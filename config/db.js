@@ -12,8 +12,7 @@ const mongoose = require('mongoose');
      catch(error)
      {
           console.log('db connection error',error.message);
-          process.exit(1);
-
+          process.exit(1); 
      }
  }
 

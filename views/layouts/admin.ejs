@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <%-include('../partials/user/header')%>
+
+    <%- body %>  <!-- Content from other pages will be injected here -->
+    <%- include('../partials/user/footer') %>
+</body>
+</html>
