@@ -1,0 +1,31 @@
+<link rel="stylesheet" href="/css/login.css">
+
+<div class="body">
+<div class="outer-container">
+    <h1>Login</h1>
+
+    <form action="/admin" method="post" id="form">
+        <div>
+            <%if(msg){%>
+                <p style="color: red;"><%=msg%></p>
+                
+            <%}%>
+        <label for="email">Email</label>
+        <input type="text" name="email" onkeyup="validateEmail()" id="email">
+        <div class="text-danger p-0 ms-5" id="emailError">username is required</div>
+    </div>
+    <div>
+        <label for="">Password</label>
+        <input type="password" name="password" onkeyup="validatePassword()" id="password">
+        <div class="text-danger p-0 ms-5" id="passwordError">password is required</div>
+    </div>
+    <div>
+        <input type="submit" value="LogIn" class="login">
+        <div class="text-danger p-0 ms-5" id="formError">please fill all fields</div>
+
+    </div>
+    </form>
+</div>
+</div>
+
+<script src="/js/login.js"></script>
