@@ -1,0 +1,158 @@
+<link rel="stylesheet" href="/css/addproduct.css">
+<div>
+<form id="addProductForm" action="/admin/addproduct" method="post" enctype="multipart/form-data">
+    
+    <label>Food Name:</label>
+    <input type="text" name="name" required>    <br>
+
+    <label>Description:</label>
+    <textarea name="description" required>    </textarea>
+<br>
+    <label>Category:</label>
+    <select id="categorySelect"  name="categoryid" required>    
+        <option value="">Select category</option>
+    </select>
+
+    <br>
+    <label>Sub-Category:</label>
+    <select id="subcategorySelect"  name="subcategoryid" required>    
+        <option value="">Select sub-category</option>
+    </select>
+<br>
+<div>
+    <label>Select at least 3 Images:</label>
+    <input type="file" id="fileInput" multiple accept="image/*" />
+    <div id="previewContainer"></div>
+
+  
+  </div>
+ <div>
+    <label>Stock:</label>
+    <input type="number" name="stock" required> <br>   
+  
+
+    <label>Price:</label>
+    <input type="number" name="price" required>  <br>  
+
+
+    <label >discount</label>
+    <input type="number" name="discountprice" required>
+
+    <button type="submit">Add Item</button> 
+ </div>
+   
+</form>
+
+
+
+</div>
+
+<!-- Cropperjs CDN link -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+
+
+
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+    const categorySelect = document.getElementById("categorySelect");
+    const subcategorySelect = document.getElementById("subcategorySelect");
+
+    if (!categorySelect || !subcategorySelect) {
+        console.error("Category or Subcategory select element not found!");
+        return;
+    }
+
+    // Load categories
+    fetch("/admin/loadcategory")
+        .then(res => res.json())       
+        .then(data => {
+            categorySelect.innerHTML = '<option value="">Select category</option>'; // Default option
+            data.forEach(category => {
+                let option = new Option(category.cat_name, category._id);
+                categorySelect.add(option);
+            });
+        })
+        .catch(err => console.error("Error loading categories:", err));
+
+    // Handle category selection change
+    categorySelect.addEventListener("change", function () {
+        const categoryId = this.value;
+        if (!categoryId) {
+            subcategorySelect.innerHTML = '<option value="">Select sub-category</option>';
+            return;
+        }
+
+
+        fetch(`/admin/subCategory/${categoryId}`)
+            .then(res => res.json())
+            .then(data => {
+                subcategorySelect.innerHTML = '<option value="">Select sub-category</option>'; // Reset subcategories
+
+                data.forEach(subcategory => {
+                    let option = new Option(subcategory.subcat_name, subcategory._id);
+                    subcategorySelect.add(option);
+                });
+            })
+            .catch(err => console.error("Error loading subcategories:", err));
+    });
+});
+let croppers = [];
+  const fileInput = document.getElementById('fileInput');
+  const previewContainer = document.getElementById('previewContainer');
+
+  fileInput.addEventListener('change', function () {
+    previewContainer.innerHTML = '';
+    croppers = [];
+
+    Array.from(fileInput.files).forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = document.createElement('img');
+        img.src = reader.result;
+        img.style.maxWidth = '200px';
+        previewContainer.appendChild(img);
+
+        const cropper = new Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1
+        });
+        croppers.push(cropper);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  document.getElementById('addProductForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (croppers.length < 3) return alert("Upload at least 3 images!");
+
+    const formData = new FormData(this);
+    for (let i = 0; i < croppers.length; i++) {
+      const blob = await new Promise(resolve => croppers[i].getCroppedCanvas().toBlob(resolve, 'image/jpeg'));
+      formData.append('images', blob, `image${i}.jpg`);
+    }
+
+    fetch(this.action, {
+  method: 'POST',
+  body: formData
+})
+  .then(res => {
+    if (res.ok) {
+      // Redirect to admin/category on success
+      window.location.href = '/admin/category';
+    } else {
+      throw new Error('Upload failed');
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Failed to upload product');
+  });
+  });
+
+</script>

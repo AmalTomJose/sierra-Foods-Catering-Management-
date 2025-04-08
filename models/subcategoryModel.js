@@ -5,6 +5,7 @@ const {ObjectId} = require('mongodb')
 const subcategorySchema = new Schema ({
     category:{
         type:ObjectId,
+        ref:'Category',
         required:true
     },
     subcat_name:{

@@ -2,13 +2,13 @@
 <section class="content-main">
   <div class="content-header">
       <div>
-          <h2 class="content-title card-title">Category List</h2>
+          <h2 class="content-title card-title">Sub Category List</h2>
           <p>Lorem ipsum dolor sit amet.</p>
       </div>
       <div>
           <a href="#" class="btn btn-light rounded font-md">Export</a>
           <a href="#" class="btn btn-light rounded  font-md">Import</a>
-          <a href="/admin/addCategory" class="btn btn-primary btn-sm rounded">Create new</a>
+          
       </div>
   </div>
   <div class="card mb-4">
@@ -40,28 +40,35 @@
       <div class="card-body">
         <table id="category" class="table">
           <thead>
+            
             <tr>
               <!-- <th scope="col"></th> -->
               <th scope="col">Name</th>
               <!-- <th scope="col">Description</th> -->
               <th scope="col">Status</th>
               <th scope="col">Action</th>
-              <th scope="col"> View subcategory  </th>
+             
             </tr>
           </thead>
         
           <tbody>
+
+              <a href="/admin/addsubCategory?id=<%= categoryid %>" class="btn btn-primary btn-sm rounded">Create new</a>
+   
+            
             <%
-            if (categorydata.length > 0) {
-              categorydata.forEach(category => {
+            if (subcategories.length > 0) {
+              subcategories.forEach(subcategory => {
             %>
-            <tr>
+
+            <tr>       
+
              
               <td>
                 <div class="d-flex align-items-center">
                        
                               <div class="ms-3">
-                                <p class="fw-bold mb-1"><%= category.cat_name %></p>
+                                <p class="fw-bold mb-1"><%= subcategory.subcat_name %></p>
                                
                               </div>
                             </div>
@@ -70,7 +77,7 @@
             
               <td>
                 <div class="col-lg-2 col-sm-2 col-4 col-status">
-                  <% if (category.cat_status) { %>
+                  <% if (subcategory.subcat_status) { %>
                     <span class="badge rounded-pill alert-success">Active</span>
                   <% } else { %>
                     <span class="badge rounded-pill alert-danger">Blocked</span>
@@ -78,24 +85,20 @@
                 </div>
               </td>
               <td>
-                <% if (category.cat_status) { %>
-                  <a  onclick="ProductUnlist('<%= category._id %>')"  class="btn btn-sm font-sm rounded btn-brand">
+                <% if (subcategory.subcat_status) { %>
+                  <a  onclick="ProductUnlist('<%=subcategory._id %>')"  class="btn btn-sm font-sm rounded btn-brand">
                     <i class="material-icons md-edit"></i> Block
                   </a>
                 <% } else { %>
-                  <a onclick="ProductUnlist('<%= category._id %>')"  class="btn btn-sm font-sm rounded btn-danger">
+                  <a onclick="ProductUnlist('<%= subcategory._id %>')"  class="btn btn-sm font-sm rounded btn-danger">
                     <i class="material-icons md-edit"></i> Unblock
                   </a>
                 <% } %>
-                <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-sm font-sm rounded btn-light">
+                <a href="/admin/editsubCategory?id=<%= subcategory._id %>" class="btn btn-sm font-sm rounded btn-light">
                   <i class="material-icons md-edit"></i> Edit
                 </a>
               </td>
-              <td>
-                <a href="/admin/subCategory?id=<%= category._id %>" class="btn btn-sm font-sm rounded btn-light">View
-
-                
-              </td>
+              
               
             </tr>
             <%
@@ -104,7 +107,7 @@
             %>
             <tr>
               <td colspan="5">
-                <p>Category not found</p>
+                <p>SubCategory not found</p>
               </td>
             </tr>
             <%
@@ -151,7 +154,7 @@ function ProductUnlist(productId) {
       }).then((result) => {
         if (result.isConfirmed) {
           // Perform the deletion via AJAX/fetch to the server
-          fetch(`/admin/unlistCategory?id=${productId}`, {
+          fetch(`/admin/unlistsubCategory?id=${productId}`, {
             method: 'GET',
             // Add other necessary headers or configurations
           }).then(response => {

@@ -147,11 +147,16 @@ const adminLogout = async (req, res) => {
   }
 };
 
+
+
+
+
 module.exports = {
   adminLogin ,
   verifyLogin,
   adminLogout,
   loadHome,
   loadUserpage,
-  listUser
+  listUser,
+  
 };

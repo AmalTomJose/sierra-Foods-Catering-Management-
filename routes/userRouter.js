@@ -33,7 +33,6 @@ router.post('/otp',userController.verifyOtp);
 router.get('/resendOTP',userController.resendOTP)
 
 
-router.get('/item',categoryController.loadItem)
 
 
 
