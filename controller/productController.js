@@ -13,7 +13,7 @@ const loadProducts  = async(req,res)=>{
     const products = await Product.find();
     const categories = await Category.find()
    
-    res.render("admin/products", { products, categories })
+    res.render("admin/products", { products})
   }
   catch(error)
   {
@@ -77,6 +77,21 @@ const blockProduct = async(req,res)=>{
   }
 }
 
+const loadeditProduct = async(req,res)=>{
+  try{
+    const id = req.query.id;
+    const product= await Product.findById(id);
+    const categories = await Category.find();
+    res.render('admin/editProduct',{product,categories})
+
+
+  }
+  catch(error)
+  {
+    console.log(error.message)
+  }
+}
+
 
 
 const loadAddproduct = async (req,res)=>{
@@ -93,7 +108,7 @@ const loadAddproduct = async (req,res)=>{
 const addProduct = async (req, res) => {
   try {
     console.log(req.body)
-    const { name, description, stock, price, discountprice, categoryid, subcategoryid } = req.body;
+    const { name, description,price, discountprice, categoryid, subcategoryid } = req.body;
     const images = req.files; // all images in req.files['images']
     console.log(images)
     const imagePaths = [];
@@ -121,13 +136,13 @@ const addProduct = async (req, res) => {
       category: categoryid,
       subcategory: subcategoryid,
       item_image: imagePaths, // assuming your schema expects an array
-      item_stock:stock,
       item_price:price,
       discount_price:discountprice
     });
     console.log(newProduct)
 
     const itemdetails = await newProduct.save();
+    res.redirect('/admin/products')
 
 
     
@@ -145,5 +160,6 @@ module.exports = {
     addProduct,
     loadProducts,
     blockProduct,
-    deleteProduct
+    deleteProduct,
+    loadeditProduct
 }

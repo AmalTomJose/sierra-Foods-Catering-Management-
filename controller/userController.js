@@ -1,6 +1,12 @@
 const User = require('../models/userSchema');
 const bcrypt = require('bcrypt');
-const message = require('../config/mailer')
+const message = require('../config/mailer');
+
+
+const Product = require('../models/itemModel');
+const Category = require('../models/categoryModels');
+
+
 const pageNotFound = async(req,res)=>{
     try{
        res.render('user/pagenotfound')
@@ -18,7 +24,20 @@ const pageNotFound = async(req,res)=>{
 
 const loadHomepage = async(req,res)=>{
     try{
-        return res.render('user/home')
+      const userId = req.session.user_id;
+      const userData = await User.findById(userId)
+      const productData = await Product.find({item_status:true});
+      const categories = await Category.find();
+
+        return res.render('user/sampleHome',{
+          products : productData,
+          User:null,
+          categories
+
+          
+
+
+        })
 
     }
     catch(error){

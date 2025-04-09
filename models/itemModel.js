@@ -34,10 +34,6 @@ const itemSchema = new Schema({
         type:Array,
         required:true
     },
-    item_stock:{
-        type:Number,
-        required:true
-    },
     item_price:{
         type:Number,
         required: true

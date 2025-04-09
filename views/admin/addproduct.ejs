@@ -27,10 +27,7 @@
   
   </div>
  <div>
-    <label>Stock:</label>
-    <input type="number" name="stock" required> <br>   
   
-
     <label>Price:</label>
     <input type="number" name="price" required>  <br>  
 
@@ -144,7 +141,7 @@ let croppers = [];
   .then(res => {
     if (res.ok) {
       // Redirect to admin/category on success
-      window.location.href = '/admin/category';
+      window.location.href = '/admin/products';
     } else {
       throw new Error('Upload failed');
     }

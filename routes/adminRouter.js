@@ -58,6 +58,7 @@ router.get('/products',adminAuth.islogin,productController.loadProducts);
 router.get('/addproduct',adminAuth.islogin,productController.loadAddproduct)
 router.post('/addproduct',upload.array("images",10),productController.addProduct)
 router.get('/deleteProduct',adminAuth.islogin,productController.deleteProduct)
+router.get('/editProduct',adminAuth.islogin,productController.loadeditProduct)
       //blocking item
 router.get('/blockProduct',adminAuth.islogin,productController.blockProduct)
 //logout
