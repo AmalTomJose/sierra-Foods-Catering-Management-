@@ -1,0 +1,38 @@
+
+  
+      <!-- Product Grid -->
+      <div class="row product-container">
+        <% for (const product of products) { %>
+          <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+            <div class="product-item">
+              <div class="position-relative bg-light overflow-hidden">
+                <% if (product.item_image && product.item_image.length > 0) { %>
+                  <img class="img-fluid w-100" src="/admin-assets/imgs/productIMG/<%= product.item_image[0] %>" alt="">
+                <% } else { %>
+                  <img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image">
+                <% } %>
+                <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
+              </div>
+              <div class="text-center p-4">
+                <a class="d-block h5 mb-2" href="#"><%= product.item_name %></a>
+                <span class="text-primary me-1">₹<%= product.item_price %></span>
+                <% if (product.discount_status) { %>
+                  <span class="text-body text-decoration-line-through">₹<%= product.discount_price %></span>
+                <% } %>
+              </div>
+              <div class="d-flex border-top">
+                <small class="w-50 text-center border-end py-2">
+                  <a class="text-body" href="/product/<%= product._id %>"><i class="fa fa-eye text-primary me-2"></i>View</a>
+                </small>
+                <small class="w-50 text-center py-2">
+                  <a class="text-body" href="#"><i class="fa fa-shopping-bag text-primary me-2"></i>Add</a>
+                </small>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <!-- Product End -->
+  

@@ -1,0 +1,113 @@
+<!-- Product Start -->
+<div class="container-xxl py-5">
+    <div class="container">
+      <div class="row g-0 gx-5 align-items-end">
+        <div class="col-lg-6">
+          <div class="section-header text-start mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 500px;">
+            <h1 class="display-5 mb-3">Our Products</h1>
+            <p>Shop Tempor ut dolore lorem kasd vero ipsum sit eirmod sit. Ipsum diam justo sed rebum vero dolor duo.</p>
+          </div>
+        </div>
+  <div class="d-flex ">
+
+        <!-- Search + Filter + Sort -->
+        <form action="/shop" method="get" class="mb-4 d-flex justify-content- flex-wrap gap-2">
+          <input type="search" class="form-control " style="width: 50%;" name="search" id="search" placeholder="Search in..." value="<%= query.search || '' %>" required />
+          <button type="submit" class="btn btn-primary">Search</button>
+          <select name="sort" class="form-select  "  style="width: 20%;" onchange="this.form.submit()">
+            <option value="asc" <%= sort === 'asc' ? 'selected' : '' %>>Price: Low to High</option>
+            <option value="desc" <%= sort === 'desc' ? 'selected' : '' %>>Price: High to Low</option>
+        </select>
+  
+        </form>
+
+           <!-- Category Pills -->
+        <ul class="nav nav-pills d-inline-flex justify-content-end mb-4" id="category-pills" >
+            <% categories.forEach(cat => { %>
+              <li class="nav-item me-2" >
+                <button type="button"
+                class="btn btn-outline-primary border-2 category-pill <%= cat._id == query.category ? 'active' : '' %>" 
+                data-id="<%= cat._id %>" >
+                <%= cat.cat_name %>
+              </button>
+              
+              </li>
+            <% }); %>
+        </ul>
+          
+  </div>
+      
+
+  
+  
+      <!-- Product Grid -->
+      <div class="row product-container">
+        <% for (const product of products) { %>
+          <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+            <div class="product-item">
+              <div class="position-relative bg-light overflow-hidden">
+                <% if (product.item_image && product.item_image.length > 0) { %>
+                  <img class="img-fluid w-100" src="/admin-assets/imgs/productIMG/<%= product.item_image[0] %>" alt="">
+                <% } else { %>
+                  <img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image">
+                <% } %>
+                <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
+              </div>
+              <div class="text-center p-4">
+                <a class="d-block h5 mb-2" href="/product/<%=product._id%>"><%= product.item_name %></a>
+                <span class="text-primary me-1">₹<%= product.item_price %></span>
+                <% if (product.discount_status) { %>
+                  <span class="text-body text-decoration-line-through">₹<%= product.discount_price %></span>
+                <% } %>
+              </div>
+              <div class="d-flex border-top">
+                <small class="w-50 text-center border-end py-2">
+                  <a class="text-body" href="/product/<%= product._id %>"><i class="fa fa-eye text-primary me-2"></i>View</a>
+                </small>
+                <small class="w-50 text-center py-2">
+                  <a class="text-body" href="#"><i class="fa fa-shopping-bag text-primary me-2"></i>Add</a>
+                </small>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <!-- Product End -->
+  
+
+
+  
+      <!-- Category Filter Script -->
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const pills = document.querySelectorAll('.category-pill');
+          const productContainer = document.querySelector('.product-container');
+  
+          pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+              const categoryId = pill.getAttribute('data-id');
+              const search = document.querySelector('input[name="search"]').value;
+              const sort = document.querySelector('select[name="sort"]').value;
+  
+              // Active pill
+              pills.forEach(p => p.classList.remove('active'));
+              pill.classList.add('active');
+  
+              // Loading spinner
+              productContainer.innerHTML = '<div class="text-center w-100 py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+  
+              fetch(`/shop/ajax?category=${categoryId}&search=${search}&sort=${sort}`)
+                .then(res => res.text())
+                .then(html => {
+                  productContainer.innerHTML = html || '<div class="text-center text-muted w-100 py-5">No products found.</div>';
+                })
+                .catch(err => {
+                  console.error('Error loading products:', err);
+                  productContainer.innerHTML = '<div class="text-danger w-100 text-center py-5">Failed to load products.</div>';
+                });
+            });
+          });
+        });
+      </script>

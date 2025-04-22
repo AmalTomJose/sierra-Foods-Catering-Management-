@@ -1,47 +1,54 @@
 <link rel="stylesheet" href="/css/signup.css">
 
 <div class="body">
-    <div class="outer-container">
+    <div class="outer-container p-3">
     <h1 class="text-center">SignUp</h1>
 
     <form action="/signup" method="post" id="form">
-        <div>
+     
             <%if(msg){%>
                 <p style="color: red;"><%=msg%></p>
                 
             <%}%>
+            <div class="input-div">
         <label for="FirstName">Firstname</label>
         <input type="text" name="firstname" id="Firstname" onkeyup="validateFirstname()">
-        <div class="text-danger p-0 ms-5" id="FirstnameError">FirstName is required</div>
         </div>
-        <div>
+          <div class="text-danger p-0 " id="FirstnameError">FirstName is required</div>
+      
+        <div class="input-div">
         <label for="LastName">Lastname</label>
         <input type="text" name="lastname" id="Lastname" onkeyup="validateLastname()">
-        <div class="text-danger p-0 ms-5" id="LastnameError">LastName is required</div>
         </div>
-        <div>
+          <div class="text-danger p-0 " id="LastnameError">LastName is required</div>
+      
+        <div class="input-div">
         <label for="email">Email</label>
         <input type="text" class="ms-4" name="email" id="email" onkeyup="validateEmail()">
-        <div class="text-danger p-0 ms-5" id="emailError">email is required</div>
         </div>
-        <div>
+          <div class="text-danger p-0 " id="emailError">email is required</div>
+      
+        <div class="input-div">
         <label for="phoneno">Phone Number</label>
         <input type="text" name="phoneno" id="phoneno" onkeyup="validatePhoneno()">
-        <div class="text-danger p-0 ms-5" id="phonenoError">phone number is required</div>
         </div>
-        <div>
+          <div class="text-danger p-0 " id="phonenoError">phone number is required</div>
+      
+        <div class="input-div">
         <label for="password">Password</label>
         <input type="password" name="password" id="password" onkeyup="validatePassword()">
-        <div class="text-danger p-0 ms-5" id="passwordError">password is required</div>
         </div>
-        <div>
+          <div class="text-danger p-0 " id="passwordError">password is required</div>
+      
+        <div class="input-div">
         <label for="confirmpassword">Confirm Password</label>
         <input type="password" name="confirmpassword" id="confirmpassword" onkeyup="validateconfirmPassword()">
-        <div class="text-danger p-0 ms-5" id="confirmpasswordError">password donot match</div>
         </div>
+          <div class="text-danger p-0 " id="confirmpasswordError">password donot match</div>
+      
         <div>
         <input type="submit" value="SignUP" class="signup">
-        <div class="text-danger p-0 ms-5" id="formError">above field should be filled</div>
+        <div class="text-danger p-0 " id="formError">above field should be filled</div>
 
         </div>
         <span>already have an account ? <a href="/login">Login</a></span>

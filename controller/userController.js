@@ -6,6 +6,16 @@ const message = require('../config/mailer');
 const Product = require('../models/itemModel');
 const Category = require('../models/categoryModels');
 
+const securePassword = async (password) => {
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    return passwordHash;
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+
 
 const pageNotFound = async(req,res)=>{
     try{
@@ -24,12 +34,11 @@ const pageNotFound = async(req,res)=>{
 
 const loadHomepage = async(req,res)=>{
     try{
-      const userId = req.session.user_id;
-      const userData = await User.findById(userId)
+      console.log(req.session.user_id)
       const productData = await Product.find({item_status:true});
       const categories = await Category.find();
 
-        return res.render('user/sampleHome',{
+        return res.render('user/home',{
           products : productData,
           User:null,
           categories
@@ -46,6 +55,25 @@ const loadHomepage = async(req,res)=>{
     }
 }
 
+
+
+const loadProductDetail = async(req,res)=>{
+  try{
+    const id = req.params.id;
+    const productDetail = await Product.findById(id);
+    res.render('user/singleProduct',{
+      product:productDetail
+    })
+
+  }
+  catch(error)
+  {
+    console.log(error.message)
+  }
+}
+
+
+
 //login page (GET)
 const loadLogin = async(req,res)=>{
     try{
@@ -61,37 +89,37 @@ const loadLogin = async(req,res)=>{
 //login page(POST)
 
 const loginPage = async(req,res)=>{
-    const {email,password} = req.body;
-     console.log(email)
-     console.log(password)
-    try{ 
-      
-        const existingUser = await User.findOne({ email: email });
-        if (existingUser) {
-          if (existingUser.isBlocked==1) {
-            res.render("user/login", { msg: "Your account is blocked." });
-            return; // Exit the function to prevent further execution
-          }
     
-          const passwordmatch = await bcrypt.compare(password, existingUser.password);
-    
-          if (passwordmatch) {
-            if (existingUser.isAdmin==1) {
-              res.render("user/login", { msg: "User not Found" });
-            } else {
-              req.session.user_id = existingUser._id;
-              console.log(req.session.user_id)
-              res.redirect("/home");
-              // res.render('home',{user:req.session})
-            }
-          } else {
-            res.render("user/login", { msg: " password is incorrect" });
-          }
-        } else {
-          res.render("user/login", { msg: "User  Not Found" });
-        }
+  try { 
+    const { email, password } = req.body;
+  
+    const existingUser = await User.findOne({ email });
+  
+    if (!existingUser) {
+      return res.render("user/login", { msg: "User not found." });
     }
-    catch(error)
+  
+    if (existingUser.isBlocked === 1) {
+      return res.render("user/login", { msg: "Your account is blocked." });
+    }
+  
+    const passwordMatch = await bcrypt.compare(password, existingUser.password);
+  
+    if (!passwordMatch) {
+      return res.render("user/login", { msg: "Password is incorrect." });
+    }
+  
+    if (existingUser.isAdmin === 1) {
+      return res.render("user/login", { msg: "User not found." });
+    }
+  
+    // Login success
+    req.session.user_id = existingUser._id;
+    console.log("User logged in:", req.session.user_id);
+    return res.redirect("/shop");
+  
+  } 
+  catch(error)
     {
         console.error("Error during login:", error);
         res.status(500).send("Internal Server Error");
@@ -239,10 +267,10 @@ const loadOtp = async (req, res) => {
   
       // Generate and send new OTP using Twilio
   
-      res.render("otp", { layout:'layouts/mainLayout',title:'otp',message: "OTP resent successfully" });
+      res.render("user/otp", { layout:'layouts/mainLayout',title:'otp',message: "OTP resent successfully" });
     } catch (error) {
       console.error("Error: ", error);
-      res.render("otp", { layout:'layouts/mainLayout',title:'otp',message: "Failed to send otp" });
+      res.render("user/otp", { layout:'layouts/mainLayout',title:'otp',message: "Failed to send otp" });
     }
   };
   
@@ -262,8 +290,199 @@ const loadOtp = async (req, res) => {
     }
  }
 
+ const getForgotPassword = async(req,res)=>{
+  try{
+     return res.render('user/forget')
+
+  }
+  catch(error)
+  {
+    console.log(error.message)
+  }
+ }
+
+ const forgotPasswordOTP = async (req, res) => {
+  try {
+    const emaildata = req.body.email;
+    console.log("Email received:", emaildata);
+
+    const userExist = await User.findOne({ email: emaildata });
+ 
+    if (userExist) {
+      req.session.userData = userExist;
+      req.session.user_id = userExist._id;
+      console.log(userExist._id);
+    
+      // Assuming you have a message-sending utility
+      const data = await message.sendVerifyMail(req, userExist.email);
+     
+    
+      res.render("user/otp",{message:null});
+    }
+     else {
+      res.render("forget", {
+        error: "Attempt Failed",
+        User: null,
+        
+      });
+    }
+  } catch (error) {
+    console.log("Error:", error.message);
+  }
+};
+
+
+
+const loadResetPassword = async(req,res) => {
+  try{
+    if(req.session.user_id){
+      const userId = req.session.user_id
+      const user = await User.findById(userId)
+      res.render("user/resetPassword",{User: user})
+    }else {
+      res.redirect("user/forget")
+    }
+  }catch(error){
+    console.log(error.message);
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try {
+    const user_id = req.session.user_id;
+    const password = req.body.password;
+    const secure_password = await securePassword(password);
+
+    const updatedData = await User.findOneAndUpdate(
+      { _id: user_id },
+      { $set: { password: secure_password } },
+      { new: true } // to return the updated document
+    );
+
+    if (updatedData) {
+      res.redirect("/login");
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+
+
+
+
+
+const loadShop = async (req, res) => {
+  try {
+    const userId = req.session.user_id;
+    const userData = await User.findById(userId);
+    let query ={item_status:true};
+
+    // Extracting query parameters
+    let { search: searchQuery, category: categoryId, sort, page } = req.query;
+
+    // Reset the page to 1 if search or category filter is applied
+    if (searchQuery || categoryId) {
+        page = 1; // Reset to page 1 if there's a new search or category selection
+    } else {
+        page = parseInt(page) || 1; // Use the existing page number or default to 1
+    }
+
+    const perPage = 9;
+    // Apply search and category filters to the query
+    if (searchQuery) {
+      query.item_name = { $regex: new RegExp(searchQuery, 'i') };
+    }
+    if (categoryId) {
+      query.category = categoryId;
+    }
+
+    // Sorting logic remains the same
+    let sortOption = {};
+    if (sort === 'asc') {
+        sortOption = { item_price: 1 };
+    } else if (sort === 'desc') {
+        sortOption = { item_price: -1 };
+    }
+
+  
+    console.log(query)
+
+    // The rest of your product fetching logic remains unchanged
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / perPage);
+    const productData = await Product.find(query)
+      .populate('category')
+      .sort(sortOption)
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+
+
+
+    const categories = await Category.find();
+    res.render('user/shop', {
+      products: productData,
+      userData,
+      categories,
+      currentPage: page,
+      totalPages: totalPages,
+      sort,
+      category: categoryId,
+      searchQuery: searchQuery,       
+      query: req.query // Pass the entire query object to your template
+    });
+    
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+const loadproduct = async (req, res) => {
+  try {
+    const { search, category, sort, page } = req.query;
+
+    const perPage = 9;
+    const currentPage = parseInt(page) || 1;
+
+    let query = {item_status:true};
+    if (search) {
+      query.item_name = { $regex: new RegExp(search, 'i') };
+    }
+    if (category) {
+      query.category = category;
+    }
+
+    let sortOption = {};
+    if (sort === 'asc') {
+      sortOption = { item_price: 1 };
+    } else if (sort === 'desc') {
+      sortOption = { item_price: -1 };
+    }
+
+    const products = await Product.find(query)
+      .sort(sortOption)
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+
+    res.render('partials/user/shopCategory', { products, layout: false });
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error in Ajax');
+  }
+};
+
+
+
+
 module.exports = {
+
     loadHomepage,
+    loadShop,
+
+
+    loadProductDetail,
     pageNotFound,
     loadLogin,
     loadSignup,
@@ -272,6 +491,11 @@ module.exports = {
     loadOtp,
     verifyOtp,
     resendOTP,
-    userlogout
+    getForgotPassword,
+    forgotPasswordOTP,
+    loadResetPassword,
+    resetPassword,
+    userlogout,
+    loadproduct
 
 }

@@ -1,25 +1,68 @@
-const multer = require ('multer');
+const multer = require('multer');
 const path = require('path');
 
-//configuring storage
 
-const storage= multer. memoryStorage();
-
-
-//filter only image files
-const fileFilter = (req,file,cb)=>{
-    const allowed = /jpeg|jpg|png|gif/;
-    const ext= allowed.test(path.extname(file.originalname).toLowerCase());
-    const mime   = allowed.test(file.mimetype);
-
-
-    if(ext&& mime){
-        return cb(null,true);
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      
+      cb(null, 'public/admin-assets/imgs/category');
+    },
+    filename: function (req, file, cb) {
+      const fileName = Date.now() + path.extname(file.originalname);
+      cb(null, fileName);
     }
-    else{
-        cb('error:ONly  images are allowed!');
+  });
+
+  
+
+  const storeproductIMG = multer.diskStorage({
+    destination: function (req, file, cb) {
+      
+      cb(null, 'public/admin-assets/imgs/productIMG');
+    },
+    filename: function (req, file, cb) {
+      const fileName = Date.now() + path.extname(file.originalname);
+      cb(null, fileName);
     }
-    
-};
-const upload = multer({storage,fileFilter,limits:{files:10}});
-module.exports = upload;
+  });
+  const storeUser = multer.diskStorage({
+    destination: function (req, file, cb) {
+      
+      cb(null, 'public/user-assets/imgs/user');
+    },
+    filename: function (req, file, cb) {
+      const fileName = Date.now() + path.extname(file.originalname);
+      cb(null, fileName);
+    }
+  });
+
+
+  // multer for Banner images
+  const bannerStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null,  "public/admin-assets/bannerImg");
+    },
+    filename: (req, file, cb) => {
+      const name = Date.now() + "-" + file.originalname;
+      cb(null, name);
+    },
+  });
+
+
+// Configurations for multer instances
+const uploadCategory = multer({ storage: storage });
+const uploadUser = multer({ storage: storeUser });
+const uploadProduct = multer({ storage: storeproductIMG });
+const bannerUpload = multer({ storage: bannerStorage });
+
+
+
+  
+
+  module.exports = {
+    uploadCategory: uploadCategory,
+    uploadUser: uploadUser,
+    uploadProduct: uploadProduct,
+    bannerUpload: bannerUpload,
+  };
+

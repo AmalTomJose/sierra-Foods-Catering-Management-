@@ -105,11 +105,11 @@
 
 .navbar .navbar-nav .nav-link {
     padding: 25px 15px;
-    color: #555555;
+    color: black;
     font-weight: 500;
     outline: none;
 }
-
+    
 .navbar .navbar-nav .nav-link:hover,
 .navbar .navbar-nav .nav-link.active {
     color: var(--dark);

@@ -1,0 +1,59 @@
+
+<link rel="stylesheet" href="css/style.css">
+<!-- Product Detail Start -->
+<div class="container-xxl py-5">
+  <div class="container">
+    <div class="row g-5">
+
+      <!-- Image Gallery -->
+      <div class="col-lg-6">
+        <% if (product.item_image && product.item_image.length > 0) { %>
+          <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              <% product.item_image.forEach((img, index) => { %>
+                <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                  <img src="/admin-assets/imgs/productIMG/<%= product.item_image %>" class="d-block w-100 rounded" alt="Product Image <%= index + 1 %>">
+                </div>
+              <% }) %>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            </button>
+          </div>
+        <% } else { %>
+          <img src="/path/to/default-image.jpg" class="img-fluid rounded" alt="No Image Available">
+        <% } %>
+      </div>
+
+      <!-- Product Info -->
+      <div class="col-lg-6">
+        <h2><%= product.item_name %></h2>
+
+        <!-- Category -->
+        <p class="text-muted">Category: <strong><%= product.category?.cat_name || 'Uncategorized' %></strong></p>
+
+        <!-- Pricing -->
+        <h4 class="text-primary mb-3">₹<%= product.item_price %></h4>
+        <% if (product.discount_status) { %>
+          <p class="text-decoration-line-through text-muted">₹<%= product.discount_price %></p>
+        <% } %>
+
+        <!-- Description -->
+        <p><%= product.item_description || 'No description available for this product.' %></p>
+
+        <!-- Add to Cart -->
+        <form action="/add-to-cart/<%= product._id %>" method="POST">
+          <div class="input-group mb-3" style="max-width: 200px;">
+            <input type="number" name="quantity" value="1" min="1" class="form-control">
+            <button type="submit" class="btn btn-primary">Add to Cart</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Product Detail End -->
+

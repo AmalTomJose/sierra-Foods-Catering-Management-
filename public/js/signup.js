@@ -65,23 +65,45 @@ function validateEmail(){
 }
 
 
-function validatePhoneno(){
-    if(phoneno.value.trim() ===''|| phoneno.value === null)
-    {
-        phonenoError.style.visibility="visible"
-        return false
-    }
-    else
-    {
-        phonenoError.style.visibility="hidden"
-        return true
+// function validatePhoneno(){
+//     if(phoneno.value.trim() ===''|| phoneno.value === null ||phoneno.value <10)
+//     {
+//   phonenoErrorError.textContent = "Enter a valid mobile number";
+
+//         phonenoError.style.visibility="visible"
+//         return false
+//     }
+//     else
+//     {
+//         phonenoError.style.visibility="hidden"
+//         return true
+//     }
+// }
+
+
+function validatePhoneno() {
+    const phoneno = document.getElementById("phoneno");
+    const phonenoError = document.getElementById("phonenoError");
+    const phone = phoneno.value.trim();
+
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if (!phoneRegex.test(phone)) {
+        phonenoError.textContent = "Enter a valid 10-digit mobile number";
+        phonenoError.style.visibility = "visible";
+        return false;
+    } else {
+        phonenoError.style.visibility = "hidden";
+        return true;
     }
 }
 
 
+
 function validatePassword(){
-    if(password.value.trim() === '' ||password.value === null)
+    if(password.value.trim() === '' ||password.value === null )//add password.value.length<8
         {
+            passwordError.textContent = "Password must be at least 8 characters long";
             passwordError.style.visibility="visible";
             return false
         }

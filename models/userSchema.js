@@ -18,7 +18,6 @@ const userSchema = new Schema ({
     },
     phoneno : {
         type : Number,
-        required :true,
         unique : false,
         sparse : true,
         default : null
@@ -30,7 +29,6 @@ const userSchema = new Schema ({
     },
     password : {
         type:String,
-        required:true,
         unique:false
 
     },

@@ -6,7 +6,7 @@ const expressEjsLayouts = require('express-ejs-layouts');
 const categoryController =  require('../controller/categoryController');
 const subcategoryController = require('../controller/subcategoryController')
 const productController = require('../controller/productController');
-const upload = require('../middlewares/multer');
+const multer= require('../middlewares/multer');
 //Setting layout for adminside
 router.use(expressEjsLayouts);
 router.set('layout','./layouts/admin')
@@ -32,7 +32,7 @@ router.post('/editCategory',categoryController.editCategory)
 
 
 router.get('/addCategory',adminAuth.islogin,categoryController.loadaddCategory)
-router.post('/addCategory',categoryController.addCategory)
+router.post('/addCategory',categoryController.addCategory)//adminAuth.islogin
 
 
 
@@ -56,11 +56,12 @@ router.post('/addsubCategory',subcategoryController.addSubcategory)
 
 router.get('/products',adminAuth.islogin,productController.loadProducts);
 router.get('/addproduct',adminAuth.islogin,productController.loadAddproduct)
-router.post('/addproduct',upload.array("images",10),productController.addProduct)
+router.post('/addproduct',multer.uploadProduct.array("image"),productController.addProduct)
 router.get('/deleteProduct',adminAuth.islogin,productController.deleteProduct)
-router.get('/editProduct',adminAuth.islogin,productController.loadeditProduct)
+router.get('/editProduct',adminAuth.islogin,productController.loadeditProduct);
+router.post("/editProduct",multer.uploadProduct.array('image'), productController.storeEditProduct)
       //blocking item
-router.get('/blockProduct',adminAuth.islogin,productController.blockProduct)
+router.get('/blockProduct',adminAuth.islogin,productController.blockProduct) 
 //logout
 router.get('/logout',adminController.adminLogout)
 

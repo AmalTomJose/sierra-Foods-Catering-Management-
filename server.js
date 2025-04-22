@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./config/passport')
 const express = require('express');
 const app = express();
 const path = require('path');
@@ -8,7 +9,8 @@ const session = require('express-session')
 const mongoose = require('mongoose')
 const userRouter = require('./routes/userRouter');
 const adminRouter = require('./routes/adminRouter');
-
+const passport = require('passport');
+const authRoute = require('./routes/authRoute');
 
 db();
 
@@ -18,6 +20,10 @@ app.use(session({
     resave:false,
     saveUninitialized: true
 }));
+
+//PASSPORT MIDDLEWARE
+app.use(passport.initialize());
+app.use(passport.session());
 
 //setting PORT from .env file.
 const PORT = process.env.PORT  || 4004;
@@ -47,6 +53,7 @@ app.use((req, res, next) => {
 //setting Routers..
 app.use('/',userRouter);
 app.use('/admin', adminRouter);
+app.use('/auth',authRoute)
 
 app.use((req, res, next) => {
     res.status(404).render("user/pagenotfound", { userData: null ,layout:'layouts/mainLayout',title:'asdfjsn'});
