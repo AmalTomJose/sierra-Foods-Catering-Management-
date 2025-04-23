@@ -59,7 +59,7 @@ router.get('/addproduct',adminAuth.islogin,productController.loadAddproduct)
 router.post('/addproduct',multer.uploadProduct.array("image"),productController.addProduct)
 router.get('/deleteProduct',adminAuth.islogin,productController.deleteProduct)
 router.get('/editProduct',adminAuth.islogin,productController.loadeditProduct);
-router.post("/editProduct",multer.uploadProduct.array('image'), productController.storeEditProduct)
+router.post('/editProduct',multer.uploadProduct.array('image'), productController.storeEditProduct)
       //blocking item
 router.get('/blockProduct',adminAuth.islogin,productController.blockProduct) 
 //logout

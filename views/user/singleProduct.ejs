@@ -1,5 +1,14 @@
+<style>
+  .zoomable-img {
+  transition: transform 0.3s ease;
+  cursor: zoom-in;
+}
 
-<link rel="stylesheet" href="css/style.css">
+.zoomable-img:hover {
+  transform: scale(1.5);
+  z-index: 1000;
+}
+</style>
 <!-- Product Detail Start -->
 <div class="container-xxl py-5">
   <div class="container">
@@ -12,7 +21,7 @@
             <div class="carousel-inner">
               <% product.item_image.forEach((img, index) => { %>
                 <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                  <img src="/admin-assets/imgs/productIMG/<%= product.item_image %>" class="d-block w-100 rounded" alt="Product Image <%= index + 1 %>">
+                  <img src="/admin-assets/imgs/productIMG/<%= img%>" class="d-block w-100 rounded zoomable-img" alt="Product Image <%= index + 1 %>">
                 </div>
               <% }) %>
             </div>
@@ -33,8 +42,16 @@
         <h2><%= product.item_name %></h2>
 
         <!-- Category -->
-        <p class="text-muted">Category: <strong><%= product.category?.cat_name || 'Uncategorized' %></strong></p>
+        <p class="text-muted">
+          Category: <strong><%= product.category && product.category.cat_name ? product.category.cat_name : 'Uncategorized' %></strong>
+        </p>
 
+        <!-- Sub Category -->
+        <p class="text-muted">
+          SubCategory: <strong><%= product.subcategory && product.subcategory.subcat_name ? product.subcategory.subcat_name : 'Uncategorized' %></strong>
+        </p>
+        
+        
         <!-- Pricing -->
         <h4 class="text-primary mb-3">₹<%= product.item_price %></h4>
         <% if (product.discount_status) { %>
@@ -42,11 +59,13 @@
         <% } %>
 
         <!-- Description -->
-        <p><%= product.item_description || 'No description available for this product.' %></p>
+        <h4><%= product.item_description %></h4>
+
+
 
         <!-- Add to Cart -->
-        <form action="/add-to-cart/<%= product._id %>" method="POST">
-          <div class="input-group mb-3" style="max-width: 200px;">
+        <form  action="/add-to-cart/<%= product._id %>" method="POST">
+          <div class="input-group mb-3 mt-4" style="max-width: 200px;">
             <input type="number" name="quantity" value="1" min="1" class="form-control">
             <button type="submit" class="btn btn-primary">Add to Cart</button>
           </div>

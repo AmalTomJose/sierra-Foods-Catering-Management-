@@ -60,7 +60,8 @@ const loadHomepage = async(req,res)=>{
 const loadProductDetail = async(req,res)=>{
   try{
     const id = req.params.id;
-    const productDetail = await Product.findById(id);
+    const productDetail = await Product.findById(id).populate('category').populate('subcategory');
+     console.log(productDetail)
     res.render('user/singleProduct',{
       product:productDetail
     })

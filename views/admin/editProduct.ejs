@@ -166,7 +166,7 @@
                                                         <% for (let i = 0; i < product.item_image.length; i++) { %>
                                                             <div class="image-container border-1 mb-4">
                                                                 <img class="image-preview"
-                                                                    src="<%= product.item_image[i] %>"
+                                                                    src="/admin-assets/imgs/productIMG/<%= product.item_image[i] %>"
                                                                     alt="Product Image">
                                                                 <br />
                                                                 <span class="remove" onclick="removeExistingImage('<%= product.item_image[i] %>', '<%= product._id %>')">Remove image</span>
