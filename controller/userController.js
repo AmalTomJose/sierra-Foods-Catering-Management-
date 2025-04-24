@@ -34,7 +34,7 @@ const pageNotFound = async(req,res)=>{
 
 const loadHomepage = async(req,res)=>{
     try{
-      console.log(req.session.user_id)
+
       const productData = await Product.find({item_status:true});
       const categories = await Category.find();
 
@@ -389,7 +389,7 @@ const loadShop = async (req, res) => {
         page = parseInt(page) || 1; // Use the existing page number or default to 1
     }
 
-    const perPage = 9;
+    const perPage = 8;
     // Apply search and category filters to the query
     if (searchQuery) {
       query.item_name = { $regex: new RegExp(searchQuery, 'i') };
@@ -408,6 +408,7 @@ const loadShop = async (req, res) => {
 
   
     console.log(query)
+    console.log('hiiihvh')
 
     // The rest of your product fetching logic remains unchanged
     const totalProducts = await Product.countDocuments(query);
@@ -443,7 +444,7 @@ const loadproduct = async (req, res) => {
   try {
     const { search, category, sort, page } = req.query;
 
-    const perPage = 9;
+    const perPage = 8;
     const currentPage = parseInt(page) || 1;
 
     let query = {item_status:true};
@@ -460,7 +461,21 @@ const loadproduct = async (req, res) => {
     } else if (sort === 'desc') {
       sortOption = { item_price: -1 };
     }
+const islogout = async (req, res, next) => {
+  try {
+    const userId = req.session.user_id || (req.session.passport && req.session.passport.user);
 
+    if (!userId) {
+      return next(); // no session? continue to login page
+    }
+    else {
+      return res.redirect('/');
+    }
+  }
+   catch (error) {
+    console.log(error.message);
+  }
+};
     const products = await Product.find(query)
       .sort(sortOption)
       .skip((currentPage - 1) * perPage)

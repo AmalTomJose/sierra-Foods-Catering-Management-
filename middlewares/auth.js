@@ -46,41 +46,44 @@
 // }
 
 const User = require('../models/userSchema');
-
 const islogin = async (req, res, next) => {
   try {
-    if (!req.session.user_id) {
+    console.log('Checking login...');
+
+    const userId = req.session.user_id || (req.session.passport && req.session.passport.user);
+
+    if (!userId) {
       return res.redirect('/login');
     }
 
-    const userData = await User.findOne({ _id: req.session.user_id });
+    const userData = await User.findById(userId);
 
-    if (req.session.user_id && userData.isAdmin === 0 && userData.isBlocked === 0) {
-      console.log('test');
-      next();
+    if (userData && userData.isAdmin === 0 && userData.isBlocked === 0) {
+      req.user = userData; // Optional: Attach user manually for non-passport logins
+      return next();
     } else {
       req.session.destroy(); // clear invalid session
-      res.redirect('/login');
+      return res.redirect('/login');
     }
   } catch (error) {
-    console.log(error.message);
+    console.log('Login middleware error:', error.message);
+    return res.redirect('/login');
   }
 };
 
+
 const islogout = async (req, res, next) => {
   try {
-    if (!req.session.user_id) {
+    const userId = req.session.user_id || (req.session.passport && req.session.passport.user);
+
+    if (!userId) {
       return next(); // no session? continue to login page
     }
-
-    const userData = await User.findOne({ _id: req.session.user_id });
-
-    if (req.session.user_id  && userData.isAdmin == 0) {
-      return res.redirect('/login');
-    } else {
-      return next();
+    else {
+      return res.redirect('/');
     }
-  } catch (error) {
+  }
+   catch (error) {
     console.log(error.message);
   }
 };

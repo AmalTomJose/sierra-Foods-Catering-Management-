@@ -11,6 +11,7 @@ passport.use(new GoogleStrategy({
 },
 async(accessToken,refreshToken,profile,done)=>{
     try{
+      
         let user = await User.findOne({
             googleId:profile.id
         });
@@ -50,6 +51,7 @@ async(accessToken,refreshToken,profile,done)=>{
 
 
 passport.serializeUser((user,done)=>done(null,user.id));
+console.log('pass');
 passport.deserializeUser(async(id,done)=>{
     const user =   await User.findById(id);
     done(null,user); 

@@ -1,14 +1,20 @@
 <style>
   .zoomable-img {
-  transition: transform 0.3s ease;
-  cursor: zoom-in;
-}
-
-.zoomable-img:hover {
-  transform: scale(1.5);
-  z-index: 1000;
-}
-</style>
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+  }
+  
+  .carousel-item {
+    overflow: visible;
+    position: relative;
+  }
+  
+  .zoomable-img:hover {
+    transform: scale(1.5);
+    z-index: 1000;
+  }
+  </style>
+   
 <!-- Product Detail Start -->
 <div class="container-xxl py-5">
   <div class="container">

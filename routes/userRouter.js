@@ -21,7 +21,7 @@ router.get('/pageNotFound',userController.pageNotFound);
 
 //LOGIN PAGE
 router.get('/login',islogout,userController.loadLogin);
-router.post('/login',userController.loginPage);
+router.post('/login',islogout,userController.loginPage);
 
 //HOME PAGE
 router.get('/',userController.loadHomepage);
