@@ -22,6 +22,11 @@ const userSchema = new Schema ({
         sparse : true,
         default : null
     },
+    image:{
+        type:String,
+        required:false
+
+    },
     googleId : {
         type : String,
         unique : true,

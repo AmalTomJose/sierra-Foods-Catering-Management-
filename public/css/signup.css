@@ -1,74 +1,126 @@
-h1{
+/* General Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  h1 {
     text-align: center;
     color: white;
-}
-
-.body{
-    height: 100vh;
-    width: 100%;
+  }
+  
+  /* Background + Centering */
+  .body {
+    background-image: url('/img/carousel-1.jpg');
     background-position: center;
-    background-repeat: no-repeat;
     background-size: cover;
+    background-repeat: no-repeat;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    
-}
-.input-div{
-    display: flex;
-    justify-content: space-between ;
-}
-.input-div input{
-    width: 70%;
-}
-.outer-container{
-    color: black;
-    background-color: rgb(134, 159, 152);
-    backdrop-filter: blur(5px);
-    border-radius: 50px;
-    
-    transition: none;
-}
-
-form {
-    
-    width: 500px;
-    margin: auto;
-    text-align: center;
-}
-
-form input{
-    border: none;
-    border-radius: 20px;
-    
-}
-form div{
+    backdrop-filter: blur(8px);
     padding: 1rem;
+  }
+  
+  /* Form Container */
+  .outer-container {
+    border-radius: 30px;
+    background-color: rgba(71, 76, 67, 0.85);
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Form styling */
+  form {
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* Input field container */
+  .input-div {
+    margin-bottom: 10px;
+  }
+  
+  /* Input fields */
+  .input-fields {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 13px;
+    background-color: aliceblue;
+    border: none;
+    height: 40px;
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+  
+  /* Error texts */
+  .text-danger {
+    font-size: 0.85rem;
+    color: #ffcccc;
+    text-align: left;
+    padding: 0 5px;
+  }
+  
+  /* Signup button */
+  .signup {
+    padding: 10px 25px;
+    border-radius: 20px;
+    border: none;
+    background-color:  #e58537;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+  .signup:hover {
+    background-color: #ca5115;
     
-}
-
-.signup{
-    padding: 5px 10px;
-} 
-
-
-span{
+  }
+  
+  /* Login link */
+  span {
     color: white;
-}
-
-span a{
+    display: block;
+    margin-top: 10px;
+  }
+  span a {
+    color: rgb(237, 227, 82);
     text-decoration: none;
-}
-
-
-#FirstnameError,
-#LastnameError,
-#emailError,
-#phonenoError,
-#passwordError,
-#confirmpasswordError,
-#formError
-{
-
+    transition: color 0.3s ease;
+  }
+  span a:hover {
+    color: #fff;
+  }
+  
+  /* Error messages hidden initially */
+  #FirstnameError,
+  #LastnameError,
+  #emailError,
+  #phonenoError,
+  #passwordError,
+  #confirmpasswordError,
+  #formError {
     visibility: hidden;
-}
+  }
+  
+  /* Responsive */
+  @media (max-width: 600px) {
+    .outer-container {
+      padding: 20px;
+      width: 100%;
+    }
+  
+    .input-fields {
+      font-size: 0.95rem;
+      height: 38px;
+    }
+  
+    .signup {
+      width: 100%;
+      margin-top: 10px;
+    }
+  }
+  

@@ -1,3 +1,5 @@
+
+
 <!-- Product Start -->
 <div class="container-xxl py-5">
     <div class="container">
@@ -11,10 +13,10 @@
   <div class="d-flex ">
 
         <!-- Search + Filter + Sort -->
-        <form action="/shop" method="get" class="mb-4 d-flex justify-content- flex-wrap gap-2">
+        <form id="filterForm"  class="mb-4 d-flex flex-wrap gap-2 justify-content-between">
           <input type="search" class="form-control " style="width: 50%;" name="search" id="search" placeholder="Search in..." value="<%= query.search || '' %>"/>
           <button type="submit" class="btn btn-primary">Search</button>
-          <select name="sort" class="form-select  "  style="width: 20%;" onchange="this.form.submit()">
+          <select name="sort" class="form-select  "  style="width: 20%;">
             <option value="asc" <%= sort === 'asc' ? 'selected' : '' %>>Price: Low to High</option>
             <option value="desc" <%= sort === 'desc' ? 'selected' : '' %>>Price: High to Low</option>
         </select>
@@ -38,104 +40,89 @@
   </div>
       
 
-  
-  
-      <!-- Product Grid -->
-      <div class="row product-container">
-        <% for (const product of products) { %>
-          <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
-            <div class="product-item">
-              <div class="position-relative bg-light overflow-hidden">
-                <% if (product.item_image && product.item_image.length > 0) { %>
-                  <img class="img-fluid w-100" src="/admin-assets/imgs/productIMG/<%= product.item_image[0] %>" alt="">
-                <% } else { %>
-                  <img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image">
-                <% } %>
-                <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
-              </div>
-              <div class="text-center p-4">
-                <a class="d-block h5 mb-2" href="/product/<%=product._id%>"><%= product.item_name %></a>
-                <span class="text-primary me-1">₹<%= product.item_price %></span>
-                <% if (product.discount_status) { %>
-                  <span class="text-body text-decoration-line-through">₹<%= product.discount_price %></span>
-                <% } %>
-              </div>
-              <div class="d-flex border-top">
-                <small class="w-50 text-center border-end py-2">
-                  <a class="text-body" href="/product/<%= product._id %>"><i class="fa fa-eye text-primary me-2"></i>View</a>
-                </small>
-                <small class="w-50 text-center py-2">
-                  <a class="text-body" href="#"><i class="fa fa-shopping-bag text-primary me-2"></i>Add</a>
-                </small>
-              </div>
-            </div>
-          </div>
-        <% } %>
-      </div>
-    </div>
+
+  <div id="product-listing">
+    <%- include("../partials/user/shopCategory", { products, totalPages, currentPage }) %>
+   
   </div>
-  <!-- Product End -->
   
 
-        <!-- Pagination Section -->
-
-        <nav class="mt-4" aria-label="Page navigation">
-          <ul class="pagination">
-            <% if (currentPage> 1) { %>
-              <li class="page-item">
-                <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
-                  <span aria-hidden="true">&laquo;</span>
-                </a>
-              </li>
-              <% } %>
-
-                <% for (let i=1; i <=totalPages; i++) { %>
-                  <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                    <a class="page-link" href="?page=<%= i %>">
-                      <%= i %>
-                    </a>
-                  </li>
-                  <% } %>
-
-                    <% if (currentPage < totalPages) { %>
-                      <li class="page-item">
-                        <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
-                          <span aria-hidden="true">&raquo;</span>
-                        </a>
-                      </li>
-                      <% } %>
-          </ul>
-        </nav>
   
+  
+
       <!-- Category Filter Script -->
-      <script>
-        document.addEventListener('DOMContentLoaded', () => {
-          const pills = document.querySelectorAll('.category-pill');
-          const productContainer = document.querySelector('.product-container');
-  
-          pills.forEach(pill => {
-            pill.addEventListener('click', () => {
-              const categoryId = pill.getAttribute('data-id');
-              const search = document.querySelector('input[name="search"]').value;
-              const sort = document.querySelector('select[name="sort"]').value;
-  
-              // Active pill
-              pills.forEach(p => p.classList.remove('active'));
-              pill.classList.add('active');
-  
-              // Loading spinner
-              productContainer.innerHTML = '<div class="text-center w-100 py-5"><div class="spinner-border text-primary" role="status"></div></div>';
-  
-              fetch(`/shop/ajax?category=${categoryId}&search=${search}&sort=${sort}`)
-                .then(res => res.text())
-                .then(html => {
-                  productContainer.innerHTML = html || '<div class="text-center text-muted w-100 py-5">No products found.</div>';
-                })
-                .catch(err => {
-                  console.error('Error loading products:', err);
-                  productContainer.innerHTML = '<div class="text-danger w-100 text-center py-5">Failed to load products.</div>';
-                });
-            });
-          });
-        });
-      </script>
+     <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+const pills = document.querySelectorAll('.category-pill');
+const productContainer = document.querySelector('.product-container');
+const searchInput = document.querySelector('input[name="search"]');
+const sortSelect = document.querySelector('select[name="sort"]');
+let currentPage = 1; // Global variable to track current page
+
+let selectedCategory = "<%= query.category || '' %>"; // Initialize selectedCategory from the template.
+function fetchFilteredProducts() {
+  const search = searchInput.value;
+  const sort = sortSelect.value;
+
+  const container = document.getElementById('product-listing');
+  container.innerHTML = '<div class="text-center w-100 py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+
+  fetch(`/shop/ajax?category=${selectedCategory}&search=${encodeURIComponent(search)}&sort=${sort}&page=${currentPage}`)
+    .then(res => res.text())
+    .then(html => {
+      container.innerHTML = html || '<div class="text-center text-muted w-100 py-5">No products found.</div>';
+      attachPaginationEvents();
+    })
+    .catch(err => {
+      console.error('Error loading products:', err);
+      container.innerHTML = '<div class="text-danger w-100 text-center py-5">Failed to load products.</div>';
+    });
+}
+
+// Reattach pagination links after content loads
+function attachPaginationEvents() {
+  document.querySelectorAll('.pagination-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentPage = parseInt(link.getAttribute('data-page'));
+      fetchFilteredProducts();
+    });
+  });
+}
+
+
+// Category pill click event
+pills.forEach(pill => {
+  pill.addEventListener('click', () => {
+    selectedCategory = pill.getAttribute('data-id'); // Update selectedCategory
+    pills.forEach(p => p.classList.remove('active')); // Remove active class from all pills
+    pill.classList.add('active'); // Add active class to the clicked pill
+    fetchFilteredProducts(); // Fetch filtered products after category change
+  });
+});
+
+// Handle form submit for search
+const searchForm = document.getElementById('filterForm');
+searchForm.addEventListener('submit', e => {
+  e.preventDefault();
+  currentPage = 1; // Reset page to 1 on search
+  fetchFilteredProducts();
+});
+
+// Handle sorting change
+sortSelect.addEventListener('change', () => {
+  currentPage = 1; // Reset page to 1 on sort change
+  fetchFilteredProducts();
+});
+
+attachPaginationEvents();
+
+});
+
+
+
+
+
+
+</script>

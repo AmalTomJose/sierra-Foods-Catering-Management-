@@ -1,72 +1,128 @@
-h1{
+h1 {
     text-align: center;
     color: white;
 }
-.body{
-    /* background-image: url('/images/user-login.jpeg'); */
+
+.body {
+    background-image: url('/img/carousel-1.jpg');
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.outer-container{
-    border-radius: 30px;
-    background-color: rgb(134, 159, 152);    
-    /* backdrop-filter: blur(5px); */
-    padding: 40px;
-    /* transition: box-shadow 1s; */
-}
-/* .outer-container:hover{
-    box-shadow:inset 400px 400px 50px rgba(0,0,0,0.2),inset -400px -400px 50px rgba(0,0,0,0.2);
-} */
-
-form div{
+    backdrop-filter: blur(8px);
     padding: 1rem;
-    text-align: center;
-     
+}
 
+.outer-container {
+    border-radius: 30px;
+    background-color: rgba(71, 76, 67, 0.85);
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 form {
-    text-align: center;
     color: white;
-
+    width: 100%;
+    text-align: center;
 }
 
+form div {
+    padding: 0.8rem 0;
+}
 
-
-form input{
+/* Input styling */
+.input-fields {
+    width: 100%;
+    padding: 10px 15px;
     border: none;
-    border-radius: 20px;
-    
+    border-radius: 13px;
+    background-color: aliceblue;
+    height: 40px;
+    opacity: 0.9;
+    font-size: 1rem;
 }
 
-span a{
-    text-decoration: none;
+/* Error messages */
+.text-danger {
+    color: #ffb3b3;
+    font-size: 0.85rem;
+    text-align: left;
+    margin-top: 5px;
 }
 
-.login{
-    padding: 5px 10px;
-    transition: background-color 0.5s,color 0.5s;
+/* Buttons and links */
+.login {
+    padding: 10px 25px;
+    transition: background-color 0.5s, color 0.5s;
 }
 
-.login:hover{
+.login:hover {
     background-color: rgb(0, 115, 255);
     color: white;
 }
 
-#emailError{
+.signupLink:hover {
+    color: chocolate;
+}
+
+span {
+    color: white;
+}
+
+span a {
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a.btn.btn-primary {
+    background-color: rgb(221, 144, 12);
+    border-radius: 20px;
+    border: none;
+    font-weight: bold;
+}
+
+a.btn.btn-primary:hover {
+    background-color: rgb(201, 124, 0);
+}
+
+/* Error visibility default */
+#emailError,
+#passwordError,
+#formError {
     visibility: hidden;
 }
 
-#passwordError{
-    visibility: hidden;
-}
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .outer-container {
+        width: 90%;
+        padding: 20px;
+    }
 
-#formError{
-    visibility: hidden;
+    .input-fields {
+        font-size: 16px;
+        height: 40px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 10px;
+    }
+
+    form div {
+        padding: 0.5rem 0;
+    }
+
+    .text-danger {
+        font-size: 14px;
+    }
 }

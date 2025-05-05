@@ -1,84 +1,245 @@
+
 <style>
-  .zoomable-img {
-    transition: transform 0.3s ease;
+  .product-description {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  line-height: 1.6;
+  font-size: 16px;
+  color: #333;
+}
+
+  .zoom-container {
+    overflow: hidden;
+    position: relative;
+    background: #f9f9f9;
+  }
+
+  .main-carousel-img {
+    transition: transform 0.4s ease;
+    max-height: 450px;
+    object-fit: contain;
     cursor: zoom-in;
   }
-  
-  .carousel-item {
-    overflow: visible;
-    position: relative;
-  }
-  
-  .zoomable-img:hover {
+
+  .zoom-container:hover .main-carousel-img {
     transform: scale(1.5);
-    z-index: 1000;
+    z-index: 10;
   }
-  </style>
-   
+
+  .carousel-thumb {
+    border: 2px solid transparent;
+    transition: border 0.3s ease;
+  }
+
+  .carousel-thumb:hover, .active-thumb {
+    border-color: #088178;
+  }
+</style>
+
+
 <!-- Product Detail Start -->
 <div class="container-xxl py-5">
-  <div class="container">
+  <div class="container" style="padding-top: 60px;">
     <div class="row g-5">
 
       <!-- Image Gallery -->
-      <div class="col-lg-6">
+      <div class="col-lg-6 mt-5">
         <% if (product.item_image && product.item_image.length > 0) { %>
           <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
+            <!-- Main Zoomable Image -->
+            <div class="carousel-inner mb-3">
               <% product.item_image.forEach((img, index) => { %>
                 <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                  <img src="/admin-assets/imgs/productIMG/<%= img%>" class="d-block w-100 rounded zoomable-img" alt="Product Image <%= index + 1 %>">
+                  <div class="zoom-container">
+                    <img src="/admin-assets/imgs/productIMG/<%= img %>" class="d-block w-100 rounded main-carousel-img" alt="Product Image <%= index + 1 %>">
+                  </div>
                 </div>
               <% }) %>
             </div>
+      
+            <!-- Carousel Controls -->
             <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="carousel-control-prev-icon"></span>
             </button>
             <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="carousel-control-next-icon"></span>
             </button>
+      
+            <!-- Thumbnail Indicators -->
+            <div class="d-flex justify-content-center gap-2 mt-3">
+              <% product.item_image.forEach((img, index) => { %>
+                <img 
+                  src="/admin-assets/imgs/productIMG/<%= img %>" 
+                  data-bs-target="#productCarousel" 
+                  data-bs-slide-to="<%= index %>" 
+                  class="img-thumbnail carousel-thumb <%= index === 0 ? 'active-thumb' : '' %>" 
+                  alt="Thumb <%= index + 1 %>" 
+                  style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;">
+              <% }) %>
+            </div>
           </div>
         <% } else { %>
-          <img src="/path/to/default-image.jpg" class="img-fluid rounded" alt="No Image Available">
+          <img src="/images/default-image.jpg" class="img-fluid rounded" alt="No Image Available">
         <% } %>
       </div>
-
+      
       <!-- Product Info -->
       <div class="col-lg-6">
         <h2><%= product.item_name %></h2>
 
-        <!-- Category -->
         <p class="text-muted">
-          Category: <strong><%= product.category && product.category.cat_name ? product.category.cat_name : 'Uncategorized' %></strong>
+          Category: <strong><%= product.category?.cat_name || 'Uncategorized' %></strong>
         </p>
 
-        <!-- Sub Category -->
         <p class="text-muted">
-          SubCategory: <strong><%= product.subcategory && product.subcategory.subcat_name ? product.subcategory.subcat_name : 'Uncategorized' %></strong>
+          SubCategory: <strong><%= product.subcategory?.subcat_name || 'Uncategorized' %></strong>
         </p>
-        
-        
-        <!-- Pricing -->
+
         <h4 class="text-primary mb-3">₹<%= product.item_price %></h4>
         <% if (product.discount_status) { %>
           <p class="text-decoration-line-through text-muted">₹<%= product.discount_price %></p>
         <% } %>
 
-        <!-- Description -->
-        <h4><%= product.item_description %></h4>
+        <div class="product-description">
+          <p><%= product.item_description %></p>
+        </div>
+        
+        <div class="bt-1 border-color-1 mt-30 mb-30"></div>
 
-
-
-        <!-- Add to Cart -->
-        <form  action="/add-to-cart/<%= product._id %>" method="POST">
-          <div class="input-group mb-3 mt-4" style="max-width: 200px;">
-            <input type="number" name="quantity" value="1" min="1" class="form-control">
-            <button type="submit" class="btn btn-primary">Add to Cart</button>
+        <!-- Add to Cart Form -->
+     
+        <form id="addToCartForm">
+          <input type="hidden" name="productData_id" id="productData_id" value="<%= product._id %>">
+        
+          <div class="row g-2 align-items-center">
+            <!-- Quantity Input -->
+            <div class="col-auto">
+              <input type="number" name="qty" id="qty" class="form-control" value="200" min="50" max="200" style="width: 120px;">
+            </div>
+        
+            <!-- Add to Cart Button -->
+            <div class="col-auto">
+              <button type="submit" id="addToCartBtn" class="btn btn-success px-4">
+                <span>Add To Cart</span>
+              </button>
+            </div>
           </div>
+        
+          <p id="insufficientStockError" class="text-danger mt-2"></p>
         </form>
+        
+        <!-- Add to Wishlist Button -->
+        <div class="detail-extralink">
+          <div class="product-extra-link2 w-50 my-1">
+            <button type="button" aria-label="Add To Wishlist" class="wishlist-button"
+              onclick="addToWishlist('<%= product._id %>')">
+              <i class="fi-rs-heart"></i> Add to Wishlist
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 <!-- Product Detail End -->
 
+<!-- Styles -->
+<style>
+  .zoomable-img {
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+  }
+
+  .carousel-item {
+    overflow: hidden;
+    position: relative;
+  }
+
+  .zoomable-img:hover {
+    transform: scale(1.5);
+    z-index: 1000;
+  }
+
+  .wishlist-button {
+    font-size: 15px;
+    font-weight: 500;
+    padding: 12px 40px;
+    color: #ffffff;
+    background-color: #088178;
+    border: 1px solid #046963;
+    border-radius: 5px;
+    border: none;
+  }
+
+  .wishlist-button:hover {
+    background-color: #046963;
+  }
+</style>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Scripts -->
+<script>
+  // Wishlist AJAX 
+  function addToWishlist(productId) {
+    fetch('/addToWishlist', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      Swal.fire({
+        title: data.success ? "Success!" : "Error!",
+        text: data.success ? data.message : data.error || "Failed to add to wishlist.",
+        icon: data.success ? "success" : "error"
+      });
+    })
+    .catch(error => {
+      console.error('Wishlist Error:', error);
+      Swal.fire("Error!", "Something went wrong.", "error");
+    });
+  }
+
+  // Add to Cart AJAX
+  document.getElementById('addToCartForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const qty = document.getElementById('qty').value;
+    const productId = document.getElementById('productData_id').value;
+    const errorEl = document.getElementById('insufficientStockError');
+    const addToCartBtn = document.getElementById('addToCartBtn');
+
+    fetch('/cart', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ qty, productData_id: productId }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        Swal.fire({
+          title: "Success!",
+          text: "Item added to cart.",
+          icon: "success"
+        }).then(() => {
+          window.location.href = '/cart';
+        });
+      } else {
+        errorEl.textContent = data.message || 'Failed to add to cart.';
+        addToCartBtn.disabled = true;
+      }
+    })
+    .catch(err => {
+      console.error('Cart Error:', err);
+      alert('Something went wrong while adding to cart.');
+    });
+  });
+</script>

@@ -1,34 +1,37 @@
 <link rel="stylesheet" href="/css/login.css">
 
 <div class="body">
+
 <div class="outer-container p-5 ">
+    
     <h1>Login</h1>
 
-    <form action="/login" method="post" id="form">
+    <form action="/login" method="post" id="form" class="form-vertical">
         <%if(msg){%>
             <p style="color: red;"><%=msg%></p>
             
         <%}%>
         <div>           
-        <label for="email">Email</label>
-        <input type="text" name="email" onkeyup="validateEmail()" id="email">
+        
+        <input type="text" name="email" onkeyup="validateEmail()" id="email" class="input-fields" placeholder="Email">
         <div class="text-danger p-0 ms-5" id="emailError">username is required</div>
     </div>
     <div>
-        <label for="">Password</label>
-        <input type="password" name="password" onkeyup="validatePassword()" id="password">
-        <div class="text-danger p-0 ms-5" id="passwordError">password is required</div>
+        
+        <input type="password" name="password" onkeyup="validatePassword()" id="password" class="input-fields" placeholder="Passsword"> 
+        <div class="text-danger p-0 " id="passwordError">password is required</div>
     </div>
+    <span> <a href="/forget-password"  style="color: rgb(237 227 82);text-decoration: none;transition: color 0.3s ease;">Forgot password?</a></span><br>
+
     <div>
-        <input type="submit" value="Log In" class="login">
+        <button type="submit" class="btn btn-secondary rounded-pill py-sm-3 px-sm-5 ms-3">Login</button>
         <div class="text-danger p-0 ms-5" id="formError">please fill all fields</div>
 
     </div>
-    <span>Dont have an account? <a href="/signup" style="color: rgb(21, 11, 203);">signUp</a></span><br>
-    <a style="background-color: rgb(101, 203, 11);" href="/auth/google" class="btn btn-primary">
+    <span>Dont have an account? <a class = 'signupLink'href="/signup" style="color: rgb(237 227 82);text-decoration: none;transition: color 0.3s ease;">signUp</a></span><br><br>
+    <a style="background-color: rgb(221, 144, 12);border-radius: 20px; border-color: none;"  href="/auth/google" class="btn btn-primary">
         <i class="fab fa-google"></i> Sign in with Google
-      </a><br>
-    <span> <a href="/forget-password"  style="color: rgb(33, 22, 154);">Forgot password?</a></span>
+      </a><br><br>
 
     </form>
 </div>

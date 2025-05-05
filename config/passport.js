@@ -39,7 +39,8 @@ async(accessToken,refreshToken,profile,done)=>{
       }
 
       if (user.isBlocked==1) {
-        return done(null, false, { message: 'Your account is blocked.' });
+        console.log('')
+        return done(null, false, { msg: 'Your account is blocked.' });
       }
         return done(null,user)
 

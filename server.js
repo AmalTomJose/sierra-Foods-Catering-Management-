@@ -1,6 +1,7 @@
 require('dotenv').config();
 require('./config/passport')
 const express = require('express');
+const nocache = require('nocache')
 const app = express();
 const path = require('path');
 const db = require('./config/db');
@@ -21,6 +22,8 @@ app.use(session({
     saveUninitialized: true
 }));
 
+
+
 //PASSPORT MIDDLEWARE
 app.use(passport.initialize());
 app.use(passport.session());
@@ -33,21 +36,27 @@ app.set('view engine','ejs');
 app.set('views',path.join(__dirname,'views'))
 app.use(expressLayouts);
 
-//setting public as a static file.
-app.use(express.static(path.join(__dirname, 'public')));
 
+// setting public as a static file with no-cache headers
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, path) => {
+      res.setHeader("Cache-Control", "no-store");
+    }
+  }));
+  
 
 // to get value from form
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
+app.use(nocache());
+
 app.use((req, res, next) => {
-    res.setHeader(
-      "Cache-Control",
-      "no-store, no-cache, must-revalidate, private"
-    );
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     next();
-});
+  }) ;
 
 
 //setting Routers..
@@ -56,7 +65,7 @@ app.use('/admin', adminRouter);
 app.use('/auth',authRoute)
 
 app.use((req, res, next) => {
-    res.status(404).render("user/pagenotfound", { userData: null ,layout:'layouts/mainLayout',title:'asdfjsn'});
+    res.status(404).render("user/pagenotfound", { userData: null ,layout:'layouts/mainLayout',title:"Page Not Found"});
 });
 
 

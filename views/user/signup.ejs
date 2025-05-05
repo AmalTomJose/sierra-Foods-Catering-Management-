@@ -1,7 +1,7 @@
-<link rel="stylesheet" href="/css/signup.css">
+<link rel="stylesheet" href="/css/signUp.css">
 
-<div class="body">
-    <div class="outer-container p-3">
+<div class="body ">
+    <div class="outer-container p-3 ">
     <h1 class="text-center">SignUp</h1>
 
     <form action="/signup" method="post" id="form">
@@ -11,38 +11,32 @@
                 
             <%}%>
             <div class="input-div">
-        <label for="FirstName">Firstname</label>
-        <input type="text" name="firstname" id="Firstname" onkeyup="validateFirstname()">
+        <input type="text" name="firstname" id="Firstname" placeholder="Firstname" class="input-fields" onkeyup="validateFirstname()">
         </div>
           <div class="text-danger p-0 " id="FirstnameError">FirstName is required</div>
       
         <div class="input-div">
-        <label for="LastName">Lastname</label>
-        <input type="text" name="lastname" id="Lastname" onkeyup="validateLastname()">
+        <input type="text" name="lastname" id="Lastname" placeholder="Lastname" class="input-fields" onkeyup="validateLastname()">
         </div>
           <div class="text-danger p-0 " id="LastnameError">LastName is required</div>
       
         <div class="input-div">
-        <label for="email">Email</label>
-        <input type="text" class="ms-4" name="email" id="email" onkeyup="validateEmail()">
+        <input type="text"  name="email" id="email" placeholder="Email" class="input-fields" onkeyup="validateEmail()">
         </div>
           <div class="text-danger p-0 " id="emailError">email is required</div>
       
         <div class="input-div">
-        <label for="phoneno">Phone Number</label>
-        <input type="text" name="phoneno" id="phoneno" onkeyup="validatePhoneno()">
+        <input type="text" name="phoneno" id="phoneno" placeholder="Phone number" class="input-fields" onkeyup="validatePhoneno()">
         </div>
           <div class="text-danger p-0 " id="phonenoError">phone number is required</div>
       
         <div class="input-div">
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password" onkeyup="validatePassword()">
+        <input type="password" name="password" id="password" placeholder="Password" class="input-fields" onkeyup="validatePassword()">
         </div>
           <div class="text-danger p-0 " id="passwordError">password is required</div>
       
         <div class="input-div">
-        <label for="confirmpassword">Confirm Password</label>
-        <input type="password" name="confirmpassword" id="confirmpassword" onkeyup="validateconfirmPassword()">
+        <input type="password" name="confirmpassword" id="confirmpassword" placeholder="Confirmpassword" class="input-fields" onkeyup="validateconfirmPassword()">
         </div>
           <div class="text-danger p-0 " id="confirmpasswordError">password donot match</div>
       
@@ -51,7 +45,7 @@
         <div class="text-danger p-0 " id="formError">above field should be filled</div>
 
         </div>
-        <span>already have an account ? <a href="/login">Login</a></span>
+        <span>already have an account ? <a href="/login" style="color: rgb(237 227 82);text-decoration: none;transition: color 0.3s ease;">Login</a></span>
     </form>
 </div>
 </div>

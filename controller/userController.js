@@ -1,10 +1,11 @@
 const User = require('../models/userSchema');
 const bcrypt = require('bcrypt');
 const message = require('../config/mailer');
-
+const mongoose = require('mongoose');
 
 const Product = require('../models/itemModel');
 const Category = require('../models/categoryModels');
+const { loadProducts } = require('./productController');
 
 const securePassword = async (password) => {
   try {
@@ -37,16 +38,19 @@ const loadHomepage = async(req,res)=>{
 
       const productData = await Product.find({item_status:true});
       const categories = await Category.find();
+      const userId = req.session.user_id;
+    const userData = await User.findById(userId);
+   
+   
+      res.render('user/home',{
+        products:productData,
+        user:userData,
+        categories
+      })
+  
 
-        return res.render('user/home',{
-          products : productData,
-          User:null,
-          categories
+   
 
-          
-
-
-        })
 
     }
     catch(error){
@@ -59,10 +63,13 @@ const loadHomepage = async(req,res)=>{
 
 const loadProductDetail = async(req,res)=>{
   try{
+    const userId = req.session.user_id;
+    const userData = await User.findById(userId);
     const id = req.params.id;
     const productDetail = await Product.findById(id).populate('category').populate('subcategory');
      console.log(productDetail)
     res.render('user/singleProduct',{
+      user:userData,
       product:productDetail
     })
 
@@ -78,9 +85,9 @@ const loadProductDetail = async(req,res)=>{
 //login page (GET)
 const loadLogin = async(req,res)=>{
     try{
-        res.render('user/login',{msg:null})
+        res.render('user/login',{msg:null,layout:'./layouts/mainLayout',title:'login'})
 
-    }
+    } 
     catch(error)
     {
         res.status(500).send("Server Error");
@@ -97,27 +104,27 @@ const loginPage = async(req,res)=>{
     const existingUser = await User.findOne({ email });
   
     if (!existingUser) {
-      return res.render("user/login", { msg: "User not found." });
+      return res.render("user/login", { msg: "User not found." ,layout:'./layouts/mainLayout',title:'login'});
     }
   
     if (existingUser.isBlocked === 1) {
-      return res.render("user/login", { msg: "Your account is blocked." });
+      return res.render("user/login", { msg: "Your account is blocked.",layout:'./layouts/mainLayout',title:'login' });
     }
   
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
   
     if (!passwordMatch) {
-      return res.render("user/login", { msg: "Password is incorrect." });
+      return res.render("user/login", { msg: "Password is incorrect." ,layout:'./layouts/mainLayout',title:'login'});
     }
   
     if (existingUser.isAdmin === 1) {
-      return res.render("user/login", { msg: "User not found." });
+      return res.render("user/login", { msg: "User not found." ,layout:'./layouts/mainLayout',title:'login' });
     }
   
     // Login success
     req.session.user_id = existingUser._id;
     console.log("User logged in:", req.session.user_id);
-    return res.redirect("/shop");
+    return res.redirect("/");
   
   } 
   catch(error)
@@ -132,7 +139,7 @@ const loginPage = async(req,res)=>{
 const loadSignup = async(req,res)=>{
     try
     {
-        res.render('user/signup',{title:'signup Page',layout:'layouts/mainLayout',msg:null})
+        res.render('user/signup',{title:'signup Page',msg:null,layout:'./layouts/mainLayout'})
 
     }
     catch(error)
@@ -200,7 +207,7 @@ const loadOtp = async (req, res) => {
   const verifyOtp = async (req, res) => {
     try {
     
-      const userData = req.session.userData;
+      const userData = req.session.user_id;
       
       const fullOTP = req.body.otp;
        console.log(userData);
@@ -228,9 +235,9 @@ const loadOtp = async (req, res) => {
         
             req.session.user_id = userDataSave._id;
   
-            res.render('user/login',{layout:'layouts/mainLayout',title:'otp',msg:'Sucessfully Created Account'});
+            res.redirect('/');
           } else {
-            res.render("user/otp", { message: "Registration Failed" });
+            res.render("user/otp", {layout:'layouts/mainLayout',title:'otp' , message: "Registration Failed" });
           
           }
         } else {
@@ -278,22 +285,26 @@ const loadOtp = async (req, res) => {
 
 //logout
 
- const userlogout = async(req,res)=>{
-    try{
-        req.session.destroy();
-        console.log('hiii')
-    res.render('user/login',{msg:'Sucessfully Logged Out'})
+const userlogout = async (req, res) => {
+  try {
+      
+        if (req.session.passport) {
+          req.session.passport.user = null;
+      }
+          req.session.user_id = null;
+          console.log('hiii');
+          return res.redirect('/login');
 
-    }
-    catch(error)
-    {
-        console.log(error.message)
-    }
- }
+  } catch (error) {
+      console.log(error.message);
+      return res.status(500).send("Internal Server Error");
+  }
+};
+
 
  const getForgotPassword = async(req,res)=>{
   try{
-     return res.render('user/forget')
+     return res.render('user/forget',{layout:'layouts/mainLayout',title:'forgetpassword'} )
 
   }
   catch(error)
@@ -318,10 +329,11 @@ const loadOtp = async (req, res) => {
       const data = await message.sendVerifyMail(req, userExist.email);
      
     
-      res.render("user/otp",{message:null});
+      res.render("user/otp",{layout:'layouts/mainLayout',title:'otp' ,message:null});
     }
      else {
-      res.render("forget", {
+      res.render("user/forget", {
+        layout:'layouts/mainLayout',title:'otp' ,
         error: "Attempt Failed",
         User: null,
         
@@ -372,87 +384,93 @@ const resetPassword = async (req, res) => {
 
 
 
-
 const loadShop = async (req, res) => {
   try {
     const userId = req.session.user_id;
     const userData = await User.findById(userId);
-    let query ={item_status:true};
 
-    // Extracting query parameters
-    let { search: searchQuery, category: categoryId, sort, page } = req.query;
-
-    // Reset the page to 1 if search or category filter is applied
-    if (searchQuery || categoryId) {
-        page = 1; // Reset to page 1 if there's a new search or category selection
-    } else {
-        page = parseInt(page) || 1; // Use the existing page number or default to 1
-    }
+    let { search, category, sort, page } = req.query;
+    page = parseInt(page) || 1;
 
     const perPage = 8;
-    // Apply search and category filters to the query
-    if (searchQuery) {
-      query.item_name = { $regex: new RegExp(searchQuery, 'i') };
-    }
-    if (categoryId) {
-      query.category = categoryId;
-    }
 
-    // Sorting logic remains the same
-    let sortOption = {};
-    if (sort === 'asc') {
-        sortOption = { item_price: 1 };
-    } else if (sort === 'desc') {
-        sortOption = { item_price: -1 };
+    let query = { item_status: true };
+
+    if (search) {
+      query.item_name = { $regex: new RegExp(search, 'i') };
     }
 
-  
-    console.log(query)
-    console.log('hiiihvh')
+    if (category) {
+      query.category = new mongoose.Types.ObjectId(category);
+    }
 
-    // The rest of your product fetching logic remains unchanged
-    const totalProducts = await Product.countDocuments(query);
+    let sortOption = { item_price: 1 };
+    if (sort === 'desc') {
+      sortOption = { item_price: -1 };
+    }
+
+    const productData = await Product.aggregate([
+      { $match: query },
+      { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
+      { $unwind: '$category' },
+      { $match: { 'category.cat_status': true }},
+      { $sort: sortOption },
+      { $skip: (page - 1) * perPage },
+      { $limit: perPage }
+    ]);
+
+    const totalCountResult = await Product.aggregate([
+      { $match: query },
+      { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
+      { $unwind: '$category' },
+      { $match: { 'category.cat_status': true }},
+      { $count: 'total' }
+    ]);
+
+    const totalProducts = totalCountResult[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / perPage);
-    const productData = await Product.find(query)
-      .populate('category')
-      .sort(sortOption)
-      .skip((page - 1) * perPage)
-      .limit(perPage);
 
+    const categories = await Category.find({ cat_status: true });
 
-
-    const categories = await Category.find();
     res.render('user/shop', {
       products: productData,
-      userData,
+      user:userData,
       categories,
       currentPage: page,
-      totalPages: totalPages,
+      totalPages,
       sort,
-      category: categoryId,
-      searchQuery: searchQuery,       
-      query: req.query // Pass the entire query object to your template
+      query: req.query
     });
-    
+
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
   }
 };
 
-const loadproduct = async (req, res) => {
+
+
+
+
+
+
+const loadProduct = async (req, res) => {
   try {
     const { search, category, sort, page } = req.query;
+      console.log(req.query)
+    console.log('hello')
 
     const perPage = 8;
     const currentPage = parseInt(page) || 1;
 
-    let query = {item_status:true};
+    let query = { item_status: true };
+
     if (search) {
       query.item_name = { $regex: new RegExp(search, 'i') };
     }
+
     if (category) {
-      query.category = category;
+      query.category = new mongoose.Types.ObjectId(category);
     }
 
     let sortOption = {};
@@ -461,28 +479,66 @@ const loadproduct = async (req, res) => {
     } else if (sort === 'desc') {
       sortOption = { item_price: -1 };
     }
-const islogout = async (req, res, next) => {
-  try {
-    const userId = req.session.user_id || (req.session.passport && req.session.passport.user);
+console.log(query )
+    const totalCountResult = await Product.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      { $unwind: '$category' },
+      { $match: { 'category.cat_status': true } },
+      { $count: 'total' }
+    ]);
 
-    if (!userId) {
-      return next(); // no session? continue to login page
-    }
-    else {
-      return res.redirect('/');
-    }
-  }
-   catch (error) {
-    console.log(error.message);
-  }
-};
-    const products = await Product.find(query)
-      .sort(sortOption)
-      .skip((currentPage - 1) * perPage)
-      .limit(perPage);
 
-    res.render('partials/user/shopCategory', { products, layout: false });
+    console.log(totalCountResult);
+    
+    const totalProducts = totalCountResult[0]?.total || 0;
+    const totalPages = Math.ceil(totalProducts / perPage);
 
+    
+
+    console.log(query)
+
+    const productData = await Product.aggregate([
+      // Match initial product filters
+      { $match: query },
+    
+      // Lookup and join category data
+      {
+        $lookup: {
+          from: 'categories', // collection name in MongoDB (check the actual name if pluralized)
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      // Unwind the category array
+      { $unwind: '$category' },
+    
+      // Filter only products whose category.cat_status is true
+      { $match: { 'category.cat_status': true } },
+    
+      // Sort
+      { $sort: sortOption },
+    
+      // Pagination
+      { $skip: (currentPage - 1) * perPage },
+      { $limit: perPage }
+    ]);
+console.log(productData)
+
+    res.render('partials/user/shopCategory', {
+      products:productData,
+      currentPage,
+      totalPages,
+      layout: false,  // Ensure only the partial view is rendered
+    });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error in Ajax');
@@ -490,14 +546,95 @@ const islogout = async (req, res, next) => {
 };
 
 
+  const loadProfile = async(req,res)=>{
+    try{
+      console.log('loadprofile')
+      const userId = req.session.user_id;
+      const userData = await User.findById(userId);
+      console.log(userData)
+      if(userData)
+      {
+        console.log('test')
+        res.render('user/userProfile',{user:userData});
+      }
+      else{
+        res.redirect('/login')
+      }
+
+    }
+  catch(error){
+    console.log(error.message)
+  }
+};
+
+// const loadProfile = async (req, res) => {
+//   try {
+//     console.log('test');
+//     const userId = req.session.user_id;
+
+//     if (!userId) {
+//       return res.redirect('/login');
+//     }
+
+//     const userData = await User.findById(userId);
+
+//     if (userData) {
+//       console.log('User found:', userData.name); // Optional: confirm it's the right user
+//       res.render('user/userProfile', { userData });
+//     } else {
+//       res.redirect('/login');
+//     }
+//   } catch (error) {
+//     console.error('Error loading profile:', error);
+//     res.status(500).send('Something went wrong while loading your profile.');
+//   }
+// };
+
+
+const userEdit = async (req, res) => {
+  try {
+    let id = req.body.user_id;
+    const userData = await User.findById(id);
+    const { name, mobile } = req.body;
+
+    let updateData;
+
+    if (!req.file) {
+      updateData = await User.findByIdAndUpdate(
+        { _id: id },
+        {
+          $set: {
+            firstname:name,
+            phoneno:mobile,
+          },
+        }
+      );
+    } else {
+      updateData = await User.findByIdAndUpdate(
+        { _id: id },
+        {
+          $set: {
+            firstname:name,
+            phoneno:mobile,
+            image: req.file.filename,
+          },
+        }
+      );
+    }
+
+    await updateData.save();
+res.redirect('/userprofile');
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
 
 
 module.exports = {
 
     loadHomepage,
     loadShop,
-
-
     loadProductDetail,
     pageNotFound,
     loadLogin,
@@ -512,6 +649,8 @@ module.exports = {
     loadResetPassword,
     resetPassword,
     userlogout,
-    loadproduct
+    loadProduct,
+    loadProfile,
+    userEdit
 
 }

@@ -31,7 +31,7 @@
             color: black;
         }
     </style>
-    <form action="/editProduct" method="post" enctype="multipart/form-data" id="product-form"
+    <form action="/admin/editProduct" method="post" enctype="multipart/form-data" id="product-form"
         onsubmit="return validationChecking()">
 
         <section class="content-main">
@@ -67,7 +67,7 @@
                                             <option value="" disabled selected>Select a Category</option>
                                             <% categories.forEach(category=> { %>
                                                 <% if (category.cat_status) { %>
-                                                    <option value="<%= category._id %>" <%=product.category &&
+                                                    <option value="<%= category._id %>" <%=category.cat_name &&
                                                         product.category.toString()===category._id.toString()
                                                         ? 'selected' : '' %>>
                                                         <%= category.cat_name %>
@@ -83,7 +83,15 @@
                                         <select name="subcategoryid" class="form-control" id="subcategorySelect">
                                             <option value="">Select sub-category</option>
 
-
+                                            <% subcategories.forEach(subcategory=> { %>
+                                                <% if (subcategory.subcat_status) { %>
+                                                    <option value="<%= subcategory._id %>" <%=subcategory.subcat_name &&
+                                                        product.subcategory.toString()===subcategory._id.toString()
+                                                        ? 'selected' : '' %>>
+                                                        <%= subcategory.subcat_name %>
+                                                    </option>
+                                                    <% } %>
+                                                        <% }); %>
                                         </select>
                                         <div class="error-message" style="color: red;" id="product_category-error">
                                         </div>

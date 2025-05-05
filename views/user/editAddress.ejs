@@ -1,0 +1,229 @@
+<style>
+    .dashboard-menu {
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+  
+    .dashboard-menu .nav-link {
+      font-weight: 500;
+      padding: 10px 15px;
+      margin-bottom: 5px;
+      border-radius: 8px;
+      transition: 0.3s;
+    }
+ 
+  
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 5px;
+      transition: border-color 0.3s;
+    }
+  
+    .form-group input:focus {
+      
+      outline: none;
+    }
+  
+    .btn-primary {
+      border: none;
+      padding: 10px 25px;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+  
+    .content-body {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+  
+    .text-danger {
+      font-size: 0.875rem;
+    }
+  </style>
+  
+  <main class="main" style="padding-top: 100px;">
+  
+
+    <section class="pt-150 pb-150">
+
+      <div class="container">
+
+        <div class="row">
+          <div class="col-lg-10 m-auto">
+
+            <div class="row">
+              <div class="col-md-4">
+                <div class="dashboard-menu">
+                  <ul class="nav flex-column" role="tablist">
+                    <!-- <li class="nav-item">
+                                      <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab" aria-controls="dashboard" aria-selected="false"><i class="fi-rs-settings-sliders mr-10"></i>Dashboard</a>
+                                  </li> -->
+                    <li class="nav-item">
+                      <a class="nav-link" href="/userprofile"><i class="fi-rs-user mr-10"></i>Account details</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="/userAddress"><i class="fi-rs-marker mr-10"></i>My Address</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" id="orders-tab" data-bs-toggle="tab" href="/order" role="tab"
+                        aria-controls="orders" aria-selected="false"><i class="fi-rs-shopping-bag mr-10"></i>Orders</a>
+                    </li>
+
+
+
+                    <li class="nav-item">
+                      <a class="nav-link" href="page-login-register.html"><i class="fi-rs-sign-out mr-10"></i>Logout</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-md-8">
+
+
+                <section class="content-body p-xl-4">
+                  <form action="/editAddress" method="post" onsubmit="return validationChecking()">
+                    <div class="row">
+
+                      <input type="hidden" name="address_id" value="<%=Address._id %>">
+                      <div class="form-group mt-5">
+                        <input type="text" id="newHouseName" name="houseName"  value="<%=Address.housename %>" placeholder="Enter House Name" />
+                        <div id="errorNewHouseName" class="ms-2 text-danger"></div>
+
+                      </div>
+                      <div class="form-group mt-5 ">
+                        <input type="text" id="street" name="street" value="<%=Address.street %>"
+                          placeholder="Enter street" />
+                        <div id="errorstreet" class="ms-2 text-danger"></div>
+                      </div>
+                      <div class="form-group mt-5 ">
+                        <input type="text" id="city" name="city" value="<%=Address.city %>" placeholder="Enter city" />
+                        <div id="errorcity" class="ms-2 text-danger"></div>
+                      </div>
+
+                      <div class="row">
+                        <div class="form-group mt-5 col-md-6">
+                          <input type="text" id="state" name="state" value="<%=Address.state %>"
+                            placeholder="Enter state" />
+                          <div id="errorstate" class="ms-2 text-danger"></div>
+                        </div>
+                        <div class="form-group mt-5 col-md-6">
+                          <input type="text" id="pincode" name="pincode" value="<%=Address.pincode %>"
+                            placeholder="Enter pincode" />
+                          <div id="errorpincode" class="ms-2 text-danger"></div>
+                        </div>
+                      </div>
+
+                    </div>
+                    <br>
+                    <div class="text-center">
+                      <button class="btn btn-primary " type="submit">Save changes</button>
+                    </div>
+
+
+
+
+                  </form>
+
+
+
+
+                </section>
+
+
+
+
+              </div>
+
+
+
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Example using DOMContentLoaded event -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      const newHouseName = document.getElementById("newHouseName");
+      const errorNewHouseName = document.getElementById("errorNewHouseName");
+      const street = document.getElementById("street");
+      const errorstreet = document.getElementById("errorstreet");
+      const city = document.getElementById("city");
+      const errorcity = document.getElementById("errorcity");
+      const state = document.getElementById("state");
+      const errorstate = document.getElementById("errorstate");
+      const pincode = document.getElementById("pincode");
+      const errorpincode = document.getElementById("errorpincode");
+
+      newHouseName.addEventListener('input', function () {
+          errorNewHouseName.innerHTML = newHouseName.value.trim() === "" ? "Please enter home name" : /^[a-zA-Z ]+$/.test(newHouseName.value) == false ? "Please enter alphabets only" : "";
+      });
+
+      street.addEventListener('input', function () {
+          errorstreet.innerHTML = street.value.trim() === "" ? "Please enter street name" : /^[a-zA-Z ]+$/.test(street.value) == false ? "Please enter alphabets only" : "";
+      });
+      
+      city.addEventListener('input', function () {
+          errorcity.innerHTML = city.value.trim() === "" ? "Please enter city name" : /^[a-zA-Z ]+$/.test(city.value) == false ? "Please enter alphabets only" : "";
+      });
+      
+      state.addEventListener('input', function () {
+          errorstate.innerHTML = state.value.trim() === "" ? "Please enter state name" : /^[a-zA-Z ]+$/.test(state.value) == false ? "Please enter alphabets only" : "";
+      });
+
+      pincode.addEventListener('input', function () {
+          errorpincode.innerHTML = pincode.value.trim() === "" ? "Please enter pincode" : /^\d{6}$/.test(pincode.value) == false ? "Please enter valid pincode" : "";
+      });
+  });
+
+  function validationChecking() {
+      const newHouseName = document.getElementById("newHouseName");
+      const errorNewHouseName = document.getElementById("errorNewHouseName");
+      const street = document.getElementById("street");
+      const errorstreet = document.getElementById("errorstreet");
+      const city = document.getElementById("city");
+      const errorcity = document.getElementById("errorcity");
+      const state = document.getElementById("state");
+      const errorstate = document.getElementById("errorstate");
+      const pincode = document.getElementById("pincode");
+      const errorpincode = document.getElementById("errorpincode");
+
+      let isValid = true;
+
+      errorNewHouseName.innerHTML = newHouseName.value.trim() === "" ? "Please enter home name" : /^[a-zA-Z ]+$/.test(newHouseName.value) == false ? "Please enter alphabets only" : "";
+      errorstreet.innerHTML = street.value.trim() === "" ? "Please enter street name" : /^[a-zA-Z ]+$/.test(street.value) == false ? "Please enter alphabets only" : "";
+      errorcity.innerHTML = city.value.trim() === "" ? "Please enter city name" : /^[a-zA-Z ]+$/.test(city.value) == false ? "Please enter alphabets only" : "";
+      errorstate.innerHTML = state.value.trim() === "" ? "Please enter state name" : /^[a-zA-Z ]+$/.test(state.value) == false ? "Please enter alphabets only" : "";
+      errorpincode.innerHTML = pincode.value.trim() === "" ? "Please enter pincode" : /^\d{6}$/.test(pincode.value) == false ? "Please enter valid pincode" : "";
+
+      if (
+          errorNewHouseName.innerHTML ||
+          errorstreet.innerHTML ||
+          errorcity.innerHTML ||
+          errorstate.innerHTML ||
+          errorpincode.innerHTML
+      ) {
+          isValid = false;
+      }
+
+      return isValid;
+  }
+</script>
+
+
+
+
+
