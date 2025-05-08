@@ -72,8 +72,8 @@ router.delete('/removeWishlist',islogin,wishlistController.removeFromWishlist)
 
 //EVENT DETAILS
 router.get('/eventDetails',islogin,eventController.loadEventForm)
-
-
+router.get('/bookings/daily-count',islogin,eventController.dailyCount)
+router.post('/bookings',islogin,eventController.bookingdetails);
 
 
 

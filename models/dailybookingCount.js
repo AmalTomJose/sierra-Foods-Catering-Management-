@@ -10,13 +10,15 @@ const dailyCountSchema = new Schema ({
         unique:true,
         required:true
     },
-    totalBookings:{
+    totalBookings: {
+      type: Number,
+      default: 0
+    },
+    totalGuests:{
         type:Number,
         default:0
     }
 });
 
 
-module.exports = {
-    dailyCountSchema
-}
+module.exports = mongoose.model('DailyCount',dailyCountSchema);

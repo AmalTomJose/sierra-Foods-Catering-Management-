@@ -1,6 +1,6 @@
 const mongoose  = require('mongoose');
 const {Schema} = mongoose;
-const {ObjectId} = require('mongodb');
+const {ObjectId, Timestamp} = require('mongodb');
 
 
 
@@ -22,6 +22,22 @@ const bookingSchema = new Schema({
     guestCount:{
         type:Number,
         enum:[200,400,600,800,1000],
+        required:true
+    },
+    eventPlace:{
+        type:String,
+        required:true
+    },
+    eventTime:{
+        type:String,
+        required:true
+    },
+    eventDistrict:{
+        type:String,
+        
+    },
+    eventPincode:{
+        type:Number,
         required:true
     },
     status:{

@@ -1,191 +1,265 @@
-<!-- FullCalendar CSS and JS -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
 
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-<style>
-  body {
-    font-family: 'Inter', sans-serif;
-    background: #f9fafb;
-    margin: 0;
-    padding: 40px;
-    color: #1a202c;
-  }
-
-  .main-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    justify-content: center;
-    align-items: flex-start;
-  }
-
-  .form-card, .calendar-card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    padding: 30px 28px;
-    flex: 1 1 380px;
-    max-width: 460px;
-    transition: transform 0.2s ease-in-out;
-  }
-
-  .form-card:hover, .calendar-card:hover {
-    transform: translateY(-4px);
-  }
-
-  h2 {
-    text-align: center;
-    font-size: 1.9rem;
-    font-weight: 600;
-    margin-bottom: 30px;
-    color: #2d3748;
-  }
-
-  form > div {
-    margin-bottom: 20px;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: #4a5568;
-  }
-
-  input[type="text"],
-  select {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background-color: #f7fafc;
-    font-size: 1rem;
-    transition: border-color 0.3s, background-color 0.3s;
-  }
-
-  input[type="text"]:focus,
-  select:focus {
-    outline: none;
-    border-color: #3182ce;
-    background-color: #fff;
-  }
-
-  select:invalid {
-    color: #a0aec0;
-  }
-
-  button {
-    width: 100%;
-    background: linear-gradient(to right, #3182ce, #63b3ed);
-    color: white;
-    padding: 12px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  button:hover {
-    background: linear-gradient(to right, #2563eb, #4299e1);
-  }
-
-  #calendar {
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  @media (max-width: 768px) {
-    .main-wrapper {
-      flex-direction: column;
-      align-items: center;
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
     }
-  }
-</style>
 
+    .main-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 60px;
+    }
 
-<div class="main-wrapper">
-  <!-- Form Section -->
-  <div class="form-card">
-    <h2>Book Your Event</h2>
-    <form action="/bookings" method="POST">
-      <div>
-        <label for="eventDate">Event Date</label>
-        <input type="text" id="eventDate" name="eventDate" readonly required placeholder="Select from calendar" />
-      </div>
+    .form-card, .calendar-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.07);
+      padding: 30px;
+      flex: 1 1 400px;
+      max-width: 500px;
+      transition: transform 0.2s ease-in-out;
+    }
 
-      <div>
-        <label for="eventType">Event Type</label>
-        <select name="eventType" id="eventType" required>
-          <option value="" disabled selected>Select event type</option>
-          <option value="Wedding">Wedding</option>
-          <option value="Birthday">Birthday</option>
-          <option value="Corporate">Corporate</option>
-          <option value="Party">Party</option>
-        </select>
-      </div>
+    .form-card:hover, .calendar-card:hover {
+      transform: translateY(-4px);
+    }
 
-      <div>
-        <label for="guestCount">Number of Guests</label>
-        <select name="guestCount" id="guestCount" required>
-          <option value="" disabled selected>Select guest range</option>
-          <option value="200">Under 200</option>
-          <option value="400">Under 400</option>
-          <option value="600">Under 600</option>
-          <option value="800">Under 800</option>
-          <option value="1000">Under 1000</option>
-        </select>
-      </div>
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
 
-      <button type="submit">Confirm Booking</button>
-    </form>
-  </div>
+    form > div {
+      margin-bottom: 20px;
+    }
 
-  <!-- Calendar Section -->
-  <div class="calendar-card">
-    <div id="calendar"></div>
-  </div>
-</div>
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
 
-<!-- JS to Load Calendar -->
-<script>
-  document.addEventListener('DOMContentLoaded', async function () {
-    const calendarEl = document.getElementById('calendar');
-    const eventDateInput = document.getElementById('eventDate');
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e0;
+      border-radius: 10px;
+      background-color: #edf2f7;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
 
-    // Fetch existing bookings
-    const res = await fetch('/bookings/daily-count');
-    const data = await res.json();
+    input[type="text"]:focus,
+    select:focus {
+      background-color: #fff;
+      border-color: #3182ce;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3);
+    }
 
-    const redDays = data.filter(d => d.count >= 2000).map(d => d.date);
-    const yellowDays = data.filter(d => d.count >= 1600 && d.count < 2000).map(d => d.date);
+    select:invalid {
+      color: #a0aec0;
+    }
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      height: 'auto',
-      events: data.map(d => ({
-        title: 'Booked',
-        start: d.date,
-        allDay: true,
-        color: redDays.includes(d.date) ? '#e74c3c' : yellowDays.includes(d.date) ? '#f1c40f' : '#2ecc71',
-      })),
-      dateClick: function(info) {
-        const selected = info.dateStr;
-        if (redDays.includes(selected)) {
-          alert("Fully booked on this date.");
-        } else {
-          if (yellowDays.includes(selected)) {
-            alert("Hurry! Few slots left on this date.");
-          }
-          eventDateInput.value = selected;
-        }
+    #calendar {
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 500px;
+    }
+
+    @media (max-width: 768px) {
+      .main-wrapper {
+        flex-direction: column;
+        align-items: center;
       }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-wrapper">
+    <div class="form-card">
+      <h2 class="text-primary">Book Your Event</h2>
+      <form action="/bookings" method="POST">
+        <div>
+          <label for="venueDate">Venue Date</label>
+          <input type="text" id="venueDate" name="date" required placeholder="Select from calendar" readonly />
+        </div>
+        <div>
+          <label for="eventType">Event Type</label>
+          <select name="event" id="eventType" required>
+            <option value="" disabled selected>Select event type</option>
+            <option value="Wedding">Wedding</option>
+            <option value="Birthday">Birthday</option>
+            <option value="Corporate">Corporate</option>
+            <option value="Party">Party</option>
+          </select>
+        </div>
+        <div>
+          <label for="guestCount">Number of Guests</label>
+          <select name="guest" id="guestCount" required>
+            <option value="" disabled selected>Select guest range</option>
+            <option value="200">Under 200</option>
+            <option value="400">Under 400</option>
+            <option value="600">Under 600</option>
+            <option value="800">Under 800</option>
+            <option value="1000">Under 1000</option>
+          </select>
+        </div>
+        <div>
+          <label for="venuePlace">Venue Place</label>
+          <input type="text" id="venuePlace" name="place" required placeholder="Enter venue place" />
+        </div>
+        <div>
+          <label for="venueTime">Venue Time</label>
+          <input type="text" id="venueTime" name="time" required placeholder="e.g., 6:00 PM" />
+        </div>
+        <div>
+          <label for="venueDistrict">Venue District</label>
+          <input type="text" id="venueDistrict" name="district" value="Ernakulam" readonly />
+        </div>
+        <div>
+          <label for="venuePincode">Venue Pincode</label>
+          <select name="pincode" id="venuePincode" required>
+            <option value="" disabled selected>Select pincode</option>
+            <option value="682001">682001</option>
+            <option value="682002">682002</option>
+            <option value="682003">682003</option>
+            <option value="682005">682005</option>
+            <option value="682015">682015</option>
+            <option value="682017">682017</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">Book Now</button>
+      </form>
+    </div>
+
+    <div class="calendar-card">
+      <h2 class="text-primary">Availability Calendar</h2>
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      const calendarEl = document.getElementById('calendar');
+      const venueDateInput = document.getElementById('venueDate');
+
+      const today = new Date();
+      const blockedDates = [];
+      for (let i = 0; i <= 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        blockedDates.push(date.toISOString().split('T')[0]);
+      }
+
+      const res = await fetch('/bookings/daily-count');
+      const data = await res.json();
+
+      const redDays = data.filter(d => d.count >= 2000).map(d => d.date);
+      const yellowDays = data.filter(d => d.count >= 1600 && d.count < 2000).map(d => d.date);
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        validRange: {
+          start: today.toISOString().split('T')[0]
+        },
+        dayCellDidMount: function (info) {
+          const day = new Date(info.date);
+
+// Extract year, month, and date
+const year = day.getFullYear();
+const month = String(day.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed, so add 1
+const date = String(day.getDate()).padStart(2, '0'); // Ensure two-digit date format
+
+// Combine them to form the date string in YYYY-MM-DD format
+const formattedDay = `${year}-${month}-${date}`;
+
+console.log('The days are:', formattedDay);
+
+          if (blockedDates.includes(formattedDay)) {
+            info.el.style.backgroundColor = '#a0aec0';
+            info.el.style.color = 'white';
+            info.el.style.pointerEvents = 'none';
+            info.el.style.cursor = 'not-allowed';
+          } else if (redDays.includes(formattedDay)) {
+            info.el.style.backgroundColor = '#e53e3e';
+            info.el.style.color = 'white';
+          } else if (yellowDays.includes(formattedDay)) {
+            info.el.style.backgroundColor = '#f6ad55';
+            info.el.style.color = 'white';
+          }
+        },
+        dateClick: function (info) {
+          const selected = info.dateStr;
+          const selectedDateData = data.find(d => d.date === selected);
+          const bookedCount = selectedDateData ? selectedDateData.count : 0;
+
+          if (blockedDates.includes(selected)) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Date Blocked',
+              text: 'This date is blocked for booking.',
+              confirmButtonColor: '#d33'
+            });
+            return;
+          }
+
+          if (redDays.includes(selected)) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Fully Booked',
+              text: 'No slots available on this date.',
+              confirmButtonColor: '#d33'
+            });
+            return;
+          }
+
+          if (yellowDays.includes(selected)) {
+            Swal.fire({
+              icon: 'info',
+              title: 'Hurry!',
+              text: 'Few slots left on this date.',
+              confirmButtonColor: '#f59e0b'
+            });
+          }
+
+          venueDateInput.value = selected;
+          updateGuestOptions(bookedCount);
+        }
+      });
+
+      calendar.render();
     });
 
-    calendar.render();
-  });
-</script>
+    function updateGuestOptions(bookedCount) {
+      const guestSelect = document.getElementById('guestCount');
+      const options = guestSelect.options;
+
+      for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        const value = parseInt(option.value);
+        if (isNaN(value)) continue;
+
+        let disable = false;
+        if (bookedCount >= 2000) disable = true;
+        else if (bookedCount >= 1800 && value <= 400) disable = true;
+        else if (bookedCount >= 1600 && value <= 600) disable = true;
+        else if (bookedCount >= 1400 && value <= 800) disable = true;
+        else if (bookedCount >= 1200 && value <= 1000) disable = true;
+
+        option.disabled = disable;
+      }
+    }
+  </script>
