@@ -1,7 +1,4 @@
 <main class="main" style="padding-top: 100px;">
-  >
-
-
   <section class="pt-150 pb-150">
     <div class="container">
       <div class="row">
@@ -10,27 +7,13 @@
             <div class="col-md-4">
               <div class="dashboard-menu">
                 <ul class="nav flex-column" role="tablist">
-                  <li class="nav-item">
-                    <a class="nav-link" href="/userprofile"><i class="fi-rs-user mr-10"></i>Account details</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/userAddress"><i class="fi-rs-marker mr-10"></i>My Address</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/orderSuccess"><i class="fi-rs-shopping-bag mr-10"></i>Orders</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/wishlist"><i class="fi-rs-heart mr-10"></i>Yourlist</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/wallet"><i class="fi-rs-shopping-bag mr-10"></i>Wallet</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/coupon"><i class="fi-rs-shopping-bag mr-10"></i>Coupon</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/logout"><i class="fi-rs-sign-out mr-10"></i>Logout</a>
-                  </li>
+                  <li class="nav-item"><a class="nav-link" href="/userprofile"><i class="fi-rs-user mr-10"></i>Account details</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/userAddress"><i class="fi-rs-marker mr-10"></i>My Address</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/orderSuccess"><i class="fi-rs-shopping-bag mr-10"></i>Orders</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/wishlist"><i class="fi-rs-heart mr-10"></i>Yourlist</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/wallet"><i class="fi-rs-shopping-bag mr-10"></i>Wallet</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/coupon"><i class="fi-rs-shopping-bag mr-10"></i>Coupon</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/logout"><i class="fi-rs-sign-out mr-10"></i>Logout</a></li>
                 </ul>
               </div>
             </div>
@@ -38,12 +21,21 @@
             <div class="col-md-8">
               <div class="card">
                 <section class="content-body p-xl-4">
+
+                  <!-- Success/Error Message Display -->
+                  <% if (message) { %>
+                    <div class="alert alert-<%= messageType || 'success' %> alert-dismissible fade show" role="alert">
+                      <%= message %>
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                  <% } %>
+
                   <form action="/userprofile" enctype="multipart/form-data" method="post" onsubmit="return validationChecking()">
                     <div class="row">
                       <div class="col-lg-8">
                         <div class="row gx-3">
                           <input type="hidden" name="user_id" value="<%=user._id%>">
-                          
+
                           <div class="col-12 mb-3">
                             <label class="form-label">Name</label>
                             <input class="form-control" name="name" value="<%=user.firstname%>" id="user_name" type="text" placeholder="Type here" required>
@@ -114,7 +106,7 @@
             </div>
 
             <div class="modal-body">
-              <form id="passwordChangeForm" action="/resetPassword" onsubmit="return validationPasswordChecking()" method="post">
+              <form id="passwordChangeForm" action="/changePasswordFromProfile" onsubmit="return validationPasswordChecking()" method="post">
                 <div class="form-group mb-3">
                   <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter Current Password" class="form-control" required>
                   <div id="errorCurrentPassword" class="ms-2 text-danger"></div>
@@ -143,11 +135,9 @@
           </div>
         </div>
       </div>
-
     </section>
 </main>
 
-<!-- JavaScript Section -->
 <script>
   document.getElementById('fileUpload').addEventListener('change', function(event) {
     const file = event.target.files[0];
@@ -187,7 +177,6 @@
     cpassword.addEventListener('input', function () {
       errorcpassword.innerHTML = cpassword.value.trim() === "" ? "Please confirm password" : (cpassword.value !== password.value) ? "Passwords do not match" : "";
     });
-
   });
 
   function validationChecking() {
@@ -210,7 +199,6 @@
     }
 
     if (errorName.innerHTML || errorMobile.innerHTML) return false;
-
     return true;
   }
 
@@ -224,7 +212,12 @@
     errorcpassword.innerHTML = cpassword.value.trim() === "" ? "Please confirm password" : (cpassword.value !== password.value) ? "Passwords do not match" : "";
 
     if (errorpassword.innerHTML || errorcpassword.innerHTML) return false;
-
     return true;
   }
+
+  // Auto-hide alerts after 4 seconds
+  setTimeout(() => {
+    const alert = document.querySelector(".alert");
+    if (alert) alert.classList.remove("show");
+  }, 4000);
 </script>

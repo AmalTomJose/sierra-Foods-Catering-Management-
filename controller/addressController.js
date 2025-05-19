@@ -1,5 +1,7 @@
 const User = require('../models/userSchema');
 const Address = require('../models/addressModel');
+const bcrypt = require("bcrypt");
+
 
 
 const loadAddress = async(req,res)=>{
@@ -127,6 +129,76 @@ res.redirect('/userAddress')
 }
 
 
+const changePasswordFromProfile = async (req, res) => {
+    try {
+      const userId = req.session.user_id;
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+  
+      const user = await User.findById(userId);
+  
+      // Validate fields
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.render("user/userProfile", {
+          user,
+          message: "All fields are required",
+          messageType: "danger",
+        });
+      }
+  
+      if (newPassword.length < 8) {
+        return res.render("user/userProfile", {
+          user,
+          message: "Password must be at least 8 characters",
+          messageType: "danger",
+        });
+      }
+  
+      if (newPassword !== confirmPassword) {
+        return res.render("user/userProfile", {
+          user,
+          message: "Passwords do not match",
+          messageType: "danger",
+        });
+      }
+  
+      if (!user) {
+        return res.render("user/userProfile", {
+          message: "User not found",
+          messageType: "danger",
+        });
+      }
+  
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.render("user/userProfile", {
+          user,
+          message: "Current password is incorrect",
+          messageType: "danger",
+        });
+      }
+  
+      const hashed = await bcrypt.hash(newPassword, 10);
+      user.password = hashed;
+      await user.save();
+  
+      return res.render("user/userProfile", {
+        user,
+        message: "Password updated successfully",
+        messageType: "success",
+      });
+  
+    } catch (err) {
+      console.log("Password change error:", err.message);
+      return res.render("user/userProfile", {
+        message: "Something went wrong",
+        messageType: "danger",
+      });
+    }
+  };
+  
+
+
+
 
 module.exports = {
     loadAddress,
@@ -134,5 +206,6 @@ module.exports = {
     addAddress,
     loadEditAddress,
     editAddress,
-    deleteAddress
+    deleteAddress,
+     changePasswordFromProfile
 }

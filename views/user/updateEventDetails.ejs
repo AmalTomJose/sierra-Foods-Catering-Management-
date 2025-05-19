@@ -1,0 +1,228 @@
+
+<style>
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+    }
+
+    .main-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 60px;
+    }
+
+    .form-card, .calendar-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.07);
+      padding: 30px;
+      flex: 1 1 400px;
+      max-width: 500px;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .form-card:hover, .calendar-card:hover {
+      transform: translateY(-4px);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    form > div {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e0;
+      border-radius: 10px;
+      background-color: #edf2f7;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      background-color: #fff;
+      border-color: #3182ce;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3);
+    }
+
+    select:invalid {
+      color: #a0aec0;
+    }
+
+    #calendar {
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 500px;
+    }
+
+    @media (max-width: 768px) {
+      .main-wrapper {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+
+
+
+<div class="main-wrapper">
+    <div class="form-card">
+      <h2>Update Your Event</h2>
+      <form action="/update-checkout?id=<%= booking._id %>" method="POST">
+        <div>
+          <label for="venueDate">Venue Date</label>
+          <input type="text" id="venueDate" value="<%= booking.eventDate.toISOString().split('T')[0] %>" name="date" required readonly />
+        </div>
+        <div>
+          <label for="eventType">Event Type</label>
+          <select name="eventType" required>
+            <option value="wedding" <%= booking.eventType === 'wedding' ? 'selected' : '' %>>Wedding</option>
+            <option value="birthday" <%= booking.eventType === 'birthday' ? 'selected' : '' %>>Birthday</option>
+            <option value="corporate" <%= booking.eventType === 'corporate' ? 'selected' : '' %>>Corporate</option>
+          </select>
+        </div>
+        <div>
+          <label for="guestCount">Number of Guests</label>
+          <select name="guest" id="guestCount" required>
+            <% [200,400,600,800,1000].forEach(count => { %>
+              <option value="<%= count %>" <%= booking.guest == count ? 'selected' : '' %>>Under <%= count %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label for="venuePlace">Venue Place</label>
+          <input type="text" id="venuePlace" name="place" value="<%= booking.place %>" required />
+        </div>
+        <div>
+          <label for="venueTime">Venue Time</label>
+          <input type="text" id="venueTime" name="time" value="<%= booking.time %>" required />
+        </div>
+        <div>
+          <label for="venueDistrict">Venue District</label>
+          <input type="text" id="venueDistrict" name="district" value="<%= booking.district %>" readonly />
+        </div>
+        <div>
+          <label for="venuePincode">Venue Pincode</label>
+          <select name="pincode" id="venuePincode" required>
+            <% ['682001','682002','682003','682005','682015','682017'].forEach(pin => { %>
+              <option value="<%= pin %>" <%= booking.pincode === pin ? 'selected' : '' %>><%= pin %></option>
+            <% }) %>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">Update Booking</button>
+      </form>
+    </div>
+
+    <div class="calendar-card">
+      <h2>Availability Calendar</h2>
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      const venueDateInput = document.getElementById('venueDate');
+      const calendarEl = document.getElementById('calendar');
+      const res = await fetch('/bookings/daily-count');
+      const data = await res.json();
+
+      const blockedDates = []; // populate as per your logic
+      const redDays = data.filter(d => d.count >= 2000).map(d => d.date);
+      const yellowDays = data.filter(d => d.count >= 1600 && d.count < 2000).map(d => d.date);
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        validRange: {
+          start: new Date().toISOString().split('T')[0]
+        },
+        dayCellDidMount: function (info) {
+          const dateStr = info.date.toISOString().split('T')[0];
+          if (blockedDates.includes(dateStr)) {
+            info.el.style.backgroundColor = '#a0aec0';
+            info.el.style.pointerEvents = 'none';
+          } else if (redDays.includes(dateStr)) {
+            info.el.style.backgroundColor = '#e53e3e';
+          } else if (yellowDays.includes(dateStr)) {
+            info.el.style.backgroundColor = '#f6ad55';
+          }
+        },
+        dateClick: function (info) {
+          const selected = info.dateStr;
+          const selectedDateData = data.find(d => d.date === selected);
+          const bookedCount = selectedDateData ? selectedDateData.count : 0;
+
+          if (blockedDates.includes(selected)) {
+            Swal.fire({ icon: 'error', title: 'Date Blocked', text: 'This date is blocked.' });
+            return;
+          }
+
+          if (redDays.includes(selected)) {
+            Swal.fire({ icon: 'warning', title: 'Fully Booked', text: 'No slots available.' });
+            return;
+          }
+
+          if (yellowDays.includes(selected)) {
+            Swal.fire({ icon: 'info', title: 'Limited Slots', text: 'Few slots left!' });
+          }
+
+          venueDateInput.value = selected;
+          updateGuestOptions(bookedCount);
+        }
+      });
+
+      calendar.render();
+    });
+
+    function updateGuestOptions(bookedCount) {
+      const guestSelect = document.getElementById('guestCount');
+      const options = guestSelect.options;
+
+      for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        const value = parseInt(option.value);
+        if (isNaN(value)) continue;
+
+        let disable = false;
+        if (bookedCount >= 2000) disable = true;
+        else if (bookedCount >= 1800 && [1000, 800, 600, 400].includes(value)) disable = true;
+        else if (bookedCount >= 1600 && [1000, 800, 600].includes(value)) disable = true;
+        else if (bookedCount >= 1400 && [1000, 800].includes(value)) disable = true;
+        else if (bookedCount >= 1200 && value === 1000) disable = true;
+
+        option.disabled = disable;
+      }
+    }
+  </script>
+
+  <% if (success && success.length > 0) { %>
+    <script>
+      Swal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: '<%= success[0] %>',
+        confirmButtonColor: '#3085d6'
+      });
+    </script>
+  <% } %>

@@ -9,6 +9,8 @@ const addressController = require('../controller/addressController');
 const wishlistController = require('../controller/wishlistController');
 const cartController = require('../controller/cartController');
 const eventController = require('../controller/eventController');
+const orderController = require('../controller/orderController')
+
 
 
 router.use(expressEjsLayouts)
@@ -48,7 +50,7 @@ router.get('/resendOTP',islogout,userController.resendOTP)
 router.get('/forget-password',islogout,userController.getForgotPassword);
 router.post('/forget',islogout,userController.forgotPasswordOTP)
 router.get('/resetPassword',islogout,userController.loadResetPassword)
-router.post('/resetPAssword',islogout,userController.resetPassword)
+router.post('/resetPassword',islogout,userController.resetPassword)
 
 
 //USER
@@ -60,6 +62,7 @@ router.post('/addAddress',islogin,addressController.addAddress)
 router.get('/editAddress',islogin,addressController.loadEditAddress)
 router.post('/editAddress',islogin,addressController.editAddress)
 router.get('/deleteAddress',islogin,addressController. deleteAddress)
+router.post('/changePasswordFromProfile',islogin,addressController.changePasswordFromProfile)
 
 
 
@@ -74,17 +77,28 @@ router.delete('/removeWishlist',islogin,wishlistController.removeFromWishlist)
 router.get('/eventDetails',islogin,eventController.loadEventForm)
 router.get('/bookings/daily-count',islogin,eventController.dailyCount)
 router.post('/bookings',islogin,eventController.bookingdetails);
+router.post('/cancel/:id',islogin,eventController.cancelBooking)
 
 
 
 
 //CART
+router.get('/cart',islogin,cartController.loadCart)
+router.post('/cart',islogin,cartController.addtoCart )
+router.delete('/remove-cart-item',islogin,cartController.removeCart)
+router.put('/updateCart',islogin,cartController.updateCart)
 
-// router.get('/cart',islogin,cartController.loadCartPage);
+
+//CHECKOUT
+
+router.get('/checkout',islogin,orderController.loadCheckout)
+router.post('/checkout',islogin,orderController.checkOutPost)
+router.get('/updateCheckout',islogin,orderController.updateCheckout)
 
 
-
-
+//orderSuccess
+router.get('/orderSuccess',islogin,orderController.loadOrderDetails)
+router.get('/orderDetails/:id',islogin,orderController.loadOrderHistory)
 
 
 

@@ -152,6 +152,7 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async function () {
+   
       const calendarEl = document.getElementById('calendar');
       const venueDateInput = document.getElementById('venueDate');
 
@@ -178,8 +179,8 @@
         dayCellDidMount: function (info) {
           const day = new Date(info.date);
 
-// Extract year, month, and date
-const year = day.getFullYear();
+         // Extract year, month, and date
+         const year = day.getFullYear();
 const month = String(day.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed, so add 1
 const date = String(day.getDate()).padStart(2, '0'); // Ensure two-digit date format
 
@@ -202,9 +203,11 @@ console.log('The days are:', formattedDay);
           }
         },
         dateClick: function (info) {
+          console.log('Hiaodsifoadiusbfvpoiuqbwaeopufbci w eioufcg qwibluerjgbkuywgilu')
           const selected = info.dateStr;
           const selectedDateData = data.find(d => d.date === selected);
           const bookedCount = selectedDateData ? selectedDateData.count : 0;
+          console.log('The booked count for the date is:',bookedCount)
 
           if (blockedDates.includes(selected)) {
             Swal.fire({
@@ -242,24 +245,50 @@ console.log('The days are:', formattedDay);
 
       calendar.render();
     });
-
     function updateGuestOptions(bookedCount) {
-      const guestSelect = document.getElementById('guestCount');
-      const options = guestSelect.options;
+  const guestSelect = document.getElementById('guestCount');
+  const options = guestSelect.options;
 
-      for (let i = 0; i < options.length; i++) {
-        const option = options[i];
-        const value = parseInt(option.value);
-        if (isNaN(value)) continue;
+  for (let i = 0; i < options.length; i++) {
+    const option = options[i];
+    const value = parseInt(option.value);
+    if (isNaN(value)) continue;
 
-        let disable = false;
-        if (bookedCount >= 2000) disable = true;
-        else if (bookedCount >= 1800 && value <= 400) disable = true;
-        else if (bookedCount >= 1600 && value <= 600) disable = true;
-        else if (bookedCount >= 1400 && value <= 800) disable = true;
-        else if (bookedCount >= 1200 && value <= 1000) disable = true;
+    let disable = false;
 
-        option.disabled = disable;
-      }
+    if (bookedCount >= 2000) {
+      disable = true; // Disable all options
+    } else if (bookedCount >= 1800) {
+      // Disable 1000, 800, 600, and 400
+      if ([1000, 800, 600, 400].includes(value)) disable = true;
+    } else if (bookedCount >= 1600) {
+      // Disable 1000, 800, and 600
+      if ([1000, 800, 600].includes(value)) disable = true;
+    } else if (bookedCount >= 1400) {
+      // Disable 1000 and 800
+      if ([1000, 800].includes(value)) disable = true;
+    } else if (bookedCount >= 1200) {
+      // Disable 1000 only
+      if (value === 1000) disable = true;
     }
-  </script>
+
+    option.disabled = disable;
+  }
+}
+
+
+   
+  </script> 
+  
+   <% if (success && success.length > 0) { %>
+    <script>
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: '<%= success[0] %>',
+        confirmButtonColor: '#3085d6'
+      });
+    </script>
+    <% } %>
+  
+    

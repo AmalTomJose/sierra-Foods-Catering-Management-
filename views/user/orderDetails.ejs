@@ -1,0 +1,165 @@
+<div class="container mt-5 pt-5" style="padding-top: 150px;">
+    <div class="text-end mb-3">
+      <button onclick="printContent()" class="btn btn-secondary">
+        <i class="material-icons">print</i> Download PDF
+      </button>
+    </div>
+
+    <section class="content-main">
+      <div class="content-header text-center mb-4">
+        <h5 class="content-title">ORDER DETAILS</h5>
+      </div>
+
+      <div class="card">
+        <header class="card-header">
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted">Order ID: <%= order.orderId %></small><br>
+              <small class="text-muted">Order Date:</small>
+              <div>
+                <i class="material-icons">calendar_today</i>
+                <b><%= new Date(order.orderDate).toLocaleString() %></b>
+              </div>
+            </div>
+            <% if (order.status !== 'failed') { %>
+            <div class="col-md-6">
+              <small class="text-muted">Delivery Date:</small>
+              <div>
+                <i class="material-icons">local_shipping</i>
+                <b><%= new Date(order.deliveryDate).toLocaleString() %></b>
+              </div>
+            </div>
+            <% } %>
+          </div>
+        </header>
+
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <h6>Customer</h6>
+              <p>
+                <%= order.user.firstname %><br>
+                <%= order.user.phoneno %>
+              </p>
+            </div>
+            <div class="col-md-4">
+              <h6>Order Info</h6>
+              <p>
+                Shipping: Fargo express<br>
+                Pay method: <%= order.paymentMethod %><br>
+                Status: <%= order.status %>
+              </p>
+            </div>
+            <div class="col-md-4">
+              <h6>Deliver To</h6>
+              <p>
+                Event Date: <%= order.address.eventDate %><br>
+                Event Type: <%= order.address.eventType %><br>
+                Guest Count: <%= order.address.guestCount %><br>
+                Event Place: <%= order.address.eventplace %><br>
+                Event Time: <%= order.address.eventTime %><br>
+                District: <%= order.address.eventDistrict %><br>
+                Pincode: <%= order.address.eventPincode %>
+              </p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Unit Price</th>
+                  <th>Quantity</th>
+                  <th class="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% let subtotal = 0; order.items.forEach(item => { 
+                  let total = item.product.discount_price * item.quantity;
+                  subtotal += total; %>
+                <tr>
+                  <td>
+                    <a class="d-flex align-items-center" href="/singleProduct/<%= item.product._id %>">
+                      <img src="/admin-assets/imgs/productIMG/<%= item.product.item_image[0] %>" width="40" height="40" class="me-2">
+                      <%= item.product.name %>
+                    </a>
+                  </td>
+                  <td>₹<%= item.product.discount_price %></td>
+                  <td><%= item.quantity %></td>
+                  <td class="text-end">₹<%= total %></td>
+                </tr>
+                <% }) %>
+                <tr>
+                  <td colspan="4">
+                    <div class="float-end">
+                      <p>Subtotal: ₹<%= subtotal %></p>
+                      <p>Shipping: ₹0.00</p>
+                      <p><strong>Grand Total: ₹<%= subtotal %></strong></p>
+                      <span class="badge rounded-pill 
+                        <%= order.status === 'Delivered' ? 'alert-success text-success' : 
+                            order.status === 'Pending' ? 'alert-warning text-warning' :
+                            order.status === 'Shipped' ? 'alert-info text-info' :
+                            order.status === 'failed' ? 'alert-danger text-danger' : 
+                            'alert-secondary' %>">
+                        <%= order.status %>
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="text-center mt-4">
+            <% if (order.status === 'Pending' || order.status === 'Shipped') { %>
+              <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
+                <i class="material-icons">cancel</i> Cancel Order
+              </button>
+            <% } %>
+
+            <% if (order.status === 'failed') { %>
+              <a class="btn btn-outline-success" href="/checkout?orderId=<%= order._id %>">
+                <i class="material-icons">replay</i> Retry Payment
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function printContent() {
+      window.print();
+    }
+
+    function cancelOrder(orderId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cancel Order',
+        text: 'Are you sure you want to cancel this order?',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, cancel it',
+        cancelButtonText: 'No',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch('/ordercancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              window.location.href = '/orderSuccess';
+            } else {
+              Swal.fire('Error', 'Failed to cancel order.', 'error');
+            }
+          });
+        }
+      });
+    }
+  </script>

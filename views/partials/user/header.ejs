@@ -43,6 +43,8 @@
           <a href="about.html" class="nav-item nav-link">About Us</a>
           <a href="/logout" class="nav-item nav-link">Logout</a>
           <a href="/shop" class="nav-item nav-link">Shop</a>
+    
+          
 
           <div class="nav-item dropdown">
             <a
@@ -63,10 +65,23 @@
         </div>
 
         <div class="d-none d-lg-flex ms-2 align-items-center">
-          <!-- Search Icon -->
-          <a class="btn-sm-square bg-white rounded-circle ms-3" href="#">
-            <small class="fa fa-search text-body"></small>
-          </a>
+          <% if (isAuthenticated) { %>
+            <% if (hasBooked) { %>
+              <a onclick="cancelBooking('<%= booking._id %>') " class="btn btn-outline-danger me-2">
+                Cancel Event
+              </a>
+            <% } else { %>
+              <a href="/eventDetails" class="btn btn-danger text-white">
+                Book an Event
+              </a>
+            <% } %>
+          <% } else { %>
+            <a href="/login" class="btn btn-primary">
+              Login to Book
+            </a>
+          <% } %>
+          
+          
           <% if(user) { %>
 
             <!-- Wishlist Icon with Filled Green Heart -->
@@ -109,7 +124,7 @@
 
     
           <!-- Cart Icon -->
-          <a class="btn-sm-square bg-white rounded-circle ms-3" href="#">
+          <a class="btn-sm-square bg-white rounded-circle ms-3" href="/cart">
             <small class="fa fa-shopping-bag text-body"></small>
           </a>
         </div> <!-- d-none d-lg-flex ms-2 align-items-center -->
@@ -117,3 +132,53 @@
       </div> <!-- collapse navbar-collapse -->
     </nav>  <!-- navbar -->
   </div>    <!-- container-fluid fixed-top -->
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    function cancelBooking(bookingId) {
+      Swal.fire({
+        title: 'Cancel Booking?',
+        input: 'textarea',
+        inputLabel: 'Reason for cancellation',
+        inputPlaceholder: 'Type your reason here...',
+        inputAttributes: {
+          'aria-label': 'Type your reason here'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        cancelButtonText: 'Close',
+        inputValidator: (value) => {
+          if (!value) {
+            return 'You must enter a reason to cancel!';
+          }
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const reason = result.value;
+  
+          fetch(`/cancel/${bookingId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire('Cancelled!', 'Your booking has been cancelled.', 'success').then(() => {
+                location.reload();
+              });
+            } else {
+              Swal.fire('Error', data.error || 'Cancellation failed.', 'error');
+            }
+          })
+          .catch(() => {
+            Swal.fire('Oops...', 'Something went wrong!', 'error');
+          });
+        }
+      });
+    }
+  </script>
+  

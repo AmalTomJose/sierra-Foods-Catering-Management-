@@ -47,82 +47,85 @@
   </div>
   
 
-  
-  
 
-      <!-- Category Filter Script -->
-     <script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    
+
     document.addEventListener('DOMContentLoaded', () => {
-
-const pills = document.querySelectorAll('.category-pill');
-const productContainer = document.querySelector('.product-container');
-const searchInput = document.querySelector('input[name="search"]');
-const sortSelect = document.querySelector('select[name="sort"]');
-let currentPage = 1; // Global variable to track current page
-
-let selectedCategory = "<%= query.category || '' %>"; // Initialize selectedCategory from the template.
-function fetchFilteredProducts() {
-  const search = searchInput.value;
-  const sort = sortSelect.value;
-
-  const container = document.getElementById('product-listing');
-  container.innerHTML = '<div class="text-center w-100 py-5"><div class="spinner-border text-primary" role="status"></div></div>';
-
-  fetch(`/shop/ajax?category=${selectedCategory}&search=${encodeURIComponent(search)}&sort=${sort}&page=${currentPage}`)
-    .then(res => res.text())
-    .then(html => {
-      container.innerHTML = html || '<div class="text-center text-muted w-100 py-5">No products found.</div>';
+   
+  
+      const pills = document.querySelectorAll('.category-pill');
+      const productContainer = document.querySelector('.product-container');
+      const searchInput = document.querySelector('input[name="search"]');
+      const sortSelect = document.querySelector('select[name="sort"]');
+      let currentPage = 1; // Global variable to track current page
+  
+      let selectedCategory = "<%= query.category || '' %>"; // Initialize selectedCategory from the template.
+  
+      function fetchFilteredProducts() {
+        const search = searchInput.value;
+        const sort = sortSelect.value;
+  
+        const container = document.getElementById('product-listing');
+        container.innerHTML = '<div class="text-center w-100 py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+  
+        fetch(`/shop/ajax?category=${selectedCategory}&search=${encodeURIComponent(search)}&sort=${sort}&page=${currentPage}`)
+          .then(res => res.text())
+          .then(html => {
+            container.innerHTML = html || '<div class="text-center text-muted w-100 py-5">No products found.</div>';
+            attachPaginationEvents();
+          })
+          .catch(err => {
+            console.error('Error loading products:', err);
+            container.innerHTML = '<div class="text-danger w-100 text-center py-5">Failed to load products.</div>';
+          });
+      }
+  
+      // Reattach pagination links after content loads
+      function attachPaginationEvents() {
+        document.querySelectorAll('.pagination-link').forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentPage = parseInt(link.getAttribute('data-page'));
+            fetchFilteredProducts();
+          });
+        });
+      }
+  
+      // Category pill click event
+      pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          selectedCategory = pill.getAttribute('data-id'); // Update selectedCategory
+          pills.forEach(p => p.classList.remove('active')); // Remove active class from all pills
+          pill.classList.add('active'); // Add active class to the clicked pill
+          fetchFilteredProducts(); // Fetch filtered products after category change
+        });
+      });
+  
+      // Handle form submit for search
+      const searchForm = document.getElementById('filterForm');
+      searchForm.addEventListener('submit', e => {
+        e.preventDefault();
+        currentPage = 1; // Reset page to 1 on search
+        fetchFilteredProducts();
+      });
+  
+      // Handle sorting change
+      sortSelect.addEventListener('change', () => {
+        currentPage = 1; // Reset page to 1 on sort change
+        fetchFilteredProducts();
+      });
+  
       attachPaginationEvents();
-    })
-    .catch(err => {
-      console.error('Error loading products:', err);
-      container.innerHTML = '<div class="text-danger w-100 text-center py-5">Failed to load products.</div>';
     });
-}
-
-// Reattach pagination links after content loads
-function attachPaginationEvents() {
-  document.querySelectorAll('.pagination-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      currentPage = parseInt(link.getAttribute('data-page'));
-      fetchFilteredProducts();
-    });
+  </script>
+   <% if (success && success.length > 0) { %>
+    <script>
+  Swal.fire({
+    icon: 'success',
+    text: '<%= success[0] %>',
   });
-}
-
-
-// Category pill click event
-pills.forEach(pill => {
-  pill.addEventListener('click', () => {
-    selectedCategory = pill.getAttribute('data-id'); // Update selectedCategory
-    pills.forEach(p => p.classList.remove('active')); // Remove active class from all pills
-    pill.classList.add('active'); // Add active class to the clicked pill
-    fetchFilteredProducts(); // Fetch filtered products after category change
-  });
-});
-
-// Handle form submit for search
-const searchForm = document.getElementById('filterForm');
-searchForm.addEventListener('submit', e => {
-  e.preventDefault();
-  currentPage = 1; // Reset page to 1 on search
-  fetchFilteredProducts();
-});
-
-// Handle sorting change
-sortSelect.addEventListener('change', () => {
-  currentPage = 1; // Reset page to 1 on sort change
-  fetchFilteredProducts();
-});
-
-attachPaginationEvents();
-
-});
-
-
-
-
-
-
 </script>
+<% } %>

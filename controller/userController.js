@@ -2,6 +2,7 @@ const User = require('../models/userSchema');
 const bcrypt = require('bcrypt');
 const message = require('../config/mailer');
 const mongoose = require('mongoose');
+const Booking = require('../models/bookingModel')
 
 const Product = require('../models/itemModel');
 const Category = require('../models/categoryModels');
@@ -67,10 +68,16 @@ const loadProductDetail = async(req,res)=>{
     const userData = await User.findById(userId);
     const id = req.params.id;
     const productDetail = await Product.findById(id).populate('category').populate('subcategory');
-     console.log(productDetail)
+    const booking= await Booking.findOne({ user: userId })
+    .sort({ createdAt: -1 }) // Sort by most recent
+    .select("guestCount"); 
+    const qty = booking.guestCount     
+    console.log('The quantity entered by the user while selecting the booking is:',qty)
+      console.log(productDetail)
     res.render('user/singleProduct',{
       user:userData,
-      product:productDetail
+      product:productDetail,
+      qty
     })
 
   }
@@ -203,64 +210,99 @@ const loadOtp = async (req, res) => {
   };
 
 
-  //POST OTP
+  // //POST OTP
+  // const verifyOtp = async (req, res) => {
+  //   try {
+    
+  //     const userData = req.session.user_id;
+      
+  //     const fullOTP = req.body.otp;
+  //      console.log(userData);
+  //      console.log(fullOTP);
+    
+  //     if (!req.session.user_id) {
+        
+  //       if (fullOTP == req.session.otp) {
+
+  //           const hashedPassword = await bcrypt.hash(userData.password,10);
+            
+  //           const user = new User({
+  //               firstname : userData.firstname,
+  //           lastname: userData.lastname,
+  //           email: userData.email,
+  //           phoneno: userData.phoneno,
+  //           password: hashedPassword,
+  //           isAdmin: 0,
+  //           isBlocked: 0,
+  //           googleId:undefined
+  //         });
+  
+  //         const userDataSave = await user.save();
+  //         if (userDataSave && userDataSave.isAdmin === 0) {
+        
+  //           req.session.user_id = userDataSave._id;
+  
+  //           res.redirect('/');
+  //         } else {
+  //           res.render("user/otp", {layout:'layouts/mainLayout',title:'otp' , message: "Registration Failed" });
+          
+  //         }
+  //       } else {
+  //         res.render("user/otp", {layout:'layouts/mainLayout',title:'otp' ,message: "invailid otp" });
+          
+  //       }
+  //     } else {
+  //       if (fullOTP.trim() == req.session.otp.trim()) {
+  //         res.redirect("/resetPassword");
+  //       } else {
+  //         res.render("user/otp", { layout:'layouts/mainLayout',title:'otp',message: "Incorrect OTP. Please try again." });
+  //       }
+  //     }
+  //   } 
+  //   catch (error) {
+  //     console.log(error.message);
+  //   }
+  // };
+  
+  
+
+  
   const verifyOtp = async (req, res) => {
     try {
-    
-      const userData = req.session.user_id;
-      
       const fullOTP = req.body.otp;
-       console.log(userData);
-       console.log(fullOTP);
-    
-      if (!req.session.user_id) {
-        
-        if (fullOTP == req.session.otp) {
-
-            const hashedPassword = await bcrypt.hash(userData.password,10);
-            
-            const user = new User({
-                firstname : userData.firstname,
-            lastname: userData.lastname,
-            email: userData.email,
-            phoneno: userData.phoneno,
-            password: hashedPassword,
-            isAdmin: 0,
-            isBlocked: 0,
-            googleId:undefined
-          });
   
-          const userDataSave = await user.save();
-          if (userDataSave && userDataSave.isAdmin === 0) {
-        
-            req.session.user_id = userDataSave._id;
+      // FLOW 1: REGISTRATION (no user_id set)
+      if (!req.session.user_id && req.session.tempUser) {
+        const userData = req.session.tempUser;
   
-            res.redirect('/');
-          } else {
-            res.render("user/otp", {layout:'layouts/mainLayout',title:'otp' , message: "Registration Failed" });
-          
-          }
+        if (fullOTP === req.session.otp) {
+          const hashedPassword = await bcrypt.hash(userData.password, 10);
+          const user = new User({ ...userData, password: hashedPassword });
+          const savedUser = await user.save();
+          req.session.user_id = savedUser._id;
+          res.redirect('/');
         } else {
-          res.render("user/otp", {layout:'layouts/mainLayout',title:'otp' ,message: "invailid otp" });
-          
+          return res.render("user/otp", { layout: 'layouts/mainLayout', message: "Invalid OTP" });
         }
-      } else {
-        if (fullOTP.trim() == req.session.otp.trim()) {
+  
+      // FLOW 2: FORGOT PASSWORD
+      } else if (req.session.resetUser) {
+        if (fullOTP === req.session.otp) {
           res.redirect("/resetPassword");
         } else {
-          res.render("user/otp", { layout:'layouts/mainLayout',title:'otp',message: "Incorrect OTP. Please try again." });
+          res.render("user/otp", { layout: 'layouts/mainLayout', message: "Incorrect OTP. Try again." });
         }
+      } else {
+        res.redirect("/login"); // fallback
       }
-    } 
-    catch (error) {
-      console.log(error.message);
+    } catch (err) {
+      console.log(err.message);
     }
   };
   
-  
 
-  
-  
+
+
   const resendOTP = async (req, res) => {
     try {
       // Retrieve user data from session storage
@@ -313,70 +355,128 @@ const userlogout = async (req, res) => {
   }
  }
 
- const forgotPasswordOTP = async (req, res) => {
-  try {
-    const emaildata = req.body.email;
-    console.log("Email received:", emaildata);
+//  const forgotPasswordOTP = async (req, res) => {
+//   try {
+//     const emaildata = req.body.email;
+//     console.log("Email received:", emaildata);
 
-    const userExist = await User.findOne({ email: emaildata });
+//     const userExist = await User.findOne({ email: emaildata });
  
-    if (userExist) {
-      req.session.userData = userExist;
-      req.session.user_id = userExist._id;
-      console.log(userExist._id);
+//     if (userExist) {
+//       req.session.userData = userExist;
+//       req.session.user_id = userExist._id;
+//       console.log(userExist._id);
     
-      // Assuming you have a message-sending utility
-      const data = await message.sendVerifyMail(req, userExist.email);
+//       // Assuming you have a message-sending utility
+//       const data = await message.sendVerifyMail(req, userExist.email);
      
     
-      res.render("user/otp",{layout:'layouts/mainLayout',title:'otp' ,message:null});
-    }
-     else {
-      res.render("user/forget", {
-        layout:'layouts/mainLayout',title:'otp' ,
-        error: "Attempt Failed",
-        User: null,
+//       res.render("user/otp",{layout:'layouts/mainLayout',title:'otp' ,message:null});
+//     }
+//      else {
+//       res.render("user/forget", {
+//         layout:'layouts/mainLayout',title:'otp' ,
+//         error: "Attempt Failed",
+//         User: null,
         
+//       });
+//     }
+//   } catch (error) {
+//     console.log("Error:", error.message);
+//   }
+// };
+
+const forgotPasswordOTP = async (req, res) => {
+  try {
+    const email = req.body.email;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.render("user/forgotPassword", {
+        layout: 'layouts/mainLayout',
+        message: "Email not found",
       });
     }
-  } catch (error) {
-    console.log("Error:", error.message);
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    req.session.otp = otp;
+    req.session.resetUser = user._id; // Store only the _id for security
+
+    // Send OTP via email here
+    console.log("OTP for reset:", otp);
+
+    res.redirect("/otp"); // Reuse same OTP page
+  } catch (err) {
+    console.log(err.message);
   }
 };
 
 
+// const loadResetPassword = async(req,res) => {
+//   try{
+//     if(req.session.user_id){
+//       const userId = req.session.user_id
+//       const user = await User.findById(userId)
+//       res.render("user/resetPassword",{User: user})
+//     }else {
+//       res.redirect("user/forget")
+//     }
+//   }catch(error){
+//     console.log(error.message);
+//   }
+// }
+const loadResetPassword = async (req, res) => {
+  if (!req.session.resetUser) return res.redirect("/login");
+  res.render("user/resetPassword", { layout: 'layouts/mainLayout',title:'forget password' });
+};
 
-const loadResetPassword = async(req,res) => {
-  try{
-    if(req.session.user_id){
-      const userId = req.session.user_id
-      const user = await User.findById(userId)
-      res.render("user/resetPassword",{User: user})
-    }else {
-      res.redirect("user/forget")
-    }
-  }catch(error){
-    console.log(error.message);
-  }
-}
 
-const resetPassword = async (req, res) => {
+
+// const resetPassword = async (req, res) => {
+//   try {
+//     const user_id = req.session.user_id;
+//     const password = req.body.password;
+//     const secure_password = await securePassword(password);
+
+//     const updatedData = await User.findOneAndUpdate(
+//       { _id: user_id },
+//       { $set: { password: secure_password } },
+//       { new: true } // to return the updated document
+//     );
+
+//     if (updatedData) {
+//       res.redirect("/login");
+//     }
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// };
+
+
+const resetPassword  = async (req, res) => {
   try {
-    const user_id = req.session.user_id;
-    const password = req.body.password;
-    const secure_password = await securePassword(password);
+    const { password, confirmPassword } = req.body;
 
-    const updatedData = await User.findOneAndUpdate(
-      { _id: user_id },
-      { $set: { password: secure_password } },
-      { new: true } // to return the updated document
-    );
-
-    if (updatedData) {
-      res.redirect("/login");
+    if (password !== confirmPassword) {
+      return res.render("user/resetPassword", {
+        layout: 'layouts/mainLayout',
+        message: "Passwords do not match",
+        title:'forget password'
+      });
     }
-  } catch (error) {
-    console.log(error.message);
+
+    const hashed = await bcrypt.hash(password, 10);
+    await User.findByIdAndUpdate(req.session.resetUser, {
+      password: hashed,
+    });
+
+    // Cleanup session
+    req.session.resetUser = null;
+    req.session.otp = null;
+
+    res.redirect("/login");
+  } catch (err) {
+    console.log(err.message);
   }
 };
 
@@ -555,7 +655,7 @@ console.log(productData)
       if(userData)
       {
         console.log('test')
-        res.render('user/userProfile',{user:userData});
+        res.render('user/userProfile',{user:userData,message:null});
       }
       else{
         res.redirect('/login')

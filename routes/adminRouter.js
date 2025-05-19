@@ -7,6 +7,9 @@ const categoryController =  require('../controller/categoryController');
 const subcategoryController = require('../controller/subcategoryController')
 const productController = require('../controller/productController');
 const multer= require('../middlewares/multer');
+const adminOrderController = require('../controller/adminOrderController')
+
+
 //Setting layout for adminside
 router.use(expressEjsLayouts);
 router.set('layout','./layouts/admin')
@@ -61,6 +64,14 @@ router.get('/deleteProduct',adminAuth.islogin,productController.deleteProduct)
 router.get('/editProduct',adminAuth.islogin,productController.loadeditProduct);
 router.post('/editProduct',multer.uploadProduct.array('image'), productController.storeEditProduct)
 router.get("/removeImage",adminAuth.islogin,productController.removeImage)
+
+
+//ALL ORDERS
+router.get('/allOrder',adminAuth.islogin,adminOrderController.listUserOrders)
+router.get('/orderDetails',adminAuth.islogin,adminOrderController.listOrderDetails)
+
+
+
 
       //blocking item
 router.get('/blockProduct',adminAuth.islogin,productController.blockProduct) 

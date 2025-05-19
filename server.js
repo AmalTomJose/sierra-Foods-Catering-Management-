@@ -12,6 +12,8 @@ const userRouter = require('./routes/userRouter');
 const adminRouter = require('./routes/adminRouter');
 const passport = require('passport');
 const authRoute = require('./routes/authRoute');
+const flash = require('connect-flash');
+const userState = require('./middlewares/userState')
 
 db();
 
@@ -23,6 +25,17 @@ app.use(session({
 }));
 
 
+app.use(flash());
+
+// Make flash messages available in all views
+app.use((req, res, next) => {
+  res.locals.success = req.flash('success');
+  res.locals.error = req.flash('error');
+  next();
+});
+
+
+app.use(userState);
 
 //PASSPORT MIDDLEWARE
 app.use(passport.initialize());

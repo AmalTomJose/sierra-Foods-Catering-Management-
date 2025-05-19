@@ -42,9 +42,13 @@ const bookingSchema = new Schema({
     },
     status:{
         type:String,
-        enum:['Pending','Confirmed','Cancelled'],
-        default:'Pending'
+        enum:['active','cancelled','completed'],
+        default:'active'
     },
+    cancelReason: {
+        type: String,
+        default: ''
+      },
     createdAt:{
         type:Date,
         default:Date.now

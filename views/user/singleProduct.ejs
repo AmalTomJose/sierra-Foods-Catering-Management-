@@ -115,7 +115,7 @@
           <div class="row g-2 align-items-center">
             <!-- Quantity Input -->
             <div class="col-auto">
-              <input type="number" name="qty" id="qty" class="form-control" value="200" min="50" max="200" style="width: 120px;">
+              <input type="number" name="qty" id="qty" class="form-control" value="<%=qty%>" min="50" max="<%=qty%>" style="width: 120px;">
             </div>
         
             <!-- Add to Cart Button -->
@@ -125,8 +125,7 @@
               </button>
             </div>
           </div>
-        
-          <p id="insufficientStockError" class="text-danger mt-2"></p>
+      
         </form>
         
         <!-- Add to Wishlist Button -->
@@ -212,30 +211,22 @@
 
     const qty = document.getElementById('qty').value;
     const productId = document.getElementById('productData_id').value;
-    const errorEl = document.getElementById('insufficientStockError');
     const addToCartBtn = document.getElementById('addToCartBtn');
 
     fetch('/cart', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ qty, productData_id: productId }),
+      body: JSON.stringify({ productId,qty })
     })
-    .then(res => res.json())
+    .then(response => response.json())
     .then(data => {
-      if (data.success) {
-        Swal.fire({
-          title: "Success!",
-          text: "Item added to cart.",
-          icon: "success"
-        }).then(() => {
-          window.location.href = '/cart';
-        });
-      } else {
-        errorEl.textContent = data.message || 'Failed to add to cart.';
-        addToCartBtn.disabled = true;
-      }
+      Swal.fire({
+        title: data.success ? "Success!" : "Error!",
+        text: data.success ? data.message : data.error || "Failed to add to wishlist.",
+        icon: data.success ? "success" : "error"
+      });
     })
     .catch(err => {
       console.error('Cart Error:', err);

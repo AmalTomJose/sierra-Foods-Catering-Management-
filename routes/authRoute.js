@@ -13,6 +13,8 @@ router.get('/google',passport.authenticate('google',{
 
 router.get('/google/callback',passport.authenticate('google',{failureRedirect:'/login'}),(req,res)=>{
     console.log(req.session.passport.user)
+    req.session.user_id = req.user._id;
+
     res.redirect('/')});
 
 //logout
