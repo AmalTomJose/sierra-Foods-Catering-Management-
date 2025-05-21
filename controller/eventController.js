@@ -17,7 +17,7 @@ const loadEventForm = async (req, res) => {
         return res.redirect('/');
       }
   
-      res.render('user/eventBooking', { user: userData });
+      res.render('user/booking/eventBooking', { user: userData });
     } catch (error) {
       console.log(error.message);
       res.redirect('/'); // Optional: redirect on error

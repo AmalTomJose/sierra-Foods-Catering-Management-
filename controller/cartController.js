@@ -13,7 +13,7 @@ const loadCart = async (req, res) => {
         const userCart = await Cart.findOne({user }).populate("items.product");
         
         if (!userCart || userCart.items.length === 0) {
-            return res.render("user/cart", {
+            return res.render("user/product/cart", {
                 user,
                 cart: [],
                 productTotal: [],
@@ -39,7 +39,7 @@ const loadCart = async (req, res) => {
         const shipping = 0; // Or any logic you want
         const subtotalWithShipping = subtotal + shipping;
         
-        res.render("user/cart", { user, cart, productTotal, subtotalWithShipping,qty });
+        res.render("user/product/cart", { user, cart, productTotal, subtotalWithShipping,qty });
         
 
     } catch (error) {

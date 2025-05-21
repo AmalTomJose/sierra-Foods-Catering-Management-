@@ -5,7 +5,7 @@ const Category = require('../models/categoryModels');
 const loadCategory = async (req,res)=>{
     try{
         const categorydata = await Category.find({});
-        res.render('admin/category',{
+        res.render('admin/category/category',{
             categorydata
         })
      
@@ -59,7 +59,7 @@ const unlistCategory = async(req,res)=>{
     try{
         const id = req.query.id;
         const categoryData = await Category.findById(id)
-   res.render('admin/editCategory',{category:categoryData})
+   res.render('admin/category/editCategory',{category:categoryData})
       
   
   
@@ -84,7 +84,7 @@ const unlistCategory = async(req,res)=>{
         });
 
         if(existingCategory){
-          return res.render("admin/editCategory",{
+          return res.render("admin/category/editCategory",{
               error: "Category name already exists",
               category: existingCategory
           })
@@ -117,7 +117,7 @@ const unlistCategory = async(req,res)=>{
 
   const loadaddCategory = async (req,res)=>{
     try{
-      res.render('admin/addCategory')
+      res.render('admin/category/addCategory')
 
 
     }
@@ -134,7 +134,7 @@ const unlistCategory = async(req,res)=>{
         cat_name: { $regex: new RegExp(`^${category_name}$`, 'i') }, // Case-insensitive match
       })
       if(existingCategory){
-        return res.render("admin/addCategory",{
+        return res.render("admin/category/addCategory",{
           error: "Category with the name already exists"
               })
       }

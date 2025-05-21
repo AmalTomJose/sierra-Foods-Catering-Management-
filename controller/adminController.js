@@ -11,7 +11,7 @@ const   adminLogin = async (req, res) => {
   try {
     res.set("cache-Control", "no-store");
   
-    res.render("admin/login",{layout:'layouts/mainLayout',title:'admin login',msg:null});
+    res.render("admin/auth/login",{layout:'layouts/mainLayout',title:'admin login',msg:null});
   }  catch (error) {
      console.log(error.message);
   }
@@ -37,13 +37,13 @@ const verifyLogin = async (req, res) => {
           res.redirect("/admin/home");
           
         } else { 
-          res.render("admin/login", {layout:'layouts/mainLayout',title:'admin login', msg: "Admin not Found" });
+          res.render("admin/auth/login", {layout:'layouts/mainLayout',title:'admin login', msg: "Admin not Found" });
         }
       } else {
-        res.render("admin/login", {layout:'layouts/mainLayout',title:'admin login', msg: "Incorrect Credentials" });
+        res.render("admin/auth/login", {layout:'layouts/mainLayout',title:'admin login', msg: "Incorrect Credentials" });
       }
     } else {
-      res.render("admin/login", { layout:'layouts/mainLayout',title:'admin login',msg: "Admin not found" });
+      res.render("admin/auth/login", { layout:'layouts/mainLayout',title:'admin login',msg: "Admin not found" });
     }
   } catch (error) {
     console.log(error.message);
@@ -66,7 +66,7 @@ const loadUserpage=async (req,res)=>{
     const userData = await User.find({isAdmin:0})
     console.log(adminData);
     console.log(userData);
-    res.render('admin/userDashboard',{users:userData,admin:adminData})
+    res.render('admin/dashboard/userDashboard',{users:userData,admin:adminData})
   }catch(error){
     console.error(error.message);
     res.status(500).send("Internal Server Error: " + error.message);
@@ -76,7 +76,7 @@ const loadUserpage=async (req,res)=>{
 const loadHome= async(req,res)=>{
   try{
 
-    res.render('admin/dashboard')
+    res.render('admin/dashboard/dashboard')
 
   }
   catch(error)

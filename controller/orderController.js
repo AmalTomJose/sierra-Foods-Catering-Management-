@@ -47,7 +47,7 @@ const loadCheckout = async(req,res)=>{
             const addressData = await Booking.findOne({user:userId,status:'active'})
 
             console.log(addressData)
-            res.render('user/checkout',{user:userId,userData,addressData,cart:cartItems,productTotal,subtotalWithShipping,retryTotal:0,orderId:''})
+            res.render('user/order/checkout',{user:userId,userData,addressData,cart:cartItems,productTotal,subtotalWithShipping,retryTotal:0,orderId:''})
         }
         
 
@@ -208,7 +208,7 @@ const loadOrderDetails = async (req, res) => {
         },
       ]);
   
-      res.render("user/order", {
+      res.render("user/order/order", {
         user: userId,
         userData,
         orders,
@@ -245,7 +245,7 @@ const loadOrderHistory = async (req, res) => {
         // Extract order ID from the order object without re-declaring the variable
         const extractedOrderId = order._id;
 
-        res.render("user/orderDetails", {user:userId, userData, order, orderId: extractedOrderId }); // Pass coupon information to the template
+        res.render("user/order/orderDetails", {user:userId, userData, order, orderId: extractedOrderId }); // Pass coupon information to the template
     } catch (error) {
         console.log(error.message);
     }
@@ -263,7 +263,7 @@ const updateCheckout = async (req, res) => {
       return res.redirect('/');
     }
 
-    res.render('user/updateEventDetails', {user, booking });
+    res.render('user/booking/updateEventDetails', {user, booking });
   } catch (err) {
     console.error('Error loading update page:', err);
     res.status(500).send('Internal Server Error');

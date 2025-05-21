@@ -79,7 +79,7 @@
   
       const orders = await Order.aggregate(pipeline);
   console.log(orders)
-      res.render("admin/allOrder", {
+      res.render("admin/order/allOrder", {
         order: orders,
         currentPage: page,
         totalPages
@@ -115,7 +115,7 @@
             return res.status(404).send('Order not found.');
         }
         // Render the template with async: true option
-        res.render("admin/orderDetails", { order });
+        res.render("admin/order/orderDetails", { order });
     } catch (error) {
         console.log(error.message);
         res.status(500).send('Internal Server Error');

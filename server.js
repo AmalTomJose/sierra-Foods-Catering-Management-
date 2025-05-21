@@ -78,7 +78,7 @@ app.use('/admin', adminRouter);
 app.use('/auth',authRoute)
 
 app.use((req, res, next) => {
-    res.status(404).render("user/pagenotfound", { userData: null ,layout:'layouts/mainLayout',title:"Page Not Found"});
+    res.status(404).render("user/general/pagenotfound", { userData: null ,layout:'layouts/mainLayout',title:"Page Not Found"});
 });
 
 

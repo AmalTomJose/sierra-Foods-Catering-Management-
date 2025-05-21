@@ -17,7 +17,7 @@ const { accessSync } = require('fs');
 
          const userWishlistItems = userWishlist ?userWishlist :[] ;
 
-         res.render('user/wishlist',{Wishlist:userWishlistItems,user})
+         res.render('user/product/wishlist',{Wishlist:userWishlistItems,user})
 
 
     }

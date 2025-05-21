@@ -11,7 +11,7 @@ const loadAddress = async(req,res)=>{
 console.log(userData)
         if(userData){
             const addressData = await Address.find({user:userId});
-            res.render('user/userAddress',{user:userData,addressData});
+            res.render('user/profile/userAddress',{user:userData,addressData});
         }
         else{
             res.redirect('/login');
@@ -28,7 +28,7 @@ const loadAddAddress = async(req,res)=>{
         const userId = req.session.user_id;
         const userData = await User.findById(userId);
         if(userData){
-            res.render('user/addAddress',{user:userData});
+            res.render('user/profile/addAddress',{user:userData});
 
         }
         else{
@@ -74,7 +74,7 @@ const loadEditAddress = async(req,res)=>{
         const address = await Address.findById(id);;
         
 
-        res.render('user/editAddress',{user:userData,Address:address})
+        res.render('user/profile/editAddress',{user:userData,Address:address})
 
     }
     catch(error){
@@ -138,7 +138,7 @@ const changePasswordFromProfile = async (req, res) => {
   
       // Validate fields
       if (!currentPassword || !newPassword || !confirmPassword) {
-        return res.render("user/userProfile", {
+        return res.render("user/profile/userProfile", {
           user,
           message: "All fields are required",
           messageType: "danger",
@@ -146,7 +146,7 @@ const changePasswordFromProfile = async (req, res) => {
       }
   
       if (newPassword.length < 8) {
-        return res.render("user/userProfile", {
+        return res.render("user/profile/userProfile", {
           user,
           message: "Password must be at least 8 characters",
           messageType: "danger",
@@ -154,7 +154,7 @@ const changePasswordFromProfile = async (req, res) => {
       }
   
       if (newPassword !== confirmPassword) {
-        return res.render("user/userProfile", {
+        return res.render("user/profile/userProfile", {
           user,
           message: "Passwords do not match",
           messageType: "danger",
@@ -162,7 +162,7 @@ const changePasswordFromProfile = async (req, res) => {
       }
   
       if (!user) {
-        return res.render("user/userProfile", {
+        return res.render("user/profile/userProfile", {
           message: "User not found",
           messageType: "danger",
         });
@@ -170,7 +170,7 @@ const changePasswordFromProfile = async (req, res) => {
   
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
-        return res.render("user/userProfile", {
+        return res.render("user/profile/userProfile", {
           user,
           message: "Current password is incorrect",
           messageType: "danger",
@@ -181,7 +181,7 @@ const changePasswordFromProfile = async (req, res) => {
       user.password = hashed;
       await user.save();
   
-      return res.render("user/userProfile", {
+      return res.render("user/profile/userProfile", {
         user,
         message: "Password updated successfully",
         messageType: "success",
@@ -189,7 +189,7 @@ const changePasswordFromProfile = async (req, res) => {
   
     } catch (err) {
       console.log("Password change error:", err.message);
-      return res.render("user/userProfile", {
+      return res.render("user/profile/userProfile", {
         message: "Something went wrong",
         messageType: "danger",
       });

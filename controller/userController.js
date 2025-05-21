@@ -21,7 +21,7 @@ const securePassword = async (password) => {
 
 const pageNotFound = async(req,res)=>{
     try{
-       res.render('user/pagenotfound')
+       res.render('user/general/pagenotfound')
 
     }
     catch(error)
@@ -43,7 +43,7 @@ const loadHomepage = async(req,res)=>{
     const userData = await User.findById(userId);
    
    
-      res.render('user/home',{
+      res.render('user/general/home',{
         products:productData,
         user:userData,
         categories
@@ -74,7 +74,7 @@ const loadProductDetail = async(req,res)=>{
     const qty = booking.guestCount     
     console.log('The quantity entered by the user while selecting the booking is:',qty)
       console.log(productDetail)
-    res.render('user/singleProduct',{
+    res.render('user/product/singleProduct',{
       user:userData,
       product:productDetail,
       qty
@@ -92,7 +92,7 @@ const loadProductDetail = async(req,res)=>{
 //login page (GET)
 const loadLogin = async(req,res)=>{
     try{
-        res.render('user/login',{msg:null,layout:'./layouts/mainLayout',title:'login'})
+        res.render('user/auth/login',{msg:null,layout:'./layouts/mainLayout',title:'login'})
 
     } 
     catch(error)
@@ -111,21 +111,21 @@ const loginPage = async(req,res)=>{
     const existingUser = await User.findOne({ email });
   
     if (!existingUser) {
-      return res.render("user/login", { msg: "User not found." ,layout:'./layouts/mainLayout',title:'login'});
+      return res.render("user/auth/login", { msg: "User not found." ,layout:'./layouts/mainLayout',title:'login'});
     }
   
     if (existingUser.isBlocked === 1) {
-      return res.render("user/login", { msg: "Your account is blocked.",layout:'./layouts/mainLayout',title:'login' });
+      return res.render("user/auth/login", { msg: "Your account is blocked.",layout:'./layouts/mainLayout',title:'login' });
     }
   
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
   
     if (!passwordMatch) {
-      return res.render("user/login", { msg: "Password is incorrect." ,layout:'./layouts/mainLayout',title:'login'});
+      return res.render("user/auth/login", { msg: "Password is incorrect." ,layout:'./layouts/mainLayout',title:'login'});
     }
   
     if (existingUser.isAdmin === 1) {
-      return res.render("user/login", { msg: "User not found." ,layout:'./layouts/mainLayout',title:'login' });
+      return res.render("user/auth/login", { msg: "User not found." ,layout:'./layouts/mainLayout',title:'login' });
     }
   
     // Login success
@@ -146,7 +146,7 @@ const loginPage = async(req,res)=>{
 const loadSignup = async(req,res)=>{
     try
     {
-        res.render('user/signup',{title:'signup Page',msg:null,layout:'./layouts/mainLayout'})
+        res.render('user/auth/signup',{title:'signup Page',msg:null,layout:'./layouts/mainLayout'})
 
     }
     catch(error)
@@ -164,7 +164,7 @@ const signupPage = async (req,res)=>{
          
         if(existingUser)
         {
-         return res.render('user/signup',{title:'signup Page',msg:'User Already Exist',layout:'layouts/mainLayout'})
+         return res.render('user/auth/signup',{title:'signup Page',msg:'User Already Exist',layout:'layouts/mainLayout'})
         }
         else{
             req.session.userData = req.body;
@@ -203,7 +203,7 @@ const signupPage = async (req,res)=>{
 // GET OTP PAGE
 const loadOtp = async (req, res) => {
     try {
-      res.render("user/otp",{layout:'layouts/mainLayout',title:'otp',message:null});
+      res.render("user/auth/otp",{layout:'layouts/mainLayout',title:'otp',message:null});
     } catch (error) {
       console.log(error.message);
     }
@@ -282,7 +282,7 @@ const loadOtp = async (req, res) => {
           req.session.user_id = savedUser._id;
           res.redirect('/');
         } else {
-          return res.render("user/otp", { layout: 'layouts/mainLayout', message: "Invalid OTP" });
+          return res.render("user/auth/otp", { layout: 'layouts/mainLayout', message: "Invalid OTP" });
         }
   
       // FLOW 2: FORGOT PASSWORD
@@ -290,7 +290,7 @@ const loadOtp = async (req, res) => {
         if (fullOTP === req.session.otp) {
           res.redirect("/resetPassword");
         } else {
-          res.render("user/otp", { layout: 'layouts/mainLayout', message: "Incorrect OTP. Try again." });
+          res.render("user/auth/otp", { layout: 'layouts/mainLayout', message: "Incorrect OTP. Try again." });
         }
       } else {
         res.redirect("/login"); // fallback
@@ -317,10 +317,10 @@ const loadOtp = async (req, res) => {
   
       // Generate and send new OTP using Twilio
   
-      res.render("user/otp", { layout:'layouts/mainLayout',title:'otp',message: "OTP resent successfully" });
+      res.render("user/auth/otp", { layout:'layouts/mainLayout',title:'otp',message: "OTP resent successfully" });
     } catch (error) {
       console.error("Error: ", error);
-      res.render("user/otp", { layout:'layouts/mainLayout',title:'otp',message: "Failed to send otp" });
+      res.render("user/auth/otp", { layout:'layouts/mainLayout',title:'otp',message: "Failed to send otp" });
     }
   };
   
@@ -346,7 +346,7 @@ const userlogout = async (req, res) => {
 
  const getForgotPassword = async(req,res)=>{
   try{
-     return res.render('user/forget',{layout:'layouts/mainLayout',title:'forgetpassword'} )
+     return res.render('user/auth/forget',{layout:'layouts/mainLayout',title:'forgetpassword'} )
 
   }
   catch(error)
@@ -392,7 +392,7 @@ const forgotPasswordOTP = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.render("user/forgotPassword", {
+      return res.render("user/auth/forgotPassword", {
         layout: 'layouts/mainLayout',
         message: "Email not found",
       });
@@ -427,7 +427,7 @@ const forgotPasswordOTP = async (req, res) => {
 // }
 const loadResetPassword = async (req, res) => {
   if (!req.session.resetUser) return res.redirect("/login");
-  res.render("user/resetPassword", { layout: 'layouts/mainLayout',title:'forget password' });
+  res.render("user/auth/resetPassword", { layout: 'layouts/mainLayout',title:'forget password' });
 };
 
 
@@ -458,7 +458,7 @@ const resetPassword  = async (req, res) => {
     const { password, confirmPassword } = req.body;
 
     if (password !== confirmPassword) {
-      return res.render("user/resetPassword", {
+      return res.render("user/auth/resetPassword", {
         layout: 'layouts/mainLayout',
         message: "Passwords do not match",
         title:'forget password'
@@ -532,7 +532,7 @@ const loadShop = async (req, res) => {
 
     const categories = await Category.find({ cat_status: true });
 
-    res.render('user/shop', {
+    res.render('user/product/shop', {
       products: productData,
       user:userData,
       categories,
@@ -655,7 +655,7 @@ console.log(productData)
       if(userData)
       {
         console.log('test')
-        res.render('user/userProfile',{user:userData,message:null});
+        res.render('user/profile/userProfile',{user:userData,message:null});
       }
       else{
         res.redirect('/login')

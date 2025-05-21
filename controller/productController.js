@@ -13,7 +13,7 @@ const loadProducts  = async(req,res)=>{
     const products = await Product.find();
     const categories = await Category.find()
    
-    res.render("admin/products", { products})
+    res.render("admin/product/products", { products})
   }
   catch(error)
   {
@@ -84,7 +84,7 @@ const loadeditProduct = async(req,res)=>{
     const categories = await Category.find();
     const subcategories = await SubCategory.find();
     if (product) {
-      res.render("admin/editProduct", { categories,subcategories, product });
+      res.render("admin/product/editProduct", { categories,subcategories, product });
   } else {
       res.redirect("/admin/products");
   }
@@ -103,7 +103,7 @@ const loadAddproduct = async (req,res)=>{
       let categories = await Category.find();
       const productImages = Product.images || [];
 
-        res.render('admin/addproduct',{categories,productImages})
+        res.render('admin/product/addproduct',{categories,productImages})
 
     }
     catch(error){

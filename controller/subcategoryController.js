@@ -12,7 +12,7 @@ const loadSubcategory = async (req,res)=>{
         console.log(categoryid)
         const subcategoryData = await Subcategory.find({category:categoryid})
         console.log(subcategoryData);
-        res.render('admin/subcategory',{subcategories:subcategoryData,categoryid})
+        res.render('admin/subcategory/subcategory',{subcategories:subcategoryData,categoryid})
 
     }
     catch(error)
@@ -70,7 +70,7 @@ const  loadeditsubCategory = async(req,res)=>{
 
  const id = req.query.id;
         const subcategoryData = await Subcategory.findById(id)
-   res.render('admin/editSubcategory',{subcategory:subcategoryData})
+   res.render('admin/subcategory/editSubcategory',{subcategory:subcategoryData})
       
     }
     catch(error){
@@ -89,7 +89,7 @@ const editsubCategory = async(req,res)=>{
         });
 
         if(existingCategory){
-          return res.render("admin/editsubCategory",{
+          return res.render("admin/subcategory/editsubCategory",{
               error: "sub Category name already exists",
               category: existingCategory
           })
@@ -123,7 +123,7 @@ const editsubCategory = async(req,res)=>{
 const loadaddSubcategory = async(req,res)=>{
   try{
     let category_id = req.query.id;
-    res.render('admin/addsubcategory',{category:category_id});
+    res.render('admin/subcategory/addsubcategory',{category:category_id});
 
   }
   catch(error)
@@ -146,7 +146,7 @@ const addSubcategory = async(req,res)=>{
 
     });
     if(existingSubcategory){
-      return res.render('admin/addsubcategory',{
+      return res.render('admin/subcategory/addsubcategory',{
         error:'Subcategory with same name exists',
         category:category_id
       })
