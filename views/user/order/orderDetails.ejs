@@ -1,4 +1,4 @@
-<div class="container mt-5 pt-5" style="padding-top: 150px;">
+<div class="container mt-5 " style="padding-top: 100px;">
     <div class="text-end mb-3">
       <button onclick="printContent()" class="btn btn-secondary">
         <i class="material-icons">print</i> Download PDF
@@ -53,13 +53,13 @@
             <div class="col-md-4">
               <h6>Deliver To</h6>
               <p>
-                Event Date: <%= order.address.eventDate %><br>
-                Event Type: <%= order.address.eventType %><br>
-                Guest Count: <%= order.address.guestCount %><br>
-                Event Place: <%= order.address.eventplace %><br>
-                Event Time: <%= order.address.eventTime %><br>
-                District: <%= order.address.eventDistrict %><br>
-                Pincode: <%= order.address.eventPincode %>
+                Event Date: <%= order.booking.eventDate %><br>
+                Event Type: <%= order.booking.eventType %><br>
+                Guest Count: <%= order.booking.guestCount %><br>
+                Event Place: <%= order.booking.eventplace %><br>
+                Event Time: <%= order.booking.eventTime %><br>
+                District: <%= order.booking.eventDistrict %><br>
+                Pincode: <%= order.booking.eventPincode %>
               </p>
             </div>
           </div>

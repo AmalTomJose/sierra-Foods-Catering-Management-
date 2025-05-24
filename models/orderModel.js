@@ -18,11 +18,11 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
-  address: {
+  booking: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Booking',
   },
-  orderDate: {
+  orderDate: {   
     type: Date,
     default: Date.now,
   },
@@ -38,8 +38,10 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
+    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
     default: 'pending',
   },
+  
   totalAmount: {
     type: Number,
     required: true,
@@ -48,12 +50,15 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  adminApproval: {
-    type: Boolean,
-    default: false,
+  paymentStatus:{
+    type:String,
+    enum:['pending','paid'],
+    default:'pending'
+    
   },
-  reason: {
-    type: String,
+  createdAt:{
+      type:Date,
+      default:Date.now
   },
   items: [
     {
@@ -64,24 +69,10 @@ const orderSchema = new mongoose.Schema({
       },
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
-      status: {
-        type: String,
-        enum: ['Confirmed', 'Pending', 'Shipped', 'Delivered','Payment Pending'],
-        default: 'Confirmed',
-      },
+      
      
-      paymentStatus: {
-        type: String,
-        enum: ["success",  "failed","Pending"],
-        default: "pending",
     },
-    },
-  ],
-  returnStatus: {
-    type: String,
-    enum: ['Pending', 'Approved', 'Rejected'],
-    default: 'Pending',
-  },
+  ]
 });
 
 const Order = mongoose.model('Order', orderSchema);

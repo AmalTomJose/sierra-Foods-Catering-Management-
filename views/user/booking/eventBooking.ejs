@@ -205,7 +205,9 @@ console.log('The days are:', formattedDay);
         dateClick: function (info) {
           console.log('Hiaodsifoadiusbfvpoiuqbwaeopufbci w eioufcg qwibluerjgbkuywgilu')
           const selected = info.dateStr;
-          const selectedDateData = data.find(d => d.date === selected);
+          console.log(selected);
+          
+          const selectedDateData = data.find(d => d.date === selected)
           const bookedCount = selectedDateData ? selectedDateData.count : 0;
           console.log('The booked count for the date is:',bookedCount)
 

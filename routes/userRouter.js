@@ -93,11 +93,17 @@ router.put('/updateCart',islogin,cartController.updateCart)
 
 router.get('/checkout',islogin,orderController.loadCheckout)
 router.post('/checkout',islogin,orderController.checkOutPost)
-router.get('/updateCheckout',islogin,orderController.updateCheckout)
+router.get('/updateBooking',islogin,orderController.loadUpdateBooking )
+router.post('/updateBooking',islogin,orderController.updateBooking)
+
+
+router.post('/checkout/create-razorpay-order',islogin,orderController.createRazorpayOrder)
+router.post('/checkout/verify-razorpay',islogin,orderController.verifyPayment)
 
 
 //orderSuccess
-router.get('/orderSuccess',islogin,orderController.loadOrderDetails)
+router.get('/orders',islogin,orderController.loadOrderDetails)
+router.get('/orderSuccess',islogin,orderController.loadOrderSuccess)
 router.get('/orderDetails/:id',islogin,orderController.loadOrderHistory)
 
 

@@ -8,6 +8,7 @@ const subcategoryController = require('../controller/subcategoryController')
 const productController = require('../controller/productController');
 const multer= require('../middlewares/multer');
 const adminOrderController = require('../controller/adminOrderController')
+const adminEventControlller = require('../controller/adminEventController')
 
 
 //Setting layout for adminside
@@ -71,12 +72,18 @@ router.get('/allOrder',adminAuth.islogin,adminOrderController.listUserOrders)
 router.get('/orderDetails',adminAuth.islogin,adminOrderController.listOrderDetails)
 
 
+//ALL EVENTS
+router.get('/events',adminAuth.islogin,adminEventControlller.listEvents)
+router.get('/events/:id',adminAuth.islogin ,adminEventControlller.viewBookingDetails)
+
 
 
       //blocking item
 router.get('/blockProduct',adminAuth.islogin,productController.blockProduct) 
 //logout
 router.get('/logout',adminController.adminLogout)
+
+
 
 
 

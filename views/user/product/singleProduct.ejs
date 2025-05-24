@@ -137,6 +137,12 @@
             </button>
           </div>
         </div>
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="alert alert-danger text-center">
+            <%= error %>
+          </div>
+        <% } %>
+        
 
       </div>
     </div>

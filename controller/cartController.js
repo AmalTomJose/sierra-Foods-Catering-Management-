@@ -32,7 +32,26 @@ const loadCart = async (req, res) => {
         .sort({ createdAt: -1 }) // Sort by most recent
         .select("guestCount"); 
         const qty = booking.guestCount 
-        
+        if(!booking){
+          return res.redirect('/eventDetails')
+        }
+        // Validate each item in cart
+        for (let item of cart) {
+          if (item.quantity > qty){
+           
+
+            // Redirect with an error message or render a page with alert
+            return res.render('user/product/cart', {
+              user:user,
+              cart: cart,
+              productTotal: productTotal, // calculate aga,in if needed
+              subtotalWithShipping: 0, 
+              qty,
+              // optional
+              error: `The quantity for exceeds available Guest Count ${qty}!`,
+            });   
+          }
+        }
         // Calculate subtotal
         const subtotal = productTotal.reduce((acc, val) => acc + val, 0);
         

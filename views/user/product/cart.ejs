@@ -8,6 +8,12 @@
                 <div class="col-12">
 
                     <div class="table-responsive">
+                      <% if (error) { %>
+                        <div class="alert alert-danger text-center">
+                          <%= error %>
+                        </div>
+                      <% } %>
+                      
                         <% if (cart.length > 0) { %>
                             <table class="table shopping-summery text-center clean">
                                 <thead class="thead-dark">
@@ -207,4 +213,15 @@
       background-color: #f8f9fa;
     }
   </style>
+  <% if (success && success.length > 0) { %>
+    <script>
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: '<%= success[0] %>',
+        confirmButtonColor: '#3085d6'
+      });
+    </script>
+  <% } %>
+  
   

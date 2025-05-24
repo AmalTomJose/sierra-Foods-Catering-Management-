@@ -28,7 +28,7 @@
                       </address>
                       <div class="d-flex align-items-center">
                         <input type="radio" name="checkAddress" value="<%= addressData._id %>" id="addressradio" class="me-3">
-                        <a href="/updateCheckout?id=<%=addressData._id%>" class="btn-small">Edit</a>
+                        <a href="/updateBooking?id=<%=addressData._id%>" class="btn-small">Edit</a>
                       </div>
                     </div>
                   </div>
@@ -94,7 +94,7 @@
               <% if (subtotalWithShipping != 0) { %>
                 <a href="#" id="btn_checkout" class="btn btn-fill-out btn-block mt-30">Place Order</a>
               <% } else { %>
-                <button class="btn btn-fill-out btn-block mt-30" disabled>Place Order</button>
+                <button class="btn btn-fill-out border border-green btn-block mt-30" disabled>Place Order</button>
               <% } %>
             </div>
           </div>
@@ -102,8 +102,6 @@
       </div>
     </section>
   
-    <input type="number" id="retryTotal" value="<%= retryTotal %>" hidden>
-    <input type="text" id="orderId" value="<%= orderId %>" hidden>
   </main>
   
   <!-- SweetAlert2 CDN -->
@@ -119,8 +117,6 @@
       btn_checkout.addEventListener('click', () => {
         const selectedAddress = document.querySelector('input[name="checkAddress"]:checked');
         const selectedPaymentMethod = document.querySelector('input[name="payment_option"]:checked').value;
-        const retryTotal = document.getElementById('retryTotal').value;
-        const orderId = document.getElementById('orderId').value;
   
         if (!selectedAddress) {
           Swal.fire({
@@ -132,10 +128,10 @@
         }
   
         const requestData = {
-          address: selectedAddress.value,
+        address: selectedAddress.value,
           paymentMethod: selectedPaymentMethod,
-          retryTotal
         };
+        console.log(requestData)
   
         // Handle Cash on Delivery
         if (selectedPaymentMethod === 'CashOnDelivery' || selectedPaymentMethod === 'Wallet') {
@@ -157,60 +153,68 @@
   
         // Handle Online Payment (Razorpay)
         if (selectedPaymentMethod === 'onlinePayment') {
-          let amount;
-          fetch('/razorpayOrder', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestData)
+  fetch('/checkout/create-razorpay-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      address: selectedAddress.value,
+      
+    })
+  })
+  .then(res => res.json())
+  .then(order => {
+    if (!order || !order.id) {
+      throw new Error('Failed to create Razorpay order');
+    }
+
+    const options = {
+      key: '<%= razorpayKey %>', // passed from server
+      amount: order.amount, // in paise
+      currency: "INR",
+      name: "Catering Service",
+      description: "Order Payment",
+      order_id: order.id,
+      handler: function (response) {
+        // Send payment verification request
+        fetch('/checkout/verify-razorpay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+            address: selectedAddress.value
           })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              amount = data.order.amount;
-  
-              const options = {
-                key: "rzp_test_XnSWcDHvXwMKdf",
-                amount,
-                currency: "INR",
-                name: "WRIZT.in",
-                description: "Payment for Your Order",
-                order_id: data.order.id,
-                handler: async function (response) {
-                  if (response.razorpay_payment_id) {
-                    const res = await fetch(`/checkout?orderId=${orderId}`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ ...requestData, amount: amount / 100, paymentStatus: 'success' })
-                    });
-                    const orderData = await res.json();
-                    if (orderData.success) {
-                      window.location.href = "/orderSuccess";
-                    }
-                  }
-                },
-                modal: {
-                  ondismiss: async function () {
-                    await fetch(`/checkout?orderId=${orderId}`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ ...requestData, amount: amount / 100, paymentStatus: 'failed' })
-                    });
-                    alert('Payment was not completed! You can try again.');
-                  }
-                },
-                prefill: {
-                  name: "WRIZT",
-                  email: "wrizt@gmail.com",
-                  contact: "8301026583"
-                },
-                theme: { color: "#3399cc" }
-              };
-  
-              const rzp = new Razorpay(options);
-              rzp.open();
-            }
-          });
-        }
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            Swal.fire({ title: "Success", text: result.message, icon: "success" })
+              .then(() => window.location.href = '/orderSuccess');
+          } else {
+            Swal.fire("Error!", result.error, "error");
+          }
+        });
+      },
+      prefill: {
+        name: "<%= userData.firstname %>",
+        email: "<%= userData.email %>",
+        contact: "<%= userData.phoneno %>"
+      },
+      theme: {
+        color: "#3399cc"
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  })
+  .catch(error => {
+    console.error('Razorpay error:', error);
+    Swal.fire("Payment Error", "Unable to initiate payment. Try again.", "error");
+  });
+}
+
       });
     });
   </script>

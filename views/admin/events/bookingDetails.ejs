@@ -1,0 +1,54 @@
+
+<div class="container mt-5">
+  <h2 class="mb-4">Booking Details</h2>
+  <div class="card p-4 shadow rounded">
+
+    <h5>User Information</h5>
+    <p><strong>Name:</strong> <%= booking.user.name %></p>
+    <p><strong>Email:</strong> <%= booking.user.email %></p>
+
+    <hr>
+
+    <h5>Event Information</h5>
+    <p><strong>Type:</strong> <%= booking.eventType %></p>
+    <p><strong>Date:</strong> <%= booking.eventDate.toDateString() %></p>
+    <p><strong>Time:</strong> <%= booking.eventTime %></p>
+    <p><strong>Guests:</strong> <%= booking.guestCount %></p>
+    <p><strong>Location:</strong> <%= booking.eventPlace %>, <%= booking.eventDistrict %>, PIN - <%= booking.eventPincode %></p>
+
+    <hr>
+
+    <h5>Status</h5>
+    <p>
+      <span class="badge bg-<%= booking.status === 'completed' ? 'success' : booking.status === 'cancelled' ? 'danger' : 'warning' %>">
+        <%= booking.status %>
+      </span>
+    </p>
+
+    <% if (booking.status === 'cancelled' && booking.cancelReason) { %>
+      <p><strong>Cancel Reason:</strong> <%= booking.cancelReason %></p>
+    <% } %>
+
+    <% if (order) { %>
+      <hr>
+      <h4 class="mt-4">Order Details</h4>
+
+      <p><strong>Order ID:</strong> <%= order._id %></p>
+      <p><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
+      <p><strong>Status:</strong> <%= order.status %></p>
+      <p><strong>Total Amount:</strong> ₹<%= order.totalAmount %></p>
+      <p><strong>Ordered At:</strong> <%= order.orderDate %></p>
+
+      <h5 class="mt-3">Ordered Items</h5>
+      <ul>
+        <% order.items.forEach(item => { %>
+          <li>
+            <strong><%= item.product.item_name %></strong>  Quantity: <%= item.quantity %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+
+  </div>
+</div>
+

@@ -1,0 +1,53 @@
+
+<div class="container mt-5">
+  <h2 class="mb-4">All Bookings</h2>
+
+  <% if (bookings.length === 0) { %>
+    <div class="alert alert-info">No bookings found.</div>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Event Type</th>
+            <th>Event Date</th>
+            <th>Guest Count</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bookings.forEach((booking, index) => { %>
+            <tr>
+              <td><%= (currentPage - 1) * 10 + index + 1 %></td>
+              <td><%= booking.user.name %><br><small><%= booking.user.email %></small></td>
+              <td><%= booking.eventType %></td>
+              <td><%= booking.eventDate.toDateString() %></td>
+              <td><%= booking.guestCount %></td>
+              <td class="<%= booking.status === 'cancelled' ? 'text-danger' : booking.status === 'completed' ? 'text-success' : 'text-warning' %>">
+                <%= booking.status %>
+              </td>
+              <td>
+                <a href="/admin/events/<%= booking._id %>" class="btn btn-sm btn-primary">View</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Booking pagination">
+      <ul class="pagination justify-content-center mt-4">
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+            <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+  <% } %>
+</div>
+

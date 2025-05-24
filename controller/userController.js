@@ -68,9 +68,21 @@ const loadProductDetail = async(req,res)=>{
     const userData = await User.findById(userId);
     const id = req.params.id;
     const productDetail = await Product.findById(id).populate('category').populate('subcategory');
-    const booking= await Booking.findOne({ user: userId })
+    const booking= await Booking.findOne({ user: userId,status:'active' })
     .sort({ createdAt: -1 }) // Sort by most recent
     .select("guestCount"); 
+    if(!booking){
+      const qty = 1;
+      return res.render('user/product/singleProduct',{
+        user:userData,
+        product:productDetail,
+        qty,
+        error:'Please Book an Event'
+      })
+  
+    }
+    else{
+
     const qty = booking.guestCount     
     console.log('The quantity entered by the user while selecting the booking is:',qty)
       console.log(productDetail)
@@ -79,6 +91,8 @@ const loadProductDetail = async(req,res)=>{
       product:productDetail,
       qty
     })
+
+    }
 
   }
   catch(error)
@@ -270,16 +284,21 @@ const loadOtp = async (req, res) => {
   const verifyOtp = async (req, res) => {
     try {
       const fullOTP = req.body.otp;
-  
+      console.log(req.session)
+
+      console.log(fullOTP)
       // FLOW 1: REGISTRATION (no user_id set)
-      if (!req.session.user_id && req.session.tempUser) {
-        const userData = req.session.tempUser;
+      if (!req.session.user_id ) {
   
-        if (fullOTP === req.session.otp) {
+  
+        if (fullOTP == req.session.otp) {
+          console.log('TEsting fucker')
+          const userData = req.session.userData
           const hashedPassword = await bcrypt.hash(userData.password, 10);
           const user = new User({ ...userData, password: hashedPassword });
           const savedUser = await user.save();
           req.session.user_id = savedUser._id;
+       
           res.redirect('/');
         } else {
           return res.render("user/auth/otp", { layout: 'layouts/mainLayout', message: "Invalid OTP" });
