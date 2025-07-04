@@ -38,7 +38,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled','requested'],
     default: 'pending',
   },
   
@@ -48,6 +48,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
+    enum:['cashondelivery','wallet','online'],
     required: true,
   },
   paymentStatus:{
@@ -55,6 +56,11 @@ const orderSchema = new mongoose.Schema({
     enum:['pending','paid'],
     default:'pending'
     
+  },
+  refundStatus :{
+    type:String,
+    enum:['none','requested','approved','rejected'],
+    default:'none'
   },
   createdAt:{
       type:Date,
@@ -69,7 +75,9 @@ const orderSchema = new mongoose.Schema({
       },
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
-      
+      status:{type:String,enum:['ordered','cancelled','delivered','requested'],default:'ordered'},
+      refundStatus:{type:String,enum:['none','requested','approved','rejected'],default:'none'}
+
      
     },
   ]

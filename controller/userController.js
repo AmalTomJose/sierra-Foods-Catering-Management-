@@ -184,8 +184,10 @@ const signupPage = async (req,res)=>{
             req.session.userData = req.body;
             req.session.register=1;
             req.session.email =email;
+            req.session.resetUser=email;
             if(req.session.email){
                 const data = await message.sendVerifyMail(req,req.session.email);
+                console.log('hello')
                 res.redirect('/otp')
             }
             // const hashedPassword = await bcrypt.hash(password,10);
@@ -216,9 +218,10 @@ const signupPage = async (req,res)=>{
 
 // GET OTP PAGE
 const loadOtp = async (req, res) => {
-    try {
-      res.render("user/auth/otp",{layout:'layouts/mainLayout',title:'otp',message:null});
+  try{
+      res.render("user/auth/otp",{layout:'layouts/user',user:'',title:'otp',message:null});
     } catch (error) {
+      console.log(error.message)
       console.log(error.message);
     }
   };
@@ -288,20 +291,22 @@ const loadOtp = async (req, res) => {
 
       console.log(fullOTP)
       // FLOW 1: REGISTRATION (no user_id set)
-      if (!req.session.user_id ) {
+      if (req.session.userData&&req.session.register==1) {
   
   
         if (fullOTP == req.session.otp) {
-          console.log('TEsting fucker')
           const userData = req.session.userData
           const hashedPassword = await bcrypt.hash(userData.password, 10);
           const user = new User({ ...userData, password: hashedPassword });
           const savedUser = await user.save();
           req.session.user_id = savedUser._id;
+
+          req.flash('success', 'User registered successfully');
+
        
           res.redirect('/');
         } else {
-          return res.render("user/auth/otp", { layout: 'layouts/mainLayout', message: "Invalid OTP" });
+          return res.render("user/auth/otp", { layout: 'layouts/user',user:'',title:'otp', message: "Invalid OTP" });
         }
   
       // FLOW 2: FORGOT PASSWORD
@@ -309,7 +314,7 @@ const loadOtp = async (req, res) => {
         if (fullOTP === req.session.otp) {
           res.redirect("/resetPassword");
         } else {
-          res.render("user/auth/otp", { layout: 'layouts/mainLayout', message: "Incorrect OTP. Try again." });
+          res.render("user/auth/otp", { layout: 'layouts/user',user:'',title:'otp', message: "Incorrect OTP. Try again." });
         }
       } else {
         res.redirect("/login"); // fallback
@@ -325,7 +330,7 @@ const loadOtp = async (req, res) => {
   const resendOTP = async (req, res) => {
     try {
       // Retrieve user data from session storage
-      const userData = req.session.userData;
+      const userData = req.session.resetUser;
   
       if (!userData) {
         res.status(400).json({ message: "Invalid or expired session" });
@@ -365,7 +370,7 @@ const userlogout = async (req, res) => {
 
  const getForgotPassword = async(req,res)=>{
   try{
-     return res.render('user/auth/forget',{layout:'layouts/mainLayout',title:'forgetpassword'} )
+     return res.render('user/auth/forget',{user:'',msg:'', layout:'layouts/user',title:'forgetpassword'} )
 
   }
   catch(error)
@@ -411,14 +416,17 @@ const forgotPasswordOTP = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.render("user/auth/forgotPassword", {
-        layout: 'layouts/mainLayout',
-        message: "Email not found",
+      return res.render("user/auth/forget", {
+        user:'',
+        layout: 'layouts/user',
+        msg: "Email not found",
+        title:'forget password  '
       });
     }
 
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     req.session.otp = otp;
+    
     req.session.resetUser = user._id; // Store only the _id for security
 
     // Send OTP via email here
@@ -446,7 +454,7 @@ const forgotPasswordOTP = async (req, res) => {
 // }
 const loadResetPassword = async (req, res) => {
   if (!req.session.resetUser) return res.redirect("/login");
-  res.render("user/auth/resetPassword", { layout: 'layouts/mainLayout',title:'forget password' });
+  res.render("user/auth/resetPassword", { user:'', layout: 'layouts/user',title:'forget password' });
 };
 
 
@@ -493,7 +501,8 @@ const resetPassword  = async (req, res) => {
     req.session.resetUser = null;
     req.session.otp = null;
 
-    res.redirect("/login");
+req.flash('success','successfully changed!')
+    res.render('user/auth/login',{msg:'',title:'login',user:''  })
   } catch (err) {
     console.log(err.message);
   }

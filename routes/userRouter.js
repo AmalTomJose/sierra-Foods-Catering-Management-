@@ -52,7 +52,6 @@ router.post('/forget',islogout,userController.forgotPasswordOTP)
 router.get('/resetPassword',islogout,userController.loadResetPassword)
 router.post('/resetPassword',islogout,userController.resetPassword)
 
-
 //USER
 router.get('/userprofile',islogin,userController.loadProfile);
 router.post('/userprofile',multer.uploadUser.single('image'), userController.userEdit);
@@ -105,6 +104,9 @@ router.post('/checkout/verify-razorpay',islogin,orderController.verifyPayment)
 router.get('/orders',islogin,orderController.loadOrderDetails)
 router.get('/orderSuccess',islogin,orderController.loadOrderSuccess)
 router.get('/orderDetails/:id',islogin,orderController.loadOrderHistory)
+router.post('/cancel-item/:orderId/:itemId', orderController.cancelItem);
+router.post('/cancel-order/:orderId',islogin,orderController.cancelOrder);
+
 
 
 

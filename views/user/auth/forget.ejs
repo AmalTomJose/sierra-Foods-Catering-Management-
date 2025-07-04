@@ -50,6 +50,10 @@
               <!-- Forgot Password box -->
               <div class="forgot-password-box">
                 <div class="text-center mb-4">
+                  <% if (msg) { %>
+                    <p class="text-danger"><%= msg %></p>
+                  <% } %>
+                  
                   <h3>Forgot Password</h3>
                 </div>
                 <form action="/forget" method="POST" id="forgotPasswordForm">

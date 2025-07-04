@@ -47,19 +47,19 @@
               <p>
                 Shipping: Fargo express<br>
                 Pay method: <%= order.paymentMethod %><br>
-                Status: <%= order.status %>
+                 Order Status: <%= order.status %>
               </p>
             </div>
             <div class="col-md-4">
               <h6>Deliver To</h6>
               <p>
-                Event Date: <%= order.booking.eventDate %><br>
-                Event Type: <%= order.booking.eventType %><br>
-                Guest Count: <%= order.booking.guestCount %><br>
-                Event Place: <%= order.booking.eventplace %><br>
-                Event Time: <%= order.booking.eventTime %><br>
-                District: <%= order.booking.eventDistrict %><br>
-                Pincode: <%= order.booking.eventPincode %>
+                Event Date : <%= order.booking.eventDate %><br>
+                Event Type : <%= order.booking.eventType %><br>
+                Guest Count : <%= order.booking.guestCount %><br>
+                Event Place : <%= order.booking.eventPlace %><br>
+                Event Time : <%= order.booking.eventTime %><br>
+                District : <%= order.booking.eventDistrict %><br>
+                Pincode : <%= order.booking.eventPincode %>
               </p>
             </div>
           </div>
@@ -71,6 +71,7 @@
                   <th>Product</th>
                   <th>Unit Price</th>
                   <th>Quantity</th>
+                  <th>order details</th>
                   <th class="text-end">Total</th>
                 </tr>
               </thead>
@@ -80,13 +81,24 @@
                   subtotal += total; %>
                 <tr>
                   <td>
-                    <a class="d-flex align-items-center" href="/singleProduct/<%= item.product._id %>">
+                    <a class="d-flex align-items-center" href="/product/<%= item.product._id %>">
                       <img src="/admin-assets/imgs/productIMG/<%= item.product.item_image[0] %>" width="40" height="40" class="me-2">
                       <%= item.product.name %>
                     </a>
                   </td>
                   <td>₹<%= item.product.discount_price %></td>
                   <td><%= item.quantity %></td>
+<td>
+  <% if (item.status !== 'cancelled') { %>
+    <button class="btn btn-danger" onclick="cancelItem('<%= order._id %>', '<%= item._id %>')">Cancel Item</button>
+  <% } else if (item.status === 'cancelled' && item.refundStatus === 'requested') { %>
+    <span class="text-danger">Requested</span>
+  <% } else { %>
+    <span class="text-danger">Cancelled</span>
+  <% } %>
+</td>
+
+
                   <td class="text-end">₹<%= total %></td>
                 </tr>
                 <% }) %>
@@ -112,10 +124,15 @@
           </div>
 
           <div class="text-center mt-4">
-            <% if (order.status === 'Pending' || order.status === 'Shipped') { %>
+            <% if (order.status == 'confirmed' ) { %>
               <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
-                <i class="material-icons">cancel</i> Cancel Order
+                <i class="material-icons"></i> Cancel Order
               </button>
+            <% } %>
+            <% if (order.status === 'requested') { %>
+           
+            <h6 class="text-danger">requested for cancelling</h6>
+            
             <% } %>
 
             <% if (order.status === 'failed') { %>
@@ -128,38 +145,84 @@
       </div>
     </section>
   </div>
-
-  <script>
-    function printContent() {
+  
+    <script>
+      function printContent() {
       window.print();
     }
 
-    function cancelOrder(orderId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Cancel Order',
-        text: 'Are you sure you want to cancel this order?',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, cancel it',
-        cancelButtonText: 'No',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          fetch('/ordercancel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              window.location.href = '/orderSuccess';
-            } else {
-              Swal.fire('Error', 'Failed to cancel order.', 'error');
-            }
-          });
-        }
-      });
-    }
-  </script>
+function cancelOrder(orderId){
+  Swal.fire({
+      icon: 'warning',
+      title: 'Cancel Order',
+      text: 'Are you sure you want to cancel this Order?',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, cancel it',
+      cancelButtonText: 'No',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`/cancel-order/${orderId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire('Cancelled!', 'Order has been cancelled.', 'success')
+              .then(() => {
+                window.location.reload();
+              });
+          } else {
+            Swal.fire('Error', data.message || 'Failed to cancel order.', 'error');
+          }
+        })
+        .catch(() => {
+          Swal.fire('Error', 'Something went wrong.', 'error');
+        });
+      }
+    });
+
+}
+
+  function cancelItem(orderId, itemId) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Cancel Item',
+      text: 'Are you sure you want to cancel this item?',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, cancel it',
+      cancelButtonText: 'No',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`/cancel-item/${orderId}/${itemId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire('Cancelled!', data.message || 'Item has been cancelled.', 'success')
+              .then(() => {
+                window.location.reload();
+              });
+          } else {
+            Swal.fire('Error', data.message || 'Failed to cancel item.', 'error');
+          }
+        })
+        .catch(() => {
+          Swal.fire('Error', data.message ||'Something went wrong.', 'error');
+        });
+      }
+    });
+  }
+</script>

@@ -126,34 +126,36 @@ const unlistCategory = async(req,res)=>{
       console.log(error.message)
     }
   }
-
-  const addCategory = async(req,res)=>{
-    try{
-      let category_name = req.body.categoryname;
+  const addCategory = async (req, res) => {
+    try {
+      let category_name = req.body.categoryname.trim().toLowerCase(); // Normalize
+  
+      // Check if a category with the same trimmed name exists (case-insensitive)
       const existingCategory = await Category.findOne({
-        cat_name: { $regex: new RegExp(`^${category_name}$`, 'i') }, // Case-insensitive match
-      })
-      if(existingCategory){
-        return res.render("admin/category/addCategory",{
-          error: "Category with the name already exists"
-              })
+        cat_name: { $regex: new RegExp(`^${category_name}$`, 'i') },
+      });
+  
+      if (existingCategory) {
+        return res.render("admin/category/addCategory", {
+          error: "Category with this name already exists",
+        });
       }
-      else{
-        const category = new Category({
-          cat_name:category_name,
-          cat_status:true
-        })
-        const categoryData = await  category.save();
-        return res.redirect('/admin/category')
-
-
-      }
-      }
-    catch(error)
-    {
-      console.log(error.message)
+  
+      // Save with trimmed & normalized name
+      const category = new Category({
+        cat_name: category_name,
+        cat_status: true,
+      });
+  
+      await category.save();
+      return res.redirect("/admin/category");
+  
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).send("Server Error");
     }
-  }
+  };
+  
   
 const loadcategory = async (req,res)=>{
   try{

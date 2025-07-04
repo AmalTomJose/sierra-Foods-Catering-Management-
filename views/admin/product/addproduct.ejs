@@ -138,7 +138,7 @@
                     <div class="col-lg-3">
                         <div class="card mb-4">
                             <div class="card-header">
-                                <h4>Picture</h4>
+                                <h4>Picture</h4> 
                             </div>
                             <div class="card-body">
                                 <div class="card mb-4">
@@ -199,6 +199,7 @@
             })
             .catch(err => console.error("Error loading subcategories:", err));
     });
+
 });
                                                     let imageCount = 0;
                                                     let removedImages = []; // Keep track of removed images
@@ -390,5 +391,86 @@
             return true;
         }
     </script>
+    <script>
+        function validationChecking() {
+          // Get inputs and error containers
+          const product_title_input = document.getElementById("product_title");
+          const product_title_error = document.getElementById("product_title-error");
+      
+          const categorySelect = document.getElementById("categorySelect");
+          const subcategorySelect = document.getElementById("subcategorySelect");
+      
+          const product_price_input = document.getElementById("product_price");
+          const discount_price_input = document.getElementById("discount_price");
+      
+          const product_price_error = document.getElementById("product_price-error");
+          const discount_price_error = document.getElementById("discount_price-error");
+      
+          const description_input = document.getElementById("description");
+          const description_error = document.getElementById("description-error");
+      
+          const filesInput = document.getElementById("files");
+          const product_image_error = document.getElementById("product_image-error");
+      
+          let isValid = true;
+      
+          // Product name
+          if (product_title_input.value.trim() === "") {
+            product_title_error.innerHTML = 'Product name is required.';
+            isValid = false;
+          } else {
+            product_title_error.innerHTML = '';
+          }
+      
+          // Category
+          if (categorySelect.value === "") {
+            alert('Please select a category.');
+            isValid = false;
+          }
+      
+          // Sub-category
+          if (subcategorySelect.value === "") {
+            alert('Please select a sub-category.');
+            isValid = false;
+          }
+      
+          // Price
+          const price = parseFloat(product_price_input.value);
+          if (isNaN(price) || price <= 0) {
+            product_price_error.innerHTML = 'Please enter a valid price greater than zero.';
+            isValid = false;
+          } else {
+            product_price_error.innerHTML = '';
+          }
+      
+          // Discount price
+          const discount = parseFloat(discount_price_input.value);
+          if (isNaN(discount) || discount < 0) {
+            discount_price_error.innerHTML = 'Enter a valid discount price (0 or above).';
+            isValid = false;
+          } else {
+            discount_price_error.innerHTML = '';
+          }
+      
+          // Description
+          if (description_input.value.trim() === "") {
+            description_error.innerHTML = 'Description is required.';
+            isValid = false;
+          } else {
+            description_error.innerHTML = '';
+          }
+      
+          // Image check
+          if (filesInput.files.length === 0) {
+            product_image_error.innerHTML = 'Please upload at least one image.';
+            isValid = false;
+          } else {
+            product_image_error.innerHTML = '';
+          }
+      
+          return isValid;
+        }
+      </script>
+      
 
 
