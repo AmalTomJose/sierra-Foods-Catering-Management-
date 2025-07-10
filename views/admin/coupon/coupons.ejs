@@ -1,0 +1,58 @@
+
+
+<h3>Coupon List</h3>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Type</th>
+      <th>Value</th>
+      <th>Min Order</th>
+      <th>Expiry</th>
+      <th>Used By</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% coupons.forEach(coupon => { %>
+      <tr>
+        <td><%= coupon.code %></td>
+        <td><%= coupon.discountType %></td>
+        <td><%= coupon.discountValue %></td>
+        <td><%= coupon.minOrderAmount %></td>
+        <td><%= new Date(coupon.expiryDate).toLocaleDateString() %></td>
+        <td><%= coupon.usedBy.length %></td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('<%= coupon._id %>')">Delete</button>
+
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+
+<script>
+  function confirmDelete(couponId) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will permanently delete the coupon.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Submit the deletion via POST using a hidden form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/coupon/delete/${couponId}`;
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  }
+</script>

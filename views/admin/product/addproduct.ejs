@@ -36,7 +36,9 @@
     <link rel="stylesheet" href="./node_modules/cropperjs/dist/cropper.min.css">
 
     <form action="/admin/addproduct" method="post" enctype="multipart/form-data" id="product-form"
-        onsubmit="return validationChecking()">
+    onsubmit="return validationChecking()"
+    
+    >
 
         <section class="content-main">
             <div class="row">
@@ -305,96 +307,96 @@
     <script src="./node_module/cropperjs/dist/cropper.min.js"></script>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <script>
-        function validationChecking() {
-            // Get input elements and error message elements
-            const product_title_input = document.getElementById("product_title");
-            const product_category_input = document.getElementById("product_category");
-            const description_input = document.getElementById("description"); // Update to match the HTML
-            const product_price_input = document.getElementById("product_price"); // Update to match the HTML
-            const product_stock_input = document.getElementById("product_stock");
-            const discount_price_input = document.getElementById("discount_price"); // Update to match the HTML
-            const product_price_error = document.getElementById("product_price-error");
-            const product_stock_error = document.getElementById("product_stock-error");
-            const discount_price_error = document.getElementById("discount_price-error"); // Update to match the HTML
-            const product_title_error = document.getElementById("product_title-error");
-            const product_category_error = document.getElementById("product_category-error");
-            const description_error = document.getElementById("description-error");
-            const filesInput = document.getElementById("files");
-            const product_image_error = document.getElementById("product_image-error");
+<script>
+function validationChecking() {
+// Get input elements and error message elements
+const product_title_input = document.getElementById("product_title");
+const product_category_input = document.getElementById("product_category");
+const description_input = document.getElementById("description"); // Update to match the HTML
+const product_price_input = document.getElementById("product_price"); // Update to match the HTML
+const product_stock_input = document.getElementById("product_stock");
+const discount_price_input = document.getElementById("discount_price"); // Update to match the HTML
+const product_price_error = document.getElementById("product_price-error");
+const product_stock_error = document.getElementById("product_stock-error");
+const discount_price_error = document.getElementById("discount_price-error"); // Update to match the HTML
+const product_title_error = document.getElementById("product_title-error");
+const product_category_error = document.getElementById("product_category-error");
+const description_error = document.getElementById("description-error");
+const filesInput = document.getElementById("files");
+const product_image_error = document.getElementById("product_image-error");
 
-            // Convert values to numbers
-            const product_price_value = parseFloat(product_price_input.value);
-            const product_stock_value = parseInt(product_stock_input.value);
-            const discount_price_value = parseFloat(discount_price_input.value);
+// Convert values to numbers
+const product_price_value = parseFloat(product_price_input.value);
+const product_stock_value = parseInt(product_stock_input.value);
+const discount_price_value = parseFloat(discount_price_input.value);
 
-            // Check if the product title is empty
-            if (product_title_input.value.trim() === "") {
-                product_title_error.innerHTML = 'Product title is required.';
-            } else {
-                product_title_error.innerHTML = '';
-            }
+// Check if the product title is empty
+if (product_title_input.value.trim() === "") {
+product_title_error.innerHTML = 'Product title is required.';
+} else {
+product_title_error.innerHTML = '';
+}
 
-            // Check if the category is not selected
-            if (product_category_input.value === "") {
-                product_category_error.innerHTML = 'Please select a category.';
-            } else {
-                product_category_error.innerHTML = '';
-            }
+// Check if the category is not selected
+if (product_category_input.value === "") {
+product_category_error.innerHTML = 'Please select a category.';
+} else {
+product_category_error.innerHTML = '';
+}
 
-            // Check if the description is empty
-            if (description_input.value.trim() === "") {
-                description_error.innerHTML = 'Description is required.';
-            } else {
-                description_error.innerHTML = '';
-            }
+// Check if the description is empty
+if (description_input.value.trim() === "") {
+description_error.innerHTML = 'Description is required.';
+} else {
+description_error.innerHTML = '';
+}
 
-            // Check if the price is not entered or less than zero
-            if (isNaN(product_price_value) || product_price_value <= 0) {
-                product_price_error.innerHTML = 'Please enter a valid price greater than zero.';
-            } else {
-                product_price_error.innerHTML = '';
-            }
+// Check if the price is not entered or less than zero
+if (isNaN(product_price_value) || product_price_value <= 0) {
+product_price_error.innerHTML = 'Please enter a valid price greater than zero.';
+} else {
+product_price_error.innerHTML = '';
+}
 
-            // Check if the stock is not entered or less than zero
-            if (isNaN(product_stock_value) || product_stock_value < 0) {
-                product_stock_error.innerHTML = 'Please enter a valid stock greater than or equal to zero.';
-            } else {
-                product_stock_error.innerHTML = '';
-            }
+// Check if the stock is not entered or less than zero
+if (isNaN(product_stock_value) || product_stock_value < 0) {
+product_stock_error.innerHTML = 'Please enter a valid stock greater than or equal to zero.';
+} else {
+product_stock_error.innerHTML = '';
+}
 
-            // Check if the discount price is not entered or less than zero
-            if (isNaN(discount_price_value) || discount_price_value < 0) {
-                discount_price_error.innerHTML = 'Please enter a valid discount price greater than or equal to zero.';
-            } else {
-                discount_price_error.innerHTML = '';
-            }
+// Check if the discount price is not entered or less than zero
+if (isNaN(discount_price_value) || discount_price_value < 0) {
+discount_price_error.innerHTML = 'Please enter a valid discount price greater than or equal to zero.';
+} else {
+discount_price_error.innerHTML = '';
+}
 
-            if (filesInput.files.length === 0) {
-                product_image_error.innerHTML = 'Please select at least one image.';
-            } else {
-                product_image_error.innerHTML = '';
-            }
+if (filesInput.files.length === 0) {
+product_image_error.innerHTML = 'Please select at least one image.';
+} else {
+product_image_error.innerHTML = '';
+}
 
 
-            // If any validation fails, return false
-            if (
-                isNaN(product_price_value) || product_price_value <= 0 ||
-                isNaN(product_stock_value) || product_stock_value < 0 ||
-                isNaN(discount_price_value) || discount_price_value < 0 ||
-                filesInput.files.length === 0
-            ) {
-                return false;
-            }
+// If any validation fails, return false
+if (
+isNaN(product_price_value) || product_price_value <= 0 ||
+isNaN(product_stock_value) || product_stock_value < 0 ||
+isNaN(discount_price_value) || discount_price_value < 0 ||
+filesInput.files.length === 0
+) {
+return false;
+}
 
-            // If all validations pass, return true
-            return true;
-        }
-    </script>
-    <script>
-        function validationChecking() {
-          // Get inputs and error containers
-          const product_title_input = document.getElementById("product_title");
+// If all validations pass, return true
+return true;
+}
+</script>
+<script>
+function validationChecking() {
+// Get inputs and error containers
+const product_title_input = document.getElementById("product_title");
           const product_title_error = document.getElementById("product_title-error");
       
           const categorySelect = document.getElementById("categorySelect");
@@ -472,5 +474,4 @@
         }
       </script>
       
-
 

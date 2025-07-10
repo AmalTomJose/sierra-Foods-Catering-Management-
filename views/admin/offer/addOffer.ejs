@@ -1,0 +1,119 @@
+<h3 class="mb-4">Add Offer</h3>
+
+<form method="POST" action="/admin/saveOffer" onsubmit="return validateForm()">
+
+  <div class="text-end">
+    <button type="submit" class="btn btn-success">Add Offer</button>
+  </div>
+  <div class="mb-3">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" class="form-control" required />
+  </div>
+
+  <div class="mb-3">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" class="form-control" required></textarea>
+  </div>
+
+  <div class="mb-3">
+    <label for="discountType">Discount Type</label>
+    <select name="discountType" id="discountType" class="form-control" required>
+      <option value="">Select Type</option>
+      <option value="percentage">Percentage</option>
+      <option value="amount">Flat Amount</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="discountValue">Discount Value</label>
+    <input
+      type="number"
+      id="discountValue"
+      name="discountValue"
+      class="form-control"
+      min="1"
+      required
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="applyToSelect">Apply To</label>
+    <select name="applicableTo" class="form-control" id="applyToSelect" required>
+      <option value="all">All</option>
+      <option value="category">Category</option>
+    </select>
+  </div>
+
+  <div class="mb-3" id="categorySelect" style="display: none;">
+    <label for="category">Category</label>
+    <select name="category" id="category" class="form-control">
+      <% categories.forEach(cat => { %>
+        <option value="<%= cat._id %>"><%= cat.cat_name %></option>
+      <% }) %>
+    </select>
+  </div>
+
+  <div class="row mb-3 d-flex">
+    <div class="col-md-6">
+      <label for="startDate">Start Date</label>
+      <input type="date" id="startDate" name="startDate" class="form-control" required />
+    </div>
+    <div class="col-md-6">
+      <label for="endDate">End Date</label>
+      <input type="date" id="endDate" name="endDate" class="form-control" required />
+    </div>
+  </div>
+
+</form>
+
+<!-- Client-side JS Validation -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const applyTo = document.getElementById('applyToSelect');
+    const categoryDiv = document.getElementById('categorySelect');
+    const categorySelect = document.getElementById('category');
+
+    function toggleCategory() {
+      if (applyTo.value === 'category') {
+        categoryDiv.style.display = 'block';
+        categorySelect.setAttribute('required', 'required');
+      } else {
+        categoryDiv.style.display = 'none';
+        categorySelect.removeAttribute('required');
+      }
+    }
+
+    applyTo.addEventListener('change', toggleCategory);
+    toggleCategory();
+  });
+
+  function validateForm() {
+    const discountValue = parseFloat(document.getElementById('discountValue').value);
+    const discountType = document.getElementById('discountType').value;
+    const startDate = new Date(document.getElementById('startDate').value);
+    const endDate = new Date(document.getElementById('endDate').value);
+    const today = new Date();
+
+    if (discountType === 'percentage' && (discountValue < 1 || discountValue > 100)) {
+      alert('Percentage must be between 1 and 100');
+      return false;
+    }
+
+    if (discountValue < 1) {
+      alert('Discount value must be greater than 0');
+      return false;
+    }
+
+    if (startDate < today.setHours(0, 0, 0, 0)) {
+      alert('Start date must be today or in the future');
+      return false;
+    }
+
+    if (endDate <= startDate) {
+      alert('End date must be after start date');
+      return false;
+    }
+
+    return true;
+  }
+</script>

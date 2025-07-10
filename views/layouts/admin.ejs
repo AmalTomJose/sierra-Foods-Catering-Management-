@@ -1,12 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/css/styles.css">
+  <meta charset="UTF-8" />
+  <title>SIERRA Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" type="image/x-icon" href="/admin-assets/imgs/theme/Wlogo.jpeg" />
+  <link rel="stylesheet" href="/admin-assets/css/main.css" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+  <!-- Required for Material Icons -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+
+<!-- Required for Bootstrap (already included?) -->
+<link href="/admin-assets/css/main.css" rel="stylesheet" />
+
+
+
+  <style>
+    #toast-container > div {
+      font-size: 16px !important;
+      padding: 15px 20px !important;
+      opacity: 1 !important;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .toast-warning {
+      background-color: #ffc107 !important;
+      color: #000 !important;
+      font-weight: bold;
+    }
+
+    .toast-success {
+      background-color: #28a745 !important;
+      color: white !important;
+    }
+
+    .toast-info {
+      background-color: #17a2b8 !important;
+      color: white !important;
+    }
+
+    .toast-error {
+      background-color: #dc3545 !important;
+      color: white !important;
+    }
+  </style>
 </head>
 <body>
-    <%-include('../partials/admin/header')%>
 
-    <%- body %>  <!-- Content from other pages will be injected here -->
-   <%-include('../partials/admin/footer')%>
+  <%- include('../partials/admin/header') %>
+
+    <%- body %>
+
+  <%- include('../partials/admin/footer') %>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+  <script>
+    const socket = io();
+    socket.emit('registerAdmin');
+
+    socket.on('cancelRequest', (data) => {
+      toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: 'toast-top-center',
+        timeOut: 7000,
+        extendedTimeOut: 2000,
+        showMethod: 'fadeIn',
+        hideMethod: 'fadeOut'
+      };
+      toastr.warning(data.message, 'Cancellation Request');
+      const notifCount = document.getElementById('notifCount');
+      if (notifCount) notifCount.textContent = +notifCount.textContent + 1;
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const notifCount = document.getElementById('notifCount');
+      if (notifCount) {
+        fetch('/admin/notifications/count')
+          .then(res => res.json())
+          .then(data => {
+            if (data.count > 0) notifCount.textContent = data.count;
+          });
+      }
+    });
+  </script>
+  <script src="/admin-assets/js/vendors/bootstrap.bundle.min.js"></script>
+
+
 </body>
 </html>

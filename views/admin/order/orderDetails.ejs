@@ -1,5 +1,6 @@
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <section class="content-main">
     <div class="content-header">
@@ -19,62 +20,80 @@
             </span> <br>
             <small class="text-muted">Order ID: <%= order._id %></small><br>
             <small class="text-muted">Order Status: </small><b class="">
-            <% if (order.status == 'Pending') { %>
+            <% if (order.status == 'pending') { %>
             <span class="badge badge-pill badge-soft-warning"><%= order.status %></span>
-            <% } else if (order.status == 'Order Confirmed') { %>
+            <% } else if (order.status == 'confirmed') { %>
             <span class="badge badge-pill badge-soft-warning"><%= order.status %></span>
-            <% } else if (order.status == 'Shipped') { %>
+            <% } else if (order.status == 'shipped') { %>
             <span class="badge badge-pill badge-soft-dark"><%= order.status %></span>
-            <% } else if (order.status == 'Out For Delivery') { %>
+            <% } else if (order.status == 'cancelled') { %>
             <span class="badge badge-pill badge-soft-dark"><%= order.status %></span>
-            <% } else if (order.status == 'Delivered') { %>
+            <% } else if (order.status == 'delivered') { %>
             <span class="badge badge-pill badge-soft-success"><%= order.status %></span>
-            <% } else if (order.status == 'Return Successfull') { %>
+            <% } else if (order.status == 'approved') { %>
             <span class="badge badge-pill badge-soft-success"><%= order.status %></span>
             <% } else { %>
             <span class="badge badge-pill badge-soft-danger"><%= order.status %></span>
             <% } %>
             <br>
             
-            <small class="text-muted">Delivery Date: </small><b><%= new Date(order.address.eventDate).toLocaleDateString() %></b>
+            <small class="text-muted">Delivery Date: </small><b><%= new Date(order.booking.eventDate).toLocaleDateString() %></b>
             </div>
             
                     <div class="col-lg-6 col-md-6 ms-auto text-md-end">
 
                         
-                        <% if (order.status !== 'Cancelled') { %>
-                            <select id="orderStatusDropdown" class="form-select d-inline-block mb-lg-0 mb-15 mw-200">
-                                <option value="Order Confirmed" <% if (order.status === 'Order Confirmed') { %> selected <% } %>>Order Confirmed</option>
-                                <option value="Out For Delivery" <% if (order.status === 'Out For Delivery') { %> selected <% } %>>Out For Delivery</option>
-                                <option value="Delivered" <% if (order.status === 'Delivered') { %> selected <% } %>>Delivered</option>
-                                <option value="Pending" <% if (order.status === 'Pending') { %> selected <% } %>>Pending</option>
-                                <option value="Shipped" <% if (order.status === 'Shipped') { %> selected <% } %>>Shipped</option>
-                                <option value="Cancelled" style="color: red;" <% if (order.status === 'Cancelled') { %> selected <% } %>>Cancelled</option>
-                            </select>
-                            <a class="btn btn-primary" href="#" onclick="saveOrderStatus(`<%=order._id%>`)">Save</a>
-                            <% if (order.status === 'Return Requested') { %>
-                                <a href="/admin/refundOrder?orderId=<%= order._id %>&status=Return Successful" class="p-2 btn btn-primary">Proceed Return</a>
-                            <% } else if (order.status === 'Return Successfull') { %>
-                                <span class="badge rounded-pill alert-success text-success">Order Returned</span>
-                           
-                            <% } else { %>
-                                <span class="badge rounded-pill alert-danger text-danger"></span>
-                            <% } %>
-                            
+                      <% if (order.refundStatus !== undefined) { %>
+                        <label for="refundStatusDropdown" class="form-label mt-3">Refund Status</label>
+                        <select id="refundStatusDropdown" class="form-select d-inline-block mb-lg-0 mb-15 mw-200">
+                          <option value="none" <%= order.refundStatus === 'none' ? 'selected' : '' %>>None</option>
+                          <option value="requested" <%= order.refundStatus === 'requested' ? 'selected' : '' %>>Requested</option>
+                          <option value="approved" <%= order.refundStatus === 'approved' ? 'selected' : '' %>>Approved</option>
+                        </select>
+                      
+                        <button class="btn btn-success" onclick="saveRefundStatus('<%= order._id %>')">Update Refund</button>
+                   
+                              <script>
+                                function saveRefundStatus(orderId) {
+                                
+                                  const selectedStatus = document.getElementById("refundStatusDropdown").value;
+                                  console.log(selectedStatus)
                               
-                        
-                        
-                    </div>
-                    
-                    <script>
-                        function saveOrderStatus(orderId) {
-                            const dropdown = document.getElementById("orderStatusDropdown");
-                            const selectedStatus = dropdown.options[dropdown.selectedIndex].value;
-                    
-                            // Redirect to the selected route
-                            window.location.href = `/admin/orderstatus?orderId=${orderId}&status=${selectedStatus}&orderDetails=true`;
-                        }
-                    </script>
+                                  fetch('/admin/orderstatus', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ orderId, status: selectedStatus })
+                                  })
+                                  .then(response => {
+                                    if (!response.ok) throw new Error('Status update failed');
+                                    return response.json();
+                                  })
+                                  .then(data => {
+                                    Swal.fire({
+                                      icon: 'success',
+                                      title: 'Order Status Updated',
+                                      text: `Order status changed to ${data.updatedStatus}`,
+                                      confirmButtonColor: '#3085d6',
+                                      confirmButtonText: 'OK'
+                                    }).then(() => {
+                                      location.reload(); // optional: reload to reflect status update
+                                    });
+                                  })
+                                  .catch(error => {
+                                    console.error(error);
+                                    Swal.fire({
+                                      icon: 'error',
+                                      title: 'Update Failed',
+                                      text: 'There was an error updating the order status. Please try again.',
+                                      confirmButtonColor: '#d33',
+                                    });
+                                  });
+                                }
+                              </script>
+                              
+                              
                     
             </div>
         </header>
@@ -119,13 +138,13 @@
                             <div class="text">
                                 <h6 class="mb-1">Deliver to</h6>
                                 <p class="mb-1">
-                                    Event Date: <%= order.address.eventDate %><br>
-                Event Type: <%= order.address.eventType %><br>
-                Guest Count: <%= order.address.guestCount %><br>
-                Event Place: <%= order.address.eventplace %><br>
-                Event Time: <%= order.address.eventTime %><br>
-                District: <%= order.address.eventDistrict %><br>
-                Pincode: <%= order.address.eventPincode %>
+                                    Event Date: <%= order.booking.eventDate %><br>
+                Event Type: <%= order.booking.eventType %><br>
+                Guest Count: <%= order.booking.guestCount %><br>
+                Event Place: <%= order.booking.eventPlace %><br>
+                Event Time: <%= order.booking.eventTime %><br>
+                District: <%= order.booking.eventDistrict %><br>
+                Pincode: <%= order.booking.eventPincode %>
                                 </p>
                                 <a href="#">View profile</a>
                             </div>
@@ -138,76 +157,80 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th width="40%">Product</th>
-                                        <th width="20%">Unit Price</th>
-                                        <th width="20%">Quantity</th>
-                                        <th width="20%" class="text-end">Total</th>
+                                      <th width="30%">Product</th>
+                                      <th width="15%">Unit Price</th>
+                                      <th width="10%">Quantity</th>
+                                      <th width="15%">Item Status</th>
+                                      <th width="30%">Refund Status</th>
+                                      <th width="15%" class="text-end">Total</th>
+                              
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <% let subtotal=0; order.items.forEach(function(item) { let
-                                        total=item.product.discount_price * item.quantity; subtotal +=total; %>
-                                        <tr>
-                                            <td>
-                                                <a class="itemside" href="#">
-                                                    <div class="left">
-                                                        <img src="/admin-assets/imgs/productIMG/<%=item.product.item_image[0]%>"
-                                                            width="40" height="40" class="img-xs" alt="Item">
-                                                    </div>
-                                                    <div class="info">
-                                                        <%=item.product.name %>
-                                                    </div>
-                                                </a>
-                                            </td>
-                                            <td>
-                                                ₹<%=item.product.discount_price %>
-                                            </td>
-                                            <td>
-                                                <%=item.quantity %>
-                                            </td>
-                                            <td class="text-end">
-                                                ₹<%= total %>
-                                            </td>
-                                        </tr>
-                                        <% }) %>
-                                            <tr>
-                                                <td colspan="4">
-                                                    <article class="float-end">
-                                                        <dl class="dlist">
-                                                            <dt>Subtotal:</dt>
-                                                            <dd>₹<%= subtotal %>
-                                                            </dd>
-                                                        </dl>
-                                                        <dl class="dlist">
-                                                            <dt>Shipping cost:</dt>
-                                                            <dd>₹0.00</dd>
-                                                        </dl>
-                                                        <dl class="dlist">
-                                                            <dt>Grand total:</dt>
-                                                            <dd> <b class="h5">₹<%= subtotal %></b> </dd>
-                                                        </dl>
-                                                        <dl class="dlist">
-                                                            <dt>Status:</dt>
-                                                            <dd>
-                                                                <%=order.status %>
-                                                            </dd>
-                                                            <dt>Status:</dt>
-                                                            <dd>
-                                                                <%= order.status %>
-                                                            </dd>
+                                <% let subtotal = 0; %>
+                                <% order.items.forEach(function(item) { %>
+                                  <% if (item.product) { %>
+                                    <% let total = item.product.discount_price * item.quantity; subtotal += total; %>
+                                    <tr>
+                                      <td>
+                                        <a class="itemside" href="#">
+                                          <div class="left">
+                                            <img src="/admin-assets/imgs/productIMG/<%= item.product.item_image[0] %>" class="img-sm" alt="Product image">
+                                          </div>
+                                          <div class="info">
+                                            <h6 class="mb-0"><%= item.product.item_name %></h6>
+                                          </div>
+                                        </a>
+                                      </td>
+                                      <td><%= item.quantity %></td>
+                                      <td><%= item.product.discount_price %></td>
+                                      <td>
+                                       <%=item.status%>
+                                      </td>
+                                      <td>
+                                        <div class="input-group input-group-sm">
+                                          <select class="form-select item-status-dropdown" data-order-id="<%= order._id%>" data-item-id="<%= item._id %>">
+                                            <option value="none" <%= item.refundStatus === 'none' ? 'selected' : '' %>>None</option>
+                                            <option value="requested" <%= item.refundStatus === 'requested' ? 'selected' : '' %>>Requested</option>
+                                            <option value="approved" <%= item.refundStatus === 'approved' ? 'selected' : '' %>>Approved</option>
+                                          </select>
+                                          <button class="btn btn-outline-success" onclick="updateItemRefundStatus('<%= order._id %>', '<%= item._id %>')">Save</button>
+                                        </div>
+                                      </td>
+                                      
+                                      
 
-                                                            
+                                      <td><%= total %></td>
+                                    </tr>
+                                  <% } else { %>
+                                    <tr>
+                                      <td colspan="4" class="text-danger">Product not found (may have been deleted)</td>
+                                    </tr>
+                                  <% } %>
+                                <% }); %>
+                                
+<tr>
+  <td colspan="4">
+    <article class="float-end">
+      <dl class="dlist">
+        <dt>Subtotal:</dt>
+        <dd>₹<%= subtotal %></dd>
+      </dl>
+      <dl class="dlist">
+        <dt>Shipping cost:</dt>
+        <dd>₹0.00</dd>
+      </dl>
+      <dl class="dlist">
+        <dt>Grand total:</dt>
+        <dd><b class="h5">₹<%= subtotal %></b></dd>
+      </dl>
+      <dl class="dlist">
+        <dt>Status:</dt>
+        <dd><%= order.status %></dd>
+      </dl>
+    </article>
+  </td>
+</tr>
 
-                                                                    <dd>
-                                                                        <span
-                                                                            class="badge rounded-pill alert-success text-success">Payment
-                                                                            done</span>
-                                                                    </dd>
-                                                        </dl>
-                                                    </article>
-                                                </td>
-                                            </tr> 
-                                </tbody>
                             </table>
                         </div> <!-- table-responsive// -->
                     </div>
@@ -224,3 +247,38 @@
       <% } %>
 
 
+      <script>
+        function updateItemRefundStatus(orderId, itemId) {
+          const select = document.querySelector(`select[data-order-id="${orderId}"][data-item-id="${itemId}"]`);
+          const status = select.value;
+      
+          fetch('/admin/update-item-status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orderId, itemId, status })
+          })
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to update');
+            return res.json();
+          })
+          .then(data => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Status Updated',
+              text: `Item Refund status changed to "${data.updatedStatus}"`,
+              confirmButtonColor: '#3085d6'
+            });
+          })
+          .catch(err => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Update Failed',
+              text: 'Something went wrong while updating item status.',
+              confirmButtonColor: '#d33'
+            });
+          });
+        }
+      </script>
+      

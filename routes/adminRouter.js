@@ -8,7 +8,8 @@ const subcategoryController = require('../controller/subcategoryController')
 const productController = require('../controller/productController');
 const multer= require('../middlewares/multer');
 const adminOrderController = require('../controller/adminOrderController')
-const adminEventControlller = require('../controller/adminEventController')
+const adminEventControlller = require('../controller/adminEventController');
+const adminCouponController = require('../controller/adminCouponController')
 
 
 //Setting layout for adminside
@@ -70,12 +71,35 @@ router.get("/removeImage",adminAuth.islogin,productController.removeImage)
 //ALL ORDERS
 router.get('/allOrder',adminAuth.islogin,adminOrderController.listUserOrders)
 router.get('/orderDetails',adminAuth.islogin,adminOrderController.listOrderDetails)
-
+router.post('/orderstatus',adminAuth.islogin,adminOrderController.orderStatus)
+router.post('/update-item-status',adminAuth.islogin,adminOrderController.itemStatus)
 
 //ALL EVENTS
 router.get('/events',adminAuth.islogin,adminEventControlller.listEvents)
 router.get('/events/:id',adminAuth.islogin ,adminEventControlller.viewBookingDetails)
 
+
+//Notifications if a user request for refund
+
+router.get('/notifications',adminAuth.islogin,adminController.viewNotifications);
+router.post('/notifications/markRead',adminAuth.islogin,adminController.markAllAsRead);
+router.get('/notifications/count',adminAuth.islogin,adminController.getUnreadCount)
+
+
+//COUPONS
+
+router.get('/coupons',adminAuth.islogin,adminCouponController.getCoupons);
+router.get('/addCoupon',adminAuth.islogin,adminCouponController.addCoupon);
+router.post('/saveCoupon',adminAuth.islogin,adminCouponController.saveCoupon);
+router.post('/coupon/delete/:id',adminAuth.islogin,adminCouponController.deleteCoupon);
+
+
+//OFFERS
+
+router.get('/offers',adminAuth.islogin,adminCouponController.getOffers);
+router.get('/addOffer',adminAuth.islogin,adminCouponController.addOffer );
+router.post('/saveOffer',adminAuth.islogin,adminCouponController.saveOffer)
+router.post('/offer/delete/:id',adminAuth.islogin,adminCouponController.deleteOffer)
 
 
       //blocking item

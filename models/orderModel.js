@@ -38,7 +38,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled','requested'],
+    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled','requested','approved'],
     default: 'pending',
   },
   
@@ -79,7 +79,7 @@ const orderSchema = new mongoose.Schema({
       refundStatus:{type:String,enum:['none','requested','approved','rejected'],default:'none'}
 
      
-    },
+    },  
   ]
 });
 

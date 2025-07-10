@@ -8,7 +8,7 @@
 const listEvents = async (req, res) => {
    try {
      const page = parseInt(req.query.page) || 1;
-     const limit = 10;
+     const limit = 8;
      const skip = (page - 1) * limit;
  
      const totalBookings = await Booking.countDocuments();
@@ -19,6 +19,8 @@ const listEvents = async (req, res) => {
        .sort({ createdAt: -1 })
        .skip(skip)
        .limit(limit);
+       console.log('this is the bookking tab')
+       console.log(bookings)
  
      res.render('admin/events/events', {
        bookings,

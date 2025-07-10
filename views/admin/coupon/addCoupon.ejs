@@ -1,0 +1,33 @@
+<h3>Add Coupon</h3>
+
+<form method="POST" action="/admin/saveCoupon" onsubmit="console.log('Submitting...')">
+    <div class="mb-2">
+    <label>Coupon Code:</label>
+    <input type="text" name="code" class="form-control" required>
+  </div>
+
+  <div class="mb-2">
+    <label>Discount Type:</label>
+    <select name="discountType" class="form-control">
+      <option value="percentage">Percentage</option>
+      <option value="amount">Flat Amount</option>
+    </select>
+  </div>
+
+  <div class="mb-2">
+    <label>Discount Value:</label>
+    <input type="number" name="discountValue" class="form-control" required>
+  </div>
+
+  <div class="mb-2">
+    <label>Minimum Order Amount:</label>
+    <input type="number" name="minOrderAmount" class="form-control">
+  </div>
+
+  <div class="mb-2">
+    <label>Expiry Date:</label>
+    <input type="date" name="expiryDate" class="form-control" required>
+  </div>
+
+  <button type="submit" class="btn btn-success mt-2">Add Coupon</button>
+</form>

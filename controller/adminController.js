@@ -3,6 +3,8 @@ const User = require("../models/userSchema");
 
 const session = require("express-session");
 const { loadHomepage } = require("./userController");
+const Notification = require('../models/notificationModel');
+
 
 
 
@@ -150,6 +152,30 @@ const adminLogout = async (req, res) => {
 
 
 
+const viewNotifications = async (req, res) => {
+  const notifications = await Notification.find().sort({ createdAt: -1 });
+
+  res.render('admin/notification/notifications', {
+    notifications,
+    layout: 'layouts/admin',
+    title: 'Notifications'
+  });
+};
+
+const markAllAsRead = async (req, res) => {
+  await Notification.updateMany({ isRead: false }, { isRead: true });
+  res.redirect('/admin/notifications');
+};
+
+const getUnreadCount = async (req, res) => {
+  const count = await Notification.countDocuments({ isRead: false });
+  res.json({ count });
+};
+
+
+
+
+
 
 module.exports = {
   adminLogin ,
@@ -158,5 +184,9 @@ module.exports = {
   loadHome,
   loadUserpage,
   listUser,
+  viewNotifications,
+  markAllAsRead,
+  getUnreadCount,
+
   
 };

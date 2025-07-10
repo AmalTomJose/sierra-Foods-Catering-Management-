@@ -1,10 +1,12 @@
 
 <div class="container mt-5">
   <h2 class="mb-4">All Bookings</h2>
+  
 
   <% if (bookings.length === 0) { %>
     <div class="alert alert-info">No bookings found.</div>
   <% } else { %>
+
     <div class="table-responsive">
       <table class="table table-bordered table-hover">
         <thead class="table-dark">
@@ -22,7 +24,16 @@
           <% bookings.forEach((booking, index) => { %>
             <tr>
               <td><%= (currentPage - 1) * 10 + index + 1 %></td>
-              <td><%= booking.user.name %><br><small><%= booking.user.email %></small></td>
+        
+              <td>
+                <% if (booking.user) { %>
+                  <%= booking.user.firstname %><br>
+                  <small><%= booking.user.email %></small>
+                <% } else { %>
+                  <span class="text-danger">User Deleted</span>
+                <% } %>
+              </td>
+        
               <td><%= booking.eventType %></td>
               <td><%= booking.eventDate.toDateString() %></td>
               <td><%= booking.guestCount %></td>
@@ -35,6 +46,7 @@
             </tr>
           <% }) %>
         </tbody>
+          
       </table>
     </div>
 

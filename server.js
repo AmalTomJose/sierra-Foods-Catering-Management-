@@ -1,7 +1,8 @@
 require('dotenv').config();
 require('./config/passport')
 const express = require('express');
-const nocache = require('nocache')
+const nocache = require('nocache');
+const http = require('http');
 const app = express();
 const path = require('path');
 const db = require('./config/db');
@@ -14,6 +15,30 @@ const passport = require('passport');
 const authRoute = require('./routes/authRoute');
 const flash = require('connect-flash');
 const userState = require('./middlewares/userState')
+
+// const socketIo = require('socket.io');
+
+const server = http.createServer(app);
+
+
+const { Server } = require('socket.io');
+const io = new Server(server); // <-- pass HTTP server to socket.io
+
+
+app.set('io',io);
+
+
+//Handle socket connection 
+io.on('connection',(socket)=>{
+  console.log('Socket Connected:',socket.id);
+
+  //admin connects put in admin Room
+  socket.on('registerAdmin',()=>{
+    socket.join('adminRoom');
+    console.log('Admin Joined adminRoom:',socket.id);
+  })
+})
+
 
 db();
 
@@ -61,6 +86,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 // to get value from form
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }))
 
 app.use(nocache());
 
@@ -82,7 +108,7 @@ app.use((req, res, next) => {
 });
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 

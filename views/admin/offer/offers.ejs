@@ -1,0 +1,56 @@
+<h3>Offer List</h3>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Type</th>
+      <th>Value</th>
+      <th>Applies To</th>
+      <th>Category</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% offers.forEach(offer => { %>
+      <tr>
+        <td><%= offer.title %></td>
+        <td><%= offer.discountType %></td>
+        <td><%= offer.discountValue %></td>
+        <td><%= offer.applicableTo %></td>
+        <td><%= offer.category ? offer.category.cat_name : '-' %></td>
+        <td><%= new Date(offer.startDate).toLocaleDateString() %></td>
+        <td><%= new Date(offer.endDate).toLocaleDateString() %></td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="confirmOfferDelete('<%= offer._id %>')">Delete</button>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  function confirmOfferDelete(offerId) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will permanently delete the offer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/offer/delete/${offerId}`;
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  }
+</script>

@@ -10,6 +10,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Wallet = require('../models/walletModel');
 const { changePasswordFromProfile } = require('./addressController');
+const Notification = require('../models/notificationModel')
 
 
 
@@ -53,7 +54,7 @@ const loadCheckout = async(req,res)=>{
             
             const shipping = 0; // Or any logic you want
             const subtotalWithShipping = subtotal + shipping;
-            if(subtotalWithShipping >100000){
+            if(subtotalWithShipping >50000){
               req.session.subtotalwithshipping=50000
             }
             else{
@@ -83,7 +84,7 @@ const loadCheckout = async(req,res)=>{
 }
 
 
-const checkOutPost = async (req, res) => {
+const   checkOutPost = async (req, res) => {
   try {
     const userId = req.session.user_id;
     const { address, paymentMethod } = req.body;
@@ -132,6 +133,7 @@ const checkOutPost = async (req, res) => {
     }
 
     const booking = await Booking.findOne({ user: userId, status: 'active' });
+
     if (!booking) return res.status(400).json({ success: false, error: 'Booking not found.' });
 
     const newOrder = new Order({
@@ -447,10 +449,11 @@ const updateBooking = async (req, res) => {
   
     if (generatedSignature === razorpay_signature) {
       // Create and save order
+      console.log('Hii ,Hello')
       const order = new Order({
         user: userId,
         booking: booking._id,
-        deleveryDate:booking.eventDate,
+        deliveryDate:booking.eventDate,
        status:'confirmed',
         totalAmount,
         paymentMethod,
@@ -528,6 +531,24 @@ const updateBooking = async (req, res) => {
         item.status = 'cancelled';
         item.refundStatus = 'requested';
         await order.save();
+
+
+        const message = `Cancel Request for item ${item.product.item_name}`
+        await Notification.create({
+          type:'cancelRequest',
+          orderId:orderId,
+          message,
+        })
+
+        //logic getting admin socket.io if a user request refund
+
+        const io = req.app.get('io');
+        io.to('adminRoom').emit('cancelRequest',{
+          orderId,
+          itemId,
+          message:` cancel request received for  item ${item.product.item_name}`
+        })
+
         return res.json({ success: true, message: 'Cancellation submitted for admin approval.' });
       }
   
@@ -543,7 +564,7 @@ const updateBooking = async (req, res) => {
     const { orderId } = req.params;
   
     try {
-      const order = await Order.findById(orderId);
+      const order = await Order.findById(orderId).populate('items.product');
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
   
       const today = new Date();
@@ -554,25 +575,41 @@ const updateBooking = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Cannot cancel within 2 days of delivery' });
       }
   
-      // Cancel all items
+      // Cancel each item
       order.items.forEach(item => {
         item.status = 'cancelled';
         item.refundStatus = (order.paymentMethod === 'cashondelivery') ? 'none' : 'requested';
       });
   
-     order.status='cancelled'
-  
-      // Set refund request for online or wallet payments 
-      if (order.paymentMethod === 'online' || order.paymentMethod === 'wallet') {
-        order.refundStatus = 'requested';
-     
-      } else {
-        order.refundStatus = 'none';
-        
-      }
+      order.status = 'cancelled';
+      order.refundStatus = (order.paymentMethod === 'online' || order.paymentMethod === 'wallet') 
+        ? 'requested' 
+        : 'none';
   
       await order.save();
-      res.json({ success: true, message: 'Order cancelled successfully.' });
+  
+      // Notify admin only if refund is requested
+      if (order.refundStatus === 'requested') {
+        const io = req.app.get('io');
+  
+        // Create a single admin notification
+        await Notification.create({
+          type: 'cancelRequest',
+          orderId: order._id,
+          message: `User requested cancellation and refund for Order #${order._id}`
+        });
+  
+        // Emit socket event
+        io.to('adminRoom').emit('cancelRequest', {
+          orderId: order._id,
+          message: `Cancel request received for Order #${order._id}`
+        });
+  
+        return res.json({ success: true, message: 'Cancellation submitted for admin approval.' });
+      }
+  
+      // If payment method is COD and no refund needed
+      return res.json({ success: true, message: 'Order cancelled successfully (no refund needed).' });
   
     } catch (error) {
       console.error(error);
@@ -580,7 +617,6 @@ const updateBooking = async (req, res) => {
     }
   };
   
-
 module.exports = {
     loadCheckout,
     checkOutPost,

@@ -81,12 +81,13 @@ const  loadeditsubCategory = async(req,res)=>{
 const editsubCategory = async(req,res)=>{
     try{
         let id = req.body.category_id;
-      let subcategoryname =req.body.subcategoryname;
+      let subcategoryname =req.body.subcategoryname.trim().toLowerCase(); ;
   
       const existingCategory = await Subcategory.findOne({
           subcat_name: { $regex: new RegExp(`^${subcategoryname}$`, 'i') }
        
         });
+        
 
         if(existingCategory){
           return res.render("admin/subcategory/editsubCategory",{

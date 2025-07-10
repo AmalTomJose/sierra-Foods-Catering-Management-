@@ -2,7 +2,10 @@ const Category = require('../models/categoryModels');
 const SubCategory = require('../models/subcategoryModel');
 const Product = require('../models/itemModel');
 const sharp = require('sharp');
+const fs = require('fs').promises;
+
 const path = require('path');
+
 // const itemModel = require('../models/itemModel');
 const expressEjsLayouts = require('express-ejs-layouts');
 
@@ -12,8 +15,9 @@ const loadProducts  = async(req,res)=>{
   try{
     const products = await Product.find();
     const categories = await Category.find()
+    const successMessage = req.flash('success');
    
-    res.render("admin/product/products", { products})
+    res.render("admin/product/products", { products,successMessage})
   }
   catch(error)
   {
@@ -110,133 +114,170 @@ const loadAddproduct = async (req,res)=>{
         console.log(error.message);
     }
 }
-   
 const addProduct = async (req, res) => {
   try {
-      const imageData = []
-      const imageFiles = req.files
+    const imageData = [];
 
-      for (const file of imageFiles) {
-          console.log(file, "File received")
+    for (const file of req.files) {
+      const randomInteger = Math.floor(Math.random() * 20000001);
+      const imgFileName = "cropped" + randomInteger + ".jpg";
+      const imageDirectory = path.join('public', 'admin-assets', 'imgs', 'productIMG');
+      const imagePath = path.join(imageDirectory, imgFileName);
 
-          const randomInteger = Math.floor(Math.random() * 20000001)
-          const imageDirectory = path.join('public', 'admin-assets', 'imgs', 'productIMG')
-          const imgFileName = "cropped" + randomInteger + ".jpg"
-          const imagePath = path.join(imageDirectory, imgFileName)
+      await sharp(file.path)
+        .resize({ width: 300, height: 300, fit: 'cover' })
+        .toFile(imagePath);
 
-          console.log(imagePath, "Image path");
-          
+      imageData.push(imgFileName);
+    }
 
-          const croppedImage = await sharp(file.path)
-  .resize({
-      width: 300, 
-      height: 300, 
-      fit: "cover",
-  })
-  .toFile(imagePath);
+    const { name, price, discountprice, description, categoryid, subcategoryid } = req.body;
 
-if (croppedImage) {
-  imageData.push(imgFileName);
-}
+    const newProduct = new Product({
+      item_name: name,
+      item_price: price,
+      discount_price: discountprice,
+      item_description: description,
+      category: categoryid,
+      subcategory: subcategoryid,
+      item_image: imageData,
+    });
 
-      }
-
-      const { name, price, discountprice, description,categoryid, subcategoryid } = req.body;
-     
-
-      const addProducts = new Product({
-        item_name:name,
-             item_description: description,
-             category: categoryid,
-             subcategory: subcategoryid,
-             item_image: imageData,
-             item_price:price,
-             discount_price:discountprice
-      });
-      console.log(addProducts)
-
-      await addProducts.save()
-      res.redirect("/admin/products")
+    await newProduct.save();
+    req.flash('success','Sucessfully added')
+    res.redirect('/admin/products');
   } catch (error) {
-      console.log(error.message)
-      res.status(500).send("Error while adding product")
+    console.error('Error adding product:', error.message);
+    res.status(500).send('Error while adding product');
   }
 };
+
 const storeEditProduct = async (req, res) => {
   try {
-    console.log(req.body);
-    const product = await Product.findOne({ _id: req.body.product_id });
-
-    // Ensure product.image is an array, or initialize it as an empty array if not
+    const productId = req.body.product_id;
+    const product = await Product.findById(productId);
     let images = Array.isArray(product.item_image) ? product.item_image : [];
 
-    let deleteData = [];
+    if (req.body.deleteImages) {
+      const deleteImages = Array.isArray(req.body.deleteImages)
+        ? req.body.deleteImages
+        : [req.body.deleteImages];
 
-    const {
-      name,
-      categoryid,
-      subcategoryid,
-      price,
-      discountprice, // Fix typo here
-      description
-    } = req.body;
-
-    const sizedata = req.body.sizes;
-
-    // Check if deletecheckbox exists and is truthy before accessing it
-    if (req.body.deletecheckbox) {
-      deleteData = req.body.deletecheckbox;
-      deleteData = deleteData.flat().map(x => Number(x)); // Flatten and convert to numbers
-      images = images.filter((img, idx) => !deleteData.includes(idx));
-    }
-
-    // If new files are uploaded, process them
-    if (req.files.length != 0) {
-      for (const file of req.files) {
-        console.log(file, "File received");
-
-        const randomInteger = Math.floor(Math.random() * 20000001);
-        const imageDirectory = path.join('public', 'admin-assets', 'imgs', 'productIMG');
-        const imgFileName = "cropped" + randomInteger + ".jpg";
-        const imagePath = path.join(imageDirectory, imgFileName);
-
-        console.log(imagePath, "Image path");
-
-        const croppedImage = await sharp(file.path)
-          .resize({
-            width: 300, 
-            height: 300, 
-            fit: "cover",
-          })
-          .toFile(imagePath);
-
-        if (croppedImage) {
-          images.push(imgFileName);
-        }
+      for (const filename of deleteImages) {
+        const imagePath = path.join('public', 'admin-assets', 'imgs', 'productIMG', filename);
+        await fs.unlink(imagePath);
+        images = images.filter(img => img !== filename);
       }
     }
 
-    await Product.findByIdAndUpdate(
-      { _id: req.body.product_id },
-      {
-        $set: {
-          item_name:name,
-          category: categoryid,  // Corrected typo here
-          subcategory: subcategoryid,  // Corrected typo here
-          item_price:price,
-          discount_price: discountprice, // Corrected typo here
-          item_description:description,
-          item_image: images
-        },
-      }
-    );
+    for (const file of req.files) {
+      const randomInteger = Math.floor(Math.random() * 20000001);
+      const imgFileName = "cropped" + randomInteger + ".jpg";
+      const imagePath = path.join('public', 'admin-assets', 'imgs', 'productIMG', imgFileName);
 
-    res.redirect("/admin/products");
+      await sharp(file.path)
+        .resize({ width: 300, height: 300, fit: 'cover' })
+        .toFile(imagePath);
 
+      images.push(imgFileName);
+    }
+
+    const { name, price, discountprice, description, categoryid, subcategoryid } = req.body;
+
+    await Product.findByIdAndUpdate(productId, {
+      $set: {
+        item_name: name,
+        item_price: price,
+        discount_price: discountprice,
+        item_description: description,
+        category: categoryid,
+        subcategory: subcategoryid,
+        item_image: images,
+      },
+    });
+
+    res.redirect('/admin/products');
   } catch (error) {
-    console.log(error.message);
+    console.error('Error updating product:', error.message);
+    res.status(500).send('Error while updating product');
   }
 };
+
+// const   storeEditProduct = async (req, res) => {
+//   try {
+//     console.log(req.body);
+//     const product = await Product.findOne({ _id: req.body.product_id });
+
+//     // Ensure product.image is an array, or initialize it as an empty array if not
+//     let images = Array.isArray(product.item_image) ? product.item_image : [];
+
+//     let deleteData = [];
+
+//     const {
+//       name,
+//       categoryid,
+//       subcategoryid,
+//       price,
+//       discountprice, // Fix typo here
+//       description
+//     } = req.body;
+
+//     const sizedata = req.body.sizes;
+
+//     // Check if deletecheckbox exists and is truthy before accessing it
+//     if (req.body.deletecheckbox) {
+//       deleteData = req.body.deletecheckbox;
+//       deleteData = deleteData.flat().map(x => Number(x)); // Flatten and convert to numbers
+//       images = images.filter((img, idx) => !deleteData.includes(idx));
+//     }
+
+//     // If new files are uploaded, process them
+//     if (req.files.length != 0) {
+//       for (const file of req.files) {
+//         console.log(file, "File received");
+
+//         const randomInteger = Math.floor(Math.random() * 20000001);
+//         const imageDirectory = path.join('public', 'admin-assets', 'imgs', 'productIMG');
+//         const imgFileName = "cropped" + randomInteger + ".jpg";
+//         const imagePath = path.join(imageDirectory, imgFileName);
+
+//         console.log(imagePath, "Image path");
+
+//         const croppedImage = await sharp(file.path)
+//           .resize({
+//             width: 300, 
+//             height: 300, 
+//             fit: "cover",
+//           })
+//           .toFile(imagePath);
+
+//         if (croppedImage) {
+//           images.push(imgFileName);
+//         }
+//       }
+//     }
+
+//     await Product.findByIdAndUpdate(
+//       { _id: req.body.product_id },
+//       {
+//         $set: {
+//           item_name:name,
+//           category: categoryid,  // Corrected typo here
+//           subcategory: subcategoryid,  // Corrected typo here
+//           item_price:price,
+//           discount_price: discountprice, // Corrected typo here
+//           item_description:description,
+//           item_image: images
+//         },
+//       }
+//     );
+
+//     res.redirect("/admin/products");
+
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// };
 
 
 
@@ -289,20 +330,38 @@ const storeEditProduct = async (req, res) => {
 // };
 
 
+// const removeImage = async (req, res) => {
+//   try {
+//       const productId = req.query.productId;
+//       const filename = req.query.filename;
+//       await Product.findByIdAndUpdate(productId, {
+//           $pull: { item_image: req.query.filename }
+//       });
+//       const imagePath = path.join('public', 'admin-assets', 'imgs', 'productIMG', filename);
+//       await fs.unlink(imagePath);
+//       console.log('Image removed successfully');
+//       res.json({ success: true, message: 'Image removed successfully' });
+//   } catch (error) {
+//       console.error(error.message);
+//       res.status(500).json({ success: false, message: 'Failed to remove image' });
+//   }
+// };
+
 const removeImage = async (req, res) => {
   try {
-      const productId = req.query.productId;
-      const filename = req.query.filename;
-      await Product.findByIdAndUpdate(productId, {
-          $pull: { item_image: req.query.filename }
-      });
-      const imagePath = path.join('public', 'admin-assets', 'imgs', 'productIMG', filename);
-      await fs.unlink(imagePath);
-      console.log('Image removed successfully');
-      res.json({ success: true, message: 'Image removed successfully' });
+    const { productId, filename } = req.query;
+
+    await Product.findByIdAndUpdate(productId, {
+      $pull: { item_image: filename },
+    });
+
+    const imagePath = path.join('public', 'admin-assets', 'imgs', 'productIMG', filename);
+    await fs.unlink(imagePath);
+
+    res.json({ success: true, message: 'Image removed successfully' });
   } catch (error) {
-      console.error(error.message);
-      res.status(500).json({ success: false, message: 'Failed to remove image' });
+    console.error('Image removal failed:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to remove image' });
   }
 };
 

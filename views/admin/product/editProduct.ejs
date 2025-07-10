@@ -42,7 +42,7 @@
                         <div>
                             <a href='/admin/prdouctList'> <button
                                     class="btn btn-light rounded font-sm mr-5 text-body hover-up">cancel</button></a>
-                            <input type="submit" class="btn btn-md rounded font-sm hover-up" value="Upload">
+                                    <input type="submit" class="btn btn-md rounded font-sm hover-up" id="uploadButton" value="Upload" disabled>
 
                         </div>
                     </div>
@@ -444,6 +444,40 @@
             return true;
         }
     </script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const fileInput = document.getElementById("files");
+      const uploadButton = document.getElementById("uploadButton");
+  
+      fileInput.addEventListener("change", function () {
+        if (fileInput.files.length > 0) {
+          uploadButton.disabled = false;
+        } else {
+          uploadButton.disabled = true;
+        }
+      });
+    });
+  </script>
+  <script>
+    function removeImage(productId, filename, element) {
+      $.ajax({
+        url: `/admin/remove-image?productId=${productId}&filename=${filename}`,
+        type: 'DELETE',
+        success: function (response) {
+          if (response.success) {
+            $(element).closest('.image-container').remove();
+          }
+        },
+        error: function (err) {
+          console.error('Image deletion error:', err);
+        }
+      });
+    }
+  </script>
+  
+
 
 
 

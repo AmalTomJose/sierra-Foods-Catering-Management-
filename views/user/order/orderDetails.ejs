@@ -83,7 +83,7 @@
                   <td>
                     <a class="d-flex align-items-center" href="/product/<%= item.product._id %>">
                       <img src="/admin-assets/imgs/productIMG/<%= item.product.item_image[0] %>" width="40" height="40" class="me-2">
-                      <%= item.product.name %>
+                      <%= item.product.item_name %>
                     </a>
                   </td>
                   <td>₹<%= item.product.discount_price %></td>
@@ -142,9 +142,22 @@
             <% } %>
           </div>
         </div>
+        <% 
+  const isOrderRefundApproved = order.refundStatus === 'approved';
+  const isAnyItemRefundApproved = order.items.some(item => item.refundStatus === 'approved');
+%>
+
+<% if (isOrderRefundApproved || isAnyItemRefundApproved) { %>
+  <div class="alert alert-success text-center mt-4" role="alert">
+    ✅ Admin has approved your refund request. The amount will be processed shortly.
+  </div>
+<% } %>
+
       </div>
     </section>
   </div>
+
+
   
     <script>
       function printContent() {
