@@ -114,11 +114,7 @@
 
 
 
-                                            <div class="col-md-4  mb-3">
-                                                <label class="form-label">Discount Price</label>
-                                                <input type="number" name="discountprice" value="<%= product.discount_price %>" placeholder="Type here" class="form-control" id="product_discount">
-                                                <div class="error-message" style="color: red;" id="product_discount-error"></div>
-                                            </div>
+                                          
                                             
                                         </div>
                                         <div class="row gx-3">
@@ -366,10 +362,7 @@
             const description_input = document.querySelector("textarea[name='description']");
             const product_price_input = document.getElementById("inputprice");
             const product_stock_input = document.getElementById("product_stock");
-            const discount_price_input = document.getElementById("product_discount");
             const product_price_error = document.getElementById("product_price-error");
-            const product_stock_error = document.getElementById("product_stock-error");
-            const discount_price_error = document.getElementById("product_discount-error");
             const product_title_error = document.getElementById("product_title-error");
             const product_category_error = document.getElementById("product_category-error");
             const description_error = document.getElementById("description-error");
@@ -379,8 +372,6 @@
 
             // Convert values to numbers
             const product_price_value = parseFloat(product_price_input.value);
-            const product_stock_value = parseInt(product_stock_input.value);
-            const discount_price_value = parseFloat(discount_price_input.value);
 
             // Check if the product title is empty
             if (product_title_input.value.trim() === "") {
@@ -410,19 +401,6 @@
                 product_price_error.innerHTML = '';
             }
 
-            // Check if the stock is not entered or less than zero
-            if (isNaN(product_stock_value) || product_stock_value < 0) {
-                product_stock_error.innerHTML = 'Please enter a valid stock greater than or equal to zero.';
-            } else {
-                product_stock_error.innerHTML = '';
-            }
-
-            // Check if the discount price is not entered or less than zero
-            if (isNaN(discount_price_value) || discount_price_value < 0) {
-                discount_price_error.innerHTML = 'Please enter a valid discount price greater than or equal to zero.';
-            } else {
-                discount_price_error.innerHTML = '';
-            }
              // Check if no existing and new images are selected
         if (imagesContainer.children.length === 0) {
             product_image_error.innerHTML = 'Please select at least one image.';
@@ -433,8 +411,7 @@
             // If any validation fails, return false
             if (
                 isNaN(product_price_value) || product_price_value <= 0 ||
-                isNaN(product_stock_value) || product_stock_value < 0 ||
-                isNaN(discount_price_value) || discount_price_value < 0 ||
+                
                 imagesContainer.children.length === 0
             ) {
                 return false;

@@ -79,6 +79,7 @@ router.get('/events',adminAuth.islogin,adminEventControlller.listEvents)
 router.get('/events/:id',adminAuth.islogin ,adminEventControlller.viewBookingDetails)
 
 
+
 //Notifications if a user request for refund
 
 router.get('/notifications',adminAuth.islogin,adminController.viewNotifications);

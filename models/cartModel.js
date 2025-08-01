@@ -14,6 +14,10 @@ const cartItemSchema = new Schema({
         type:Number,
         required:true,
         min:100
+    },
+    discountedPrice:{
+        type:Number,
+        default:0
     }
 
 });

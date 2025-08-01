@@ -9,7 +9,8 @@ const addressController = require('../controller/addressController');
 const wishlistController = require('../controller/wishlistController');
 const cartController = require('../controller/cartController');
 const eventController = require('../controller/eventController');
-const orderController = require('../controller/orderController')
+const orderController = require('../controller/orderController');
+const couponController = require('../controller/couponController')
 
 
 
@@ -106,6 +107,10 @@ router.get('/orderSuccess',islogin,orderController.loadOrderSuccess)
 router.get('/orderDetails/:id',islogin,orderController.loadOrderHistory)
 router.post('/cancel-item/:orderId/:itemId', orderController.cancelItem);
 router.post('/cancel-order/:orderId',islogin,orderController.cancelOrder);
+
+
+//coupon
+router.post('/applyCoupon',islogin,couponController.applyCoupon)     
 
 
 

@@ -96,10 +96,28 @@
           SubCategory: <strong><%= product.subcategory?.subcat_name || 'Uncategorized' %></strong>
         </p>
 
-        <h4 class="text-primary mb-3">₹<%= product.item_price %></h4>
-        <% if (product.discount_status) { %>
-          <p class="text-decoration-line-through text-muted">₹<%= product.discount_price %></p>
+        <% if (product.appliedOffer) { %>
+          <div class="p-3 mb-3 bg-light border rounded">
+            <h5 class="text-success mb-1">Special Offer</h5>
+            <p class="mb-1">
+              <% if (product.appliedOffer.discountType === 'percentage') { %>
+                <strong><%= product.appliedOffer.discountValue %>%</strong> off this product!
+              <% } else { %>
+                Save ₹<%= product.appliedOffer.discountValue %> on this product!
+              <% } %>
+            </p>
+            <p class="text-muted small mb-0">
+              Valid until <%= new Date(product.appliedOffer.endDate).toLocaleDateString() %>
+            </p>
+                      </div>
+          <h4 class="mb-3 text-primary">
+            ₹<%= product.offerPrice %> <del class="text-muted small">₹<%= product.item_price %></del>
+          </h4>
+          
+        <% } else { %>
+          <h4 class="text-primary mb-3">₹<%= product.item_price %></h4>
         <% } %>
+        
 
         <div class="product-description">
           <p><%= product.item_description %></p>

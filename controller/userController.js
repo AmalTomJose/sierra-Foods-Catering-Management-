@@ -7,6 +7,10 @@ const Booking = require('../models/bookingModel')
 const Product = require('../models/itemModel');
 const Category = require('../models/categoryModels');
 const { loadProducts } = require('./productController');
+const Offer = require('../models/offerModel')
+
+
+
 
 const securePassword = async (password) => {
   try {
@@ -60,46 +64,130 @@ const loadHomepage = async(req,res)=>{
     }
 }
 
-
-
-const loadProductDetail = async(req,res)=>{
-  try{
+const loadProductDetail = async (req, res) => {
+  try {
     const userId = req.session.user_id;
     const userData = await User.findById(userId);
     const id = req.params.id;
-    const productDetail = await Product.findById(id).populate('category').populate('subcategory');
-    const booking= await Booking.findOne({ user: userId,status:'active' })
-    .sort({ createdAt: -1 }) // Sort by most recent
-    .select("guestCount"); 
-    if(!booking){
-      const qty = 1;
-      return res.render('user/product/singleProduct',{
-        user:userData,
-        product:productDetail,
-        qty,
-        error:'Please Book an Event'
-      })
+
+    const product = await Product.findById(id)
+      .populate('category')
+      .populate('subcategory');
+
+    const booking = await Booking.findOne({ user: userId, status: 'active' })
+      .sort({ createdAt: -1 })
+      .select('guestCount');
+
+    const today = new Date();
+
+    const activeOffers = await Offer.find({
+      isActive: true,
+      startDate: { $lte: today },
+      endDate: { $gte: today },
+    });
+
+    const productOffer = activeOffers.find(o =>
+      o.applicableTo === 'product' &&
+      Array.isArray(o.products) &&
+      o.products.some(pid => pid.toString() === product._id.toString())
+    );
+
+    const categoryOffer = activeOffers.find(o =>
+      o.applicableTo === 'category' &&
+      o.category?.toString() === product.category?._id?.toString()
+    );
+
+    let bestOffer = null;
+    let bestDiscount = 0;
+
+    if (productOffer) {
+      const discount = productOffer.discountType === 'percentage'
+        ? (product.item_price * productOffer.discountValue) / 100
+        : productOffer.discountValue;
+
+      if (discount > bestDiscount) {
+        bestDiscount = discount;
+        bestOffer = productOffer;
+      }
+    }
+
+    if (categoryOffer) {
+      const discount = categoryOffer.discountType === 'percentage'
+        ? (product.item_price * categoryOffer.discountValue) / 100
+        : categoryOffer.discountValue;
+
+      if (discount > bestDiscount) {
+        bestDiscount = discount;
+        bestOffer = categoryOffer;
+      }
+    }
+
+    if (bestOffer) {
+      product.offerPrice = Math.max(product.item_price - bestDiscount, 0);
+      product.appliedOffer = bestOffer;
+    }
+
+    const qty = booking?.guestCount || 1;
+
+    return res.render('user/product/singleProduct', {
+      user: userData,
+      product,
+      qty,
+      error: booking ? null : 'Please Book an Event',
+    });
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+
+// const loadProductDetail = async(req,res)=>{
+//   try{
+//     const userId = req.session.user_id;
+//     const userData = await User.findById(userId);
+//     const id = req.params.id;
+//     const productDetail = await Product.findById(id).populate('category').populate('subcategory');
+
+
+
+
+
+
+
+//     const booking= await Booking.findOne({ user: userId,status:'active' })
+//     .sort({ createdAt: -1 }) // Sort by most recent
+//     .select("guestCount"); 
+//     if(!booking){
+//       const qty = 1;
+//       return res.render('user/product/singleProduct',{
+//         user:userData,
+//         product:productDetail,
+//         qty,
+//         error:'Please Book an Event'
+//       })
   
-    }
-    else{
+//     }
+//     else{
 
-    const qty = booking.guestCount     
-    console.log('The quantity entered by the user while selecting the booking is:',qty)
-      console.log(productDetail)
-    res.render('user/product/singleProduct',{
-      user:userData,
-      product:productDetail,
-      qty
-    })
+//     const qty = booking.guestCount     
+//     console.log('The quantity entered by the user while selecting the booking is:',qty)
+//       console.log(productDetail)
+//     res.render('user/product/singleProduct',{
+//       user:userData,
+//       product:productDetail,
+//       qty
+//     })
 
-    }
+//     }
 
-  }
-  catch(error)
-  {
-    console.log(error.message)
-  }
-}
+//   }
+//   catch(error)
+//   {
+//     console.log(error.message)
+//   }
+// }
 
 
 
@@ -512,6 +600,72 @@ req.flash('success','successfully changed!')
 
 
 
+// const loadShop = async (req, res) => {
+//   try {
+//     const userId = req.session.user_id;
+//     const userData = await User.findById(userId);
+
+//     let { search, category, sort, page } = req.query;
+//     page = parseInt(page) || 1;
+
+//     const perPage = 8;
+
+//     let query = { item_status: true };
+
+//     if (search) {
+//       query.item_name = { $regex: new RegExp(search, 'i') };
+//     }
+
+//     if (category) {
+//       query.category = new mongoose.Types.ObjectId(category);
+//     }
+
+//     let sortOption = { item_price: 1 };
+//     if (sort === 'desc') {
+//       sortOption = { item_price: -1 };
+//     }
+
+//     const productData = await Product.aggregate([
+//       { $match: query },
+//       { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
+//       { $unwind: '$category' },
+//       { $match: { 'category.cat_status': true }},
+//       { $sort: sortOption },
+//       { $skip: (page - 1) * perPage },
+//       { $limit: perPage }
+//     ]);
+
+//     const totalCountResult = await Product.aggregate([
+//       { $match: query },
+//       { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
+//       { $unwind: '$category' },
+//       { $match: { 'category.cat_status': true }},
+//       { $count: 'total' }
+//     ]);
+
+//     const totalProducts = totalCountResult[0]?.total || 0;
+//     const totalPages = Math.ceil(totalProducts / perPage);
+
+//     const categories = await Category.find({ cat_status: true });
+
+//     res.render('user/product/shop', {
+//       products: productData,
+//       user:userData,
+//       categories,
+//       currentPage: page,
+//       totalPages,
+//       sort,
+//       query: req.query
+//     });
+
+//   } catch (error) {
+//     console.log(error.message);
+//     res.status(500).send('Internal Server Error');
+//   }
+// };
+
+
+
 const loadShop = async (req, res) => {
   try {
     const userId = req.session.user_id;
@@ -521,7 +675,6 @@ const loadShop = async (req, res) => {
     page = parseInt(page) || 1;
 
     const perPage = 8;
-
     let query = { item_status: true };
 
     if (search) {
@@ -537,9 +690,25 @@ const loadShop = async (req, res) => {
       sortOption = { item_price: -1 };
     }
 
+    const today = new Date();
+
+    // ✅ Fetch active offers
+    const activeOffers = await Offer.find({
+      isActive: true,
+      startDate: { $lte: today },
+      endDate: { $gte: today }
+    });
+
     const productData = await Product.aggregate([
       { $match: query },
-      { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
       { $unwind: '$category' },
       { $match: { 'category.cat_status': true }},
       { $sort: sortOption },
@@ -547,9 +716,67 @@ const loadShop = async (req, res) => {
       { $limit: perPage }
     ]);
 
+    // ✅ Apply best offer to each product
+    const updatedProducts = productData.map(product => {
+      // Product Offer Match
+      const productOffer = activeOffers.find(o =>
+        o.applicableTo === 'product' &&
+        Array.isArray(o.products) &&
+        o.products.some(pid => pid.toString() === product._id.toString())
+      );
+    
+      console.log('the sample for product offer is :',productOffer)
+      
+      let categoryOffer = activeOffers.find(
+        o => o.applicableTo === 'category' && o.category?.toString() === product.category._id.toString()
+      );
+console.log(categoryOffer)
+      let bestOffer = null;
+      let bestDiscount = 0;
+
+      // Calculate product offer discount
+      if (productOffer) {
+        const discount = productOffer.discountType === 'percentage'
+          ? (product.item_price * productOffer.discountValue) / 100
+          : productOffer.discountValue;
+
+        if (discount > bestDiscount) {
+          bestDiscount = discount;
+          bestOffer = productOffer;
+        }
+      }
+
+      // Calculate category offer discount
+      if (categoryOffer) {
+        const discount = categoryOffer.discountType === 'percentage'
+          ? (product.item_price * categoryOffer.discountValue) / 100
+          : categoryOffer.discountValue;
+
+        if (discount > bestDiscount) {
+          bestDiscount = discount;
+          bestOffer = categoryOffer;
+        }
+      }
+
+      if (bestOffer) {
+        product.offerPrice = Math.max(product.item_price - bestDiscount, 0); // Ensure non-negative
+        product.appliedOffer = bestOffer;
+      }
+      console.log('the final product befoe passing is :',product)
+
+      return product;
+    });
+
     const totalCountResult = await Product.aggregate([
       { $match: query },
-      { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
       { $unwind: '$category' },
       { $match: { 'category.cat_status': true }},
       { $count: 'total' }
@@ -557,12 +784,11 @@ const loadShop = async (req, res) => {
 
     const totalProducts = totalCountResult[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / perPage);
-
     const categories = await Category.find({ cat_status: true });
 
     res.render('user/product/shop', {
-      products: productData,
-      user:userData,
+      products: updatedProducts,
+      user: userData,
       categories,
       currentPage: page,
       totalPages,
@@ -575,6 +801,7 @@ const loadShop = async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 };
+
 
 
 
@@ -633,6 +860,18 @@ console.log(query )
 
     console.log(query)
 
+
+
+    const today = new Date();
+
+    // ✅ Fetch active offers
+    const activeOffers = await Offer.find({
+      isActive: true,
+      startDate: { $lte: today },
+      endDate: { $gte: today }
+    });
+
+
     const productData = await Product.aggregate([
       // Match initial product filters
       { $match: query },
@@ -659,10 +898,65 @@ console.log(query )
       { $skip: (currentPage - 1) * perPage },
       { $limit: perPage }
     ]);
-console.log(productData)
+
+
+
+
+
+    // ✅ Apply best offer to each product
+    const updatedProducts = productData.map(product => {
+      // Product Offer Match
+      const productOffer = activeOffers.find(o =>
+        o.applicableTo === 'product' &&
+        Array.isArray(o.products) &&
+        o.products.some(pid => pid.toString() === product._id.toString())
+      );
+    
+      console.log('the sample for product offer is :',productOffer)
+      
+      let categoryOffer = activeOffers.find(
+        o => o.applicableTo === 'category' && o.category?.toString() === product.category._id.toString()
+      );
+console.log(categoryOffer)
+      let bestOffer = null;
+      let bestDiscount = 0;
+
+      // Calculate product offer discount
+      if (productOffer) {
+        const discount = productOffer.discountType === 'percentage'
+          ? (product.item_price * productOffer.discountValue) / 100
+          : productOffer.discountValue;
+
+        if (discount > bestDiscount) {
+          bestDiscount = discount;
+          bestOffer = productOffer;
+        }
+      }
+
+      // Calculate category offer discount
+      if (categoryOffer) {
+        const discount = categoryOffer.discountType === 'percentage'
+          ? (product.item_price * categoryOffer.discountValue) / 100
+          : categoryOffer.discountValue;
+
+        if (discount > bestDiscount) {
+          bestDiscount = discount;
+          bestOffer = categoryOffer;
+        }
+      }
+
+      if (bestOffer) {
+        product.offerPrice = Math.max(product.item_price - bestDiscount, 0); // Ensure non-negative
+        product.appliedOffer = bestOffer;
+      }
+      console.log('the final product befoe passing is :',product)
+
+      return product;
+    });
+
 
     res.render('partials/user/shopCategory', {
-      products:productData,
+      products:updatedProducts,
       currentPage,
       totalPages,
       layout: false,  // Ensure only the partial view is rendered

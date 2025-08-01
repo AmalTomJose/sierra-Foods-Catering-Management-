@@ -2,70 +2,135 @@ const Cart  = require('../models/cartModel');
 const User = require('../models/userSchema');
 const Product = require('../models/itemModel');
 const Booking = require('../models/bookingModel')
-
-
+const Offer = require('../models/offerModel')
 
 const loadCart = async (req, res) => {
-    try {
-        const user = req.session.user_id;
+  try {
+    const user = req.session.user_id;
 
+    const userCart = await Cart.findOne({ user }).populate("items.product");
 
-        const userCart = await Cart.findOne({user }).populate("items.product");
-        
-        if (!userCart || userCart.items.length === 0) {
-            return res.render("user/product/cart", {
-                user,
-                cart: [],
-                productTotal: [],
-                subtotalWithShipping: 0
-            });
-        }
-
-        const cart = userCart.items;
-        const productTotal = cart.map(item => {
-            const price = item.product.discount_price;
-            return price * item.quantity;
-        });
-
-        //calculating qty using the guest Count
-        const booking= await Booking.findOne({ user: user })
-        .sort({ createdAt: -1 }) // Sort by most recent
-        .select("guestCount"); 
-        const qty = booking.guestCount 
-        if(!booking){
-          return res.redirect('/eventDetails')
-        }
-        // Validate each item in cart
-        for (let item of cart) {
-          if (item.quantity > qty){
-           
-
-            // Redirect with an error message or render a page with alert
-            return res.render('user/product/cart', {
-              user:user,
-              cart: cart,
-              productTotal: productTotal, // calculate aga,in if needed
-              subtotalWithShipping: 0, 
-              qty,
-              // optional
-              error: `The quantity for exceeds available Guest Count ${qty}!`,
-            });   
-          }
-        }
-        // Calculate subtotal
-        const subtotal = productTotal.reduce((acc, val) => acc + val, 0);
-        
-        const shipping = 0; // Or any logic you want
-        const subtotalWithShipping = subtotal + shipping;
-        
-        res.render("user/product/cart", { user, cart, productTotal, subtotalWithShipping,qty });
-        
-
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).send("Internal Server Error");
+    if (!userCart || userCart.items.length === 0) {
+      return res.render("user/product/cart", {
+        user,
+        cart: [],
+        productTotal: [],
+        subtotalWithShipping: 0,
+        qty: 0,
+        offerDiscount: 0,
+        totalAfterOffer: 0
+      });
     }
+
+    const cart = userCart.items;
+
+    // Get most recent booking for qty
+    const booking = await Booking.findOne({ user: user })
+      .sort({ createdAt: -1 })
+      .select("guestCount");
+
+    if (!booking) return res.redirect('/eventDetails');
+    const qty = booking.guestCount;
+
+    // Offer fetching
+    const activeOffers = await Offer.find({
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
+      isActive: true,
+    });
+
+    let subtotal = 0;
+    let offerDiscount = 0;
+    const productTotal = [];
+
+    const cartItemsWithDiscount = cart.map(item => {
+      const product = item.product;
+      console.log('The testing for the product is :',product)
+      const quantity = item.quantity;
+
+       const productOffer = activeOffers.find(o =>
+        o.applicableTo === 'product' &&
+        Array.isArray(o.products) &&
+        o.products.some(pid => pid.toString() === product._id.toString())
+      );
+    
+      console.log('the sample for product offer is :',productOffer)
+      
+      let categoryOffer = activeOffers.find(
+        o => o.applicableTo === 'category' && o.category?.toString() === product.category._id.toString()
+      );
+
+      let discountPerItem = 0;
+
+      if (productOffer) {
+        discountPerItem = calculateOffer(productOffer, product.item_price);
+      } else if (categoryOffer) {
+        discountPerItem = calculateOffer(categoryOffer, product.item_price);
+      }
+
+      const discountedPrice = product.item_price - discountPerItem;
+      const totalForItem = discountedPrice * quantity;
+      console.log('the totalforitem is for example:',totalForItem)
+
+      subtotal += totalForItem;
+      offerDiscount += discountPerItem * quantity;
+      productTotal.push(totalForItem);
+     
+
+      return {
+        ...item._doc,
+        discountedPrice,
+        offerApplied: discountPerItem,
+      };
+    });
+    
+
+  
+
+    const shipping = 0; // add shipping logic if needed
+    const subtotalWithShipping = subtotal + shipping;
+
+    // Validate against guest count
+    for (let item of cart) {
+      if (item.quantity > qty) {
+        return res.render('user/product/cart', {
+          user,
+          cart: cartItemsWithDiscount,
+          productTotal,
+          subtotalWithShipping: 0,
+          qty,
+          offerDiscount,
+          totalAfterOffer: 0,
+          error: `The quantity for ${item.product.name} exceeds available Guest Count (${qty})!`,
+        });
+      }
+    }
+
+    res.render("user/product/cart", {
+      user,
+      cart: cartItemsWithDiscount,
+      productTotal,
+      subtotalWithShipping,
+      qty,
+      offerDiscount,
+      totalAfterOffer: subtotalWithShipping
+    });
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send("Internal Server Error");
+  }
 };
+
+// Utility Function
+function calculateOffer(offer, price) {
+  if (offer.discountType === "percentage") {
+    return Math.round((price * offer.discountValue) / 100);
+  } else {
+    return offer.discountValue;
+  }
+}
+
 
 
 const addtoCart = async (req, res) => {

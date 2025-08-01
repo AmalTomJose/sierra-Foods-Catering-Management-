@@ -38,10 +38,6 @@ const itemSchema = new Schema({
         type:Number,
         required: true
     },
-    discount_price:{
-        type: Number,
-        required:true
-    },
     productAddDate:{
         type:Date,
         default:Date.now
@@ -51,7 +47,7 @@ const itemSchema = new Schema({
         type:Date,
         default:Date.now
     },
-    discout_status:{
+    discount_status:{
         type:Boolean,
         default:false
     },

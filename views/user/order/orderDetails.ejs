@@ -1,84 +1,90 @@
-<div class="container mt-5 " style="padding-top: 100px;">
-    <div class="text-end mb-3">
-      <button onclick="printContent()" class="btn btn-secondary">
-        <i class="material-icons">print</i> Download PDF
-      </button>
+<div class="container mt-5" style="padding-top: 100px;">
+  <div class="text-end mb-3">
+    <button onclick="printContent()" class="btn btn-secondary">
+      <i class="material-icons">print</i> Download PDF
+    </button>
+  </div>
+
+  <section class="content-main">
+    <div class="content-header text-center mb-4">
+      <h5 class="content-title">ORDER DETAILS</h5>
     </div>
 
-    <section class="content-main">
-      <div class="content-header text-center mb-4">
-        <h5 class="content-title">ORDER DETAILS</h5>
-      </div>
-
-      <div class="card">
-        <header class="card-header">
-          <div class="row">
-            <div class="col-md-6">
-              <small class="text-muted">Order ID: <%= order.orderId %></small><br>
-              <small class="text-muted">Order Date:</small>
-              <div>
-                <i class="material-icons">calendar_today</i>
-                <b><%= new Date(order.orderDate).toLocaleString() %></b>
-              </div>
+    <div class="card">
+      <header class="card-header">
+        <div class="row">
+          <div class="col-md-6">
+            <small class="text-muted">Order ID: <%= order.orderId %></small><br>
+            <small class="text-muted">Order Date:</small>
+            <div>
+              <b><%= new Date(order.orderDate).toLocaleString() %></b>
             </div>
-            <% if (order.status !== 'failed') { %>
+          </div>
+          <% if (order.status !== 'failed') { %>
             <div class="col-md-6">
               <small class="text-muted">Delivery Date:</small>
               <div>
-                <i class="material-icons">local_shipping</i>
-                <b><%= new Date(order.deliveryDate).toLocaleString() %></b>
+               <b><%= new Date(order.deliveryDate).toLocaleString() %></b>
               </div>
             </div>
-            <% } %>
-          </div>
-        </header>
+          <% } %>
+        </div>
+      </header>
 
-        <div class="card-body">
-          <div class="row mb-4">
-            <div class="col-md-4">
-              <h6>Customer</h6>
-              <p>
-                <%= order.user.firstname %><br>
-                <%= order.user.phoneno %>
-              </p>
-            </div>
-            <div class="col-md-4">
-              <h6>Order Info</h6>
-              <p>
-                Shipping: Fargo express<br>
-                Pay method: <%= order.paymentMethod %><br>
-                 Order Status: <%= order.status %>
-              </p>
-            </div>
-            <div class="col-md-4">
-              <h6>Deliver To</h6>
-              <p>
-                Event Date : <%= order.booking.eventDate %><br>
-                Event Type : <%= order.booking.eventType %><br>
-                Guest Count : <%= order.booking.guestCount %><br>
-                Event Place : <%= order.booking.eventPlace %><br>
-                Event Time : <%= order.booking.eventTime %><br>
-                District : <%= order.booking.eventDistrict %><br>
-                Pincode : <%= order.booking.eventPincode %>
-              </p>
-            </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <h6>Customer</h6>
+            <p><%= order.user.firstname %><br><%= order.user.phoneno %></p>
           </div>
+          <div class="col-md-4">
+            <h6>Order Info</h6>
+            <p>
+              Shipping: Fargo express<br>
+              Pay method: <%= order.paymentMethod %><br>
+              Order Status: <%= order.status %>
+              <% if(order.paymentMethod=='cashondelivery'){%>
+                payment Status:<%=order.paymentStatus%>
+                Advance Amount:<%=order.advanceAmount%>
+              <%}%>
+            </p>
+          </div>
+          <div class="col-md-4">
+            <h6>Deliver To</h6>
+            <p>
+              Event Date : <%= order.booking.eventDate %><br>
+              Event Type : <%= order.booking.eventType %><br>
+              Guest Count : <%= order.booking.guestCount %><br>
+              Event Place : <%= order.booking.eventPlace %><br>
+              Event Time : <%= order.booking.eventTime %><br>
+              District : <%= order.booking.eventDistrict %><br>
+              Pincode : <%= order.booking.eventPincode %>
+            </p>
+          </div>
+        </div>
 
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Unit Price</th>
-                  <th>Quantity</th>
-                  <th>order details</th>
-                  <th class="text-end">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% let subtotal = 0; order.items.forEach(item => { 
-                  let total = item.product.discount_price * item.quantity;
-                  subtotal += total; %>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Unit Price</th>
+                <th>Quantity</th>
+                <th>Order Action</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% 
+                let subtotal = 0;
+                let totalCouponDiscount = 0;
+                order.items.forEach(item => {
+                  const itemTotal = item.price* item.quantity;
+                  const discount = item.couponDiscount || 0;
+                  const finalTotal = itemTotal - discount;
+                  subtotal += finalTotal;
+                  totalCouponDiscount += discount;
+              %>
                 <tr>
                   <td>
                     <a class="d-flex align-items-center" href="/product/<%= item.product._id %>">
@@ -86,86 +92,91 @@
                       <%= item.product.item_name %>
                     </a>
                   </td>
-                  <td>₹<%= item.product.discount_price %></td>
+                  <td>₹<%= item.price %></td>
                   <td><%= item.quantity %></td>
-<td>
-  <% if (item.status !== 'cancelled') { %>
-    <button class="btn btn-danger" onclick="cancelItem('<%= order._id %>', '<%= item._id %>')">Cancel Item</button>
-  <% } else if (item.status === 'cancelled' && item.refundStatus === 'requested') { %>
-    <span class="text-danger">Requested</span>
-  <% } else { %>
-    <span class="text-danger">Cancelled</span>
-  <% } %>
-</td>
-
-
-                  <td class="text-end">₹<%= total %></td>
-                </tr>
-                <% }) %>
-                <tr>
-                  <td colspan="4">
-                    <div class="float-end">
-                      <p>Subtotal: ₹<%= subtotal %></p>
-                      <p>Shipping: ₹0.00</p>
-                      <p><strong>Grand Total: ₹<%= subtotal %></strong></p>
-                      <span class="badge rounded-pill 
-                        <%= order.status === 'Delivered' ? 'alert-success text-success' : 
-                            order.status === 'Pending' ? 'alert-warning text-warning' :
-                            order.status === 'Shipped' ? 'alert-info text-info' :
-                            order.status === 'failed' ? 'alert-danger text-danger' : 
-                            'alert-secondary' %>">
-                        <%= order.status %>
-                      </span>
-                    </div>
+                  <td>
+                    <% if (item.status !== 'cancelled') { %>
+                      <button class="btn btn-danger" onclick="cancelItem('<%= order._id %>', '<%= item._id %>')">Cancel Item</button>
+                    <% } else if (item.status === 'cancelled' && item.refundStatus === 'requested') { %>
+                      <span class="text-danger">Requested</span>
+                    <% } else { %>
+                      <span class="text-danger">Cancelled</span>
+                    <% } %>
+                  </td>
+                  <td class="text-end">
+                    ₹<%= itemTotal %><br>
+                    <% if (discount > 0) { %>
+                      <small class="text-success">- ₹<%= discount %> (Coupon)</small><br>
+                      <strong>₹<%= finalTotal %></strong>
+                    <% } else { %>
+                      <strong>₹<%= itemTotal %></strong>
+                    <% } %>
                   </td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="text-center mt-4">
-            <% if (order.status == 'confirmed' ) { %>
-              <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
-                <i class="material-icons"></i> Cancel Order
-              </button>
-            <% } %>
-            <% if (order.status === 'requested') { %>
-           
-            <h6 class="text-danger">requested for cancelling</h6>
-            
-            <% } %>
-
-            <% if (order.status === 'failed') { %>
-              <a class="btn btn-outline-success" href="/checkout?orderId=<%= order._id %>">
-                <i class="material-icons">replay</i> Retry Payment
-              </a>
-            <% } %>
-          </div>
+              <% }); %>
+              <tr>
+                <td colspan="4">
+                  <div class="float-end">
+                    <% if (order.couponCode) { %>
+                      <p><strong>Coupon Code:</strong> <%= order.couponCode %></p>
+                    <% } %>
+                    <p>Subtotal: ₹<%= subtotal + totalCouponDiscount %></p>
+                    <p>Coupon Discount: <span class="text-danger">- ₹<%= totalCouponDiscount %></span></p>
+                    <p>Shipping: ₹0.00</p>
+                    <p><strong>Grand Total: ₹<%= subtotal %></strong></p>
+                    <span class="badge rounded-pill 
+                      <%= order.status === 'Delivered' ? 'alert-success text-success' : 
+                          order.status === 'Pending' ? 'alert-warning text-warning' :
+                          order.status === 'Shipped' ? 'alert-info text-info' :
+                          order.status === 'failed' ? 'alert-danger text-danger' : 
+                          'alert-secondary' %>">
+                      <%= order.status %>
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <% 
-  const isOrderRefundApproved = order.refundStatus === 'approved';
-  const isAnyItemRefundApproved = order.items.some(item => item.refundStatus === 'approved');
-%>
 
-<% if (isOrderRefundApproved || isAnyItemRefundApproved) { %>
-  <div class="alert alert-success text-center mt-4" role="alert">
-    ✅ Admin has approved your refund request. The amount will be processed shortly.
-  </div>
-<% } %>
+        <div class="text-center mt-4">
+          <% if (order.status == 'confirmed' ) { %>
+            <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
+              <i class="material-icons"></i> Cancel Order
+            </button>
+          <% } %>
+          <% if (order.status === 'requested') { %>
+            <h6 class="text-danger">Requested for cancellation</h6>
+          <% } %>
+          <% if (order.status === 'failed') { %>
+            <a class="btn btn-outline-success" href="/checkout?orderId=<%= order._id %>">
+              <i class="material-icons">replay</i> Retry Payment
+            </a>
+          <% } %>
+        </div>
+
+        <% 
+          const isOrderRefundApproved = order.refundStatus === 'approved';
+          const isAnyItemRefundApproved = order.items.some(item => item.refundStatus === 'approved');
+        %>
+        <% if (isOrderRefundApproved || isAnyItemRefundApproved) { %>
+          <div class="alert alert-success text-center mt-4" role="alert">
+            ✅ Admin has approved your refund request. The amount will be processed shortly.
+          </div>
+        <% } %>
 
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
+</div>
 
+<script>
+  function printContent() {
+    window.print();
+  }
 
-  
-    <script>
-      function printContent() {
-      window.print();
-    }
-
-function cancelOrder(orderId){
-  Swal.fire({
+  function cancelOrder(orderId){
+    Swal.fire({
       icon: 'warning',
       title: 'Cancel Order',
       text: 'Are you sure you want to cancel this Order?',
@@ -199,8 +210,7 @@ function cancelOrder(orderId){
         });
       }
     });
-
-}
+  }
 
   function cancelItem(orderId, itemId) {
     Swal.fire({

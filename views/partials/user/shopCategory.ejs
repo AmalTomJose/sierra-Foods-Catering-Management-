@@ -11,14 +11,30 @@
               <img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image">
             <% } %>
             <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
-          </div>
-          <div class="text-center p-4">
+          </div><div class="text-center p-4">
             <a class="d-block h5 mb-2" href="/product/<%= product._id %>"><%= product.item_name %></a>
-            <span class="text-primary me-1">₹<%= product.item_price %></span>
-            <% if (product.discount_status) { %>
-              <span class="text-body text-decoration-line-through">₹<%= product.discount_price %></span>
+          
+            <% if (product.appliedOffer) { %>
+              <div>
+                <span class="text-danger fw-bold me-2">
+                  ₹<%= product.offerPrice %>
+                </span>
+                <del class="text-muted small">₹<%= product.item_price %></del>
+              </div>
+              <span class="badge bg-success mt-1">
+                <%= product.appliedOffer.discountType === 'percentage'
+                      ? product.appliedOffer.discountValue + '% OFF'
+                      : '₹' + product.appliedOffer.discountValue + ' OFF' %>
+              </span>
+            <% } else { %>
+              <div>
+                <span class="text-primary fw-bold">
+                  ₹<%= product.item_price %>
+                </span>
+              </div>
             <% } %>
           </div>
+          
           <div class="d-flex border-top">
             <small class="w-50 text-center border-end py-2">
               <a class="text-body" href="/product/<%= product._id %>"><i class="fa fa-eye text-primary me-2"></i>View</a>

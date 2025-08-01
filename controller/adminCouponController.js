@@ -1,6 +1,7 @@
 const Coupon = require('../models/coupenModel');
 const Offer = require('../models/offerModel');
 const Category = require('../models/categoryModels');
+const Product = require('../models/itemModel')
 
 
 
@@ -76,8 +77,9 @@ const getOffers  = async(req,res)=>{
 const addOffer = async(req,res)=>{
   try{
     const categories = await Category.find();
+    const products = await Product.find({item_status:true});
 
-    res.render('admin/offer/addOffer',{categories})
+    res.render('admin/offer/addOffer',{categories,products})
 
   }
   catch(error){
@@ -86,8 +88,9 @@ const addOffer = async(req,res)=>{
 }
 
 const saveOffer =async(req,res)=>{
+  console.log(req.body)
 
-    const { title, description, discountType, discountValue, applicableTo, category, startDate, endDate } = req.body;
+    const { title, description, discountType, discountValue, applicableTo,products, category, startDate, endDate } = req.body;
 
     try {
       const newOffer = new Offer({
@@ -97,10 +100,12 @@ const saveOffer =async(req,res)=>{
         discountValue,
         applicableTo,
         category: applicableTo === 'category' ? category : null,
+        products: applicableTo === 'product' ? products : [],
         startDate,
         endDate,
         isActive: true
       });
+      
   
       await newOffer.save();
       res.redirect('/admin/offers');
