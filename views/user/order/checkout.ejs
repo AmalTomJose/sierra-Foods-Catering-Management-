@@ -128,7 +128,7 @@
                   <label class="form-check-label" for="exampleRadios2">Online Payment</label>
                 </div>
                 <div class="custome-radio">
-                  <input class="form-check-input" value="Wallet" type="radio" name="payment_option" id="exampleRadios3">
+                  <input class="form-check-input" value="wallet" type="radio" name="payment_option" id="exampleRadios3">
                   <label class="form-check-label" for="exampleRadios3">Wallet</label>
                 </div>
               </div>
@@ -390,7 +390,8 @@ removeBtn.addEventListener('click', () => {
         const rzp = new Razorpay(options);
         rzp.open();
       });
-    } else {
+    }
+     else {
       // Full Wallet payment
       fetch('/checkout', {
         method: 'POST',

@@ -1,0 +1,14 @@
+<% if (salesData && salesData.totalOrders !== undefined) { %>
+    <h3>Sales Report (<%= filterType %>)</h3>
+    <ul>
+      <li>Total Orders: <%= salesData.totalOrders %></li>
+      <li>Total Sales: ₹<%= salesData.totalSales.toFixed(2) %></li>
+      <li>Coupon Discount: ₹<%= salesData.couponDiscount.toFixed(2) %></li>
+      <li>Offer Discount: ₹<%= salesData.offerDiscount.toFixed(2) %></li>
+      <li>Total Discount: ₹<%= salesData.totalDiscount.toFixed(2) %></li>
+      <li><strong>Net Revenue: ₹<%= salesData.netRevenue.toFixed(2) %></strong></li>
+    </ul>
+  <% } else { %>
+    <p>No sales data found for the selected range.</p>
+  <% } %>
+  

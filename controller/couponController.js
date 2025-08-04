@@ -18,6 +18,8 @@ const applyCoupon = async (req, res) => {
   ? (finalAmountValue * coupon.discountValue) / 100
   : coupon.discountValue;
   console.log('the discount for the coupon is :',discount)
+  coupon.usedBy.push(userId);
+  await coupon.save();
 
 
   res.json({ success: true, coupon, discount });

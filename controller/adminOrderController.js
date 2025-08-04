@@ -4,6 +4,8 @@
   const Cart = require('../models/cartModel');
   const Product = require('../models/itemModel');
   const dateFun = require('../config/dateData');
+  const Wallet = require('../models/walletModel');
+  const DailyCount = require('../models/dailybookingCount')
   
   
   const listUserOrders = async (req, res) => {
@@ -81,17 +83,21 @@
   const orderStatus = async (req, res) => {
     try {
       const { orderId, status } = req.body;
+      console.log('Hi the value for the status is:',status)
+      const userId = req.session.user_id;
   
       const validStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'requested', 'approved'];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: 'Invalid status' });
       }
+
   
       // Fetch order and update item statuses
-      const order = await Order.findById(orderId);
+      const order = await Order.findById(orderId).populate('booking');
       if (!order) {
         return res.status(404).json({ message: 'Order not found' });
       }
+
   
       // Update order status
       order.refundStatus = status;
@@ -103,6 +109,40 @@
       });
   
       await order.save();
+
+      if (status === 'approved') {
+        const userId = order.user;
+        const totalRefund = order.finalAmount;
+      
+        if (totalRefund > 0) {
+          let wallet = await Wallet.findOne({ user: userId });
+      
+          // Create wallet if it doesn't exist
+          if (!wallet) {
+            wallet = new Wallet({ user: userId, balance: 0 });
+          }
+      
+          wallet.balance += totalRefund;
+          await wallet.save();
+        }
+      }
+      if(order.refundStatus=='approved' && order.status=='cancelled'){
+
+    const eventDate = new Date(order.booking.eventDate).toISOString().split("T")[0];
+    await DailyCount.findOneAndUpdate(
+      { date: new Date(eventDate) },
+      {
+        $inc: {
+          totalBookings: -1,
+          totalGuests: -parseInt(order.booking.guestCount),
+
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+         
+      }
   
       res.json({ message: 'Order status and item statuses updated', updatedStatus: order.refundStatus });
   
@@ -112,22 +152,48 @@
     }
   };
   
-  
-  
-const itemStatus = async(req,res)=>{
+  const itemStatus = async (req, res) => {
   const { orderId, itemId, status } = req.body;
+  const userId = req.session.user_id;
+
   try {
+    // Step 1: Update the item's refundStatus
     await Order.updateOne(
       { _id: orderId, 'items._id': itemId },
       { $set: { 'items.$.refundStatus': status } }
     );
-    res.json({ updatedStatus: status });
-  }
-  catch(error){
-    console.log(error)
-  }
-}
 
+    // Step 2: If approved, process refund
+    if (status === 'approved') {
+      const wallet = await Wallet.findOne({ user: userId });
+
+      if (!wallet) {
+        return res.status(400).json({ message: 'Wallet not found' });
+      }
+
+      const order = await Order.findOne({ _id: orderId });
+      const item = order.items.find(item => item._id.toString() === itemId);
+
+      if (!item) {
+        return res.status(400).json({ message: 'Item not found in order' });
+      }
+
+      const itemPrice = item.price;
+      const quantity = item.quantity;
+      const couponDiscount = item.couponDiscount || 0;
+
+      const totalRefund = (itemPrice * quantity) - couponDiscount;
+
+      wallet.balance += totalRefund;
+      await wallet.save();
+    }
+
+    res.json({ updatedStatus: status });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
   module.exports= {
     listUserOrders,

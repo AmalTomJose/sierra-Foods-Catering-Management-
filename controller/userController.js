@@ -8,6 +8,45 @@ const Product = require('../models/itemModel');
 const Category = require('../models/categoryModels');
 const { loadProducts } = require('./productController');
 const Offer = require('../models/offerModel')
+const Wallet = require('../models/walletModel')
+
+const generateRandomCode = (firstname)=>{
+  const random = Math.floor(1000 + Math.random() * 9000); // 4 digits
+  return `${firstname.slice(0,3).toUpperCase()}${random}`; 
+}
+
+
+// Function to create wallet
+const createWalletForUser = async (userId) => {
+  try {
+      const existingWallet = await Wallet.findOne({ user: userId });
+      if (existingWallet) return existingWallet;
+
+      const newWallet = new Wallet({ user: userId });
+      await newWallet.save();
+      console.log("✅ Wallet created for user:", userId);
+      return newWallet;
+  } catch (err) {
+      console.error("❌ Error creating wallet:", err);
+  }
+};
+
+
+
+const loadWallet = async(req,res)=>{
+  try{
+      const userId = req.session.user_id;
+      const wallet = await Wallet.findOne({user:userId});
+   
+      res.render('user/profile/wallet',{user:userId,wallet})
+
+  }
+  catch(err){
+      console.log(err)
+  }
+}
+
+
 
 
 
@@ -260,7 +299,7 @@ const loadSignup = async(req,res)=>{
 
 //signup page(POST)
 const signupPage = async (req,res)=>{
-    const {firstname,lastname,email,phoneno,password} =  req.body  ;
+    const {firstname,lastname,email,phoneno,password,referralCode} =  req.body  ;
     try{
         const existingUser = await User.findOne({email});
          
@@ -275,7 +314,6 @@ const signupPage = async (req,res)=>{
             req.session.resetUser=email;
             if(req.session.email){
                 const data = await message.sendVerifyMail(req,req.session.email);
-                console.log('hello')
                 res.redirect('/otp')
             }
             // const hashedPassword = await bcrypt.hash(password,10);
@@ -384,11 +422,27 @@ const loadOtp = async (req, res) => {
   
         if (fullOTP == req.session.otp) {
           const userData = req.session.userData
+          const referralCode = userData.referralCode
           const hashedPassword = await bcrypt.hash(userData.password, 10);
-          const user = new User({ ...userData, password: hashedPassword });
-          const savedUser = await user.save();
-          req.session.user_id = savedUser._id;
+          let referredByUser = null;
+          if(referralCode){
+            referredByUser = await User.findOne({ referralCode :referralCode});
 
+          }
+          const user = new User({ ...userData, password: hashedPassword ,referredBy:referredByUser?referredByUser._id:null});
+          user.referralCode = generateRandomCode(user.firstname)
+          const savedUser = await user.save();
+          await createWalletForUser(user._id)
+          if (referredByUser) {
+            await Wallet.updateOne(
+              { user: referredByUser._id },
+              { $inc: { balance: 100 } }
+            );
+            await Wallet.updateOne({user:savedUser._id},{$inc: { balance: 50 } })
+          }
+
+          req.session.user_id = savedUser._id;
+       
           req.flash('success', 'User registered successfully');
 
        
@@ -1073,6 +1127,7 @@ module.exports = {
     userlogout,
     loadProduct,
     loadProfile,
-    userEdit
+    userEdit,
+    loadWallet
 
 }

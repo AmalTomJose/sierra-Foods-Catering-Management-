@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/userSchema");
+const Order = require('../models/orderModel')
 
 const session = require("express-session");
 const { loadHomepage } = require("./userController");
@@ -77,8 +78,21 @@ const loadUserpage=async (req,res)=>{
 
 const loadHome= async(req,res)=>{
   try{
+    const totalActiveUsers = await User.countDocuments({ isBlocked: 0 });
+    const totalActiveOrders = await Order.countDocuments({status:'confirmed'});
+    const totalRevenueData = await Order.aggregate([
+      { $match: { paymentStatus: 'paid' } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$finalAmount" }
+        }
+      }
+    ]);
+    const totalRevenue = totalRevenueData[0]?.total || 0;
 
-    res.render('admin/dashboard/dashboard')
+    
+    res.render('admin/dashboard/dashboard',{totalActiveOrders,totalActiveUsers,totalRevenue})
 
   }
   catch(error)
@@ -176,6 +190,82 @@ const getUnreadCount = async (req, res) => {
 
 
 
+const getSalesReport = async (req, res) => {
+  try {
+    let { filterType, startDate, endDate } = req.query;
+
+    let match = { status: 'Delivered' }; // Only count delivered orders
+
+    // Filter by date
+    const now = new Date();
+    switch (filterType) {
+      case 'daily':
+        match.createdAt = {
+          $gte: new Date(now.setHours(0, 0, 0, 0)),
+          $lte: new Date()
+        };
+        break;
+      case 'weekly':
+        const startOfWeek = new Date();
+        startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+        startOfWeek.setHours(0, 0, 0, 0);
+        match.createdAt = { $gte: startOfWeek, $lte: new Date() };
+        break;
+      case 'monthly':
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        match.createdAt = { $gte: firstDay, $lte: new Date() };
+        break;
+      case 'custom':
+        if (startDate && endDate) {
+          match.createdAt = {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          };
+        }
+        break;
+    }
+
+    const salesData = await Order.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalSales: { $sum: '$totalAmount' },
+          couponDiscount: { $sum: '$couponDiscount' },
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          totalOrders: 1,
+          totalSales: 1,
+          couponDiscount: 1,
+     
+          totalDiscount: { $add: ['$couponDiscount'] },
+          netRevenue: {
+            $subtract: ['$totalSales', { $add: ['$couponDiscount', '$offerDiscount'] }]
+          }
+        }
+      }
+    ]);
+
+    res.render('admin/dashboard/salesReport', {
+     
+      salesData: salesData[0] || {},
+      filterType,
+      startDate,
+      endDate
+    });
+  } catch (err) {
+    console.log('❌ Error generating report:', err);
+    res.redirect('/admin/dashboard');
+  }
+};
+
+
+
+
 
 module.exports = {
   adminLogin ,
@@ -187,6 +277,7 @@ module.exports = {
   viewNotifications,
   markAllAsRead,
   getUnreadCount,
+  getSalesReport
 
   
 };

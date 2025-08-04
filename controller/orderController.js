@@ -124,126 +124,270 @@ const loadCheckout = async (req, res) => {
 
 const checkOutPost = async (req, res) => {
   try {
+    const {
+      address,
+      paymentMethod,
+      coupon,
+      couponDiscount,
+      finalAmount,
+    } = req.body;
+
     const userId = req.session.user_id;
-    const { address, paymentMethod, coupon, couponDiscount, finalAmount, codAdvanceOption } = req.body;
 
-    if (!address || !paymentMethod) {
-      return res.status(400).json({ success: false, error: 'Address and payment method are required.' });
+
+
+    // 🛒 Step 2: Fetch cart and booking
+    const userCart = await Cart.findOne({ user: userId }).populate("items.product");
+    if (!userCart || userCart.items.length === 0) {
+      return res.status(400).json({ success: false, error: "Cart is empty" });
     }
 
-    const cart = await Cart.findOne({ user: userId }).populate('items.product');
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ success: false, error: 'Your cart is empty.' });
+    const booking = await Booking.findOne({ user: userId, status: "active" });
+    if (!booking) {
+      return res.status(400).json({ success: false, error: "Booking not found" });
     }
 
-    const booking = await Booking.findOne({ user: userId, status: 'active' });
-    if (!booking) return res.status(400).json({ success: false, error: 'Booking not found.' });
+    if(paymentMethod == 'wallet'){
 
-    // Step 1: Prepare base prices
-    const orderItems = cart.items.map((item) => {
-      const product = item.product;
-      const price = product.item_price;
-      return {
-        product: product._id,
-        quantity: item.quantity,
-        price,
-        total: price * item.quantity,
-      };
+      const wallet = await Wallet.findOne({user:userId})
+      if(!wallet){
+        return res.status(400).json({ success: false, error: "Wallet not found for the User!" });
+        
+
+      }
+
+      if(wallet.balance<finalAmount)
+      {
+       return res.status(400).json({ success: false, error: 'Insufficient wallet balance.' });
+
+      }
+      wallet.balance -=finalAmount
+      await wallet.save();
+
+
+
+    }
+    // 🎁 Step 3: Fetch active offers
+    const activeOffers = await Offer.find({
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
+      isActive: true,
     });
 
-    const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
-    const totalSubtotal = totalAmount;
+    let subtotal = 0;
+    const orderItems = [];
 
-    // Step 2: Payment Handling
-    let paymentStatus = 'pending';
-    let amountPaid = 0;
+    // 🧾 Step 4: Process cart items with offer discount
+    for (const item of userCart.items) {
+      const product = item.product;
+      const quantity = item.quantity;
 
-    // 25% of final amount
-    const advanceAmount = Math.round(finalAmount * 0.25);
+      let discountPerItem = 0;
 
-    if (paymentMethod === 'wallet') {
-      console.log('hell is now')
-      const wallet = await Wallet.findById(userId);
-      if (!wallet || wallet.balance < finalAmount) {
-        return res.status(400).json({ success: false, error: 'Insufficient wallet balance.' });
+      const productOffer = activeOffers.find(o =>
+        o.applicableTo === "product" &&
+        Array.isArray(o.products) &&
+        o.products.some(pid => pid.toString() === product._id.toString())
+      );
+
+      const categoryOffer = activeOffers.find(o =>
+        o.applicableTo === "category" &&
+        o.category?.toString() === product.category?._id.toString()
+      );
+
+      if (productOffer) {
+        discountPerItem = calculateOffer(productOffer, product.item_price);
+      } else if (categoryOffer) {
+        discountPerItem = calculateOffer(categoryOffer, product.item_price);
       }
-      wallet.balance -= finalAmount;
-      await wallet.save();
-      paymentStatus = 'paid';
-      amountPaid = finalAmount;
+
+      const discountedPrice = product.item_price - discountPerItem;
+      const itemTotal = discountedPrice * quantity;
+      subtotal += itemTotal;
+
+      orderItems.push({
+        product: product._id,
+        quantity,
+        price: discountedPrice,
+        offerDiscount: discountPerItem,
+        status: "ordered",
+        couponDiscount: 0, // to be distributed
+      });
     }
 
-    if (paymentMethod === 'cashondelivery') {
-      if (codAdvanceOption === 'wallet') {
-        const wallet = await Wallet.findById(userId);
-        if (!wallet || wallet.balance < advanceAmount) {
-          return res.status(400).json({ success: false, error: 'Insufficient wallet balance for COD advance.' });
-        }
-        wallet.balance -= advanceAmount;
-        await wallet.save();
-        paymentStatus = 'partial';
-        amountPaid = advanceAmount;
-      }
-      // If Razorpay, advance payment is handled on client-side Razorpay callback
-      if (codAdvanceOption === 'razorpay') {
-        paymentStatus = 'partial';
-        amountPaid = advanceAmount; // Will be validated in Razorpay verification route
-      }
-    }
-
-    // Step 3: Split couponDiscount across items
-    const distributedItems = [];
+    // 🎟️ Step 5: Distribute coupon discount
     let distributed = 0;
+    for (let i = 0; i < orderItems.length; i++) {
+      const itemTotal = orderItems[i].price * orderItems[i].quantity;
+      let share = Math.floor((itemTotal / subtotal) * couponDiscount);
 
-    orderItems.forEach((item, index) => {
-      let share = Math.floor((item.total / totalSubtotal) * couponDiscount);
-      if (index === orderItems.length - 1) {
+      if (i === orderItems.length - 1) {
         share = couponDiscount - distributed;
       }
+
       distributed += share;
+      orderItems[i].couponDiscount = share;
+    }
 
-      distributedItems.push({
-        product: item.product,
-        quantity: item.quantity,
-        price: item.price,
-        status: 'ordered',
-        offerDiscount: 0,
-        couponDiscount: share,
-      });
-    });
 
-    // Step 4: Create and save order
+
+    // 📝 Step 7: Save order
     const newOrder = new Order({
       user: userId,
       booking: booking._id,
       deliveryDate: booking.eventDate,
       paymentMethod,
-      paymentStatus,
-      status: 'confirmed',
-      totalAmount,
+      paymentStatus:'paid',
+      totalAmount: subtotal,
       finalAmount,
       couponUsed: coupon || null,
       couponDiscount: couponDiscount || 0,
-      advancePaid: amountPaid,
-      items: distributedItems,
+      status: "confirmed",
+      items: orderItems,
     });
 
     await newOrder.save();
 
-    // Step 5: Final clean-up
-    booking.status = 'completed';
+    // 🧹 Step 8: Cleanup
+    booking.status = "completed";
     await booking.save();
 
-    const eventDay = new Date(booking.eventDate).toISOString().split('T')[0];
+    const eventDate = new Date(booking.eventDate).toISOString().split("T")[0];
     await DailyCount.findOneAndUpdate(
-      { date: new Date(eventDay) },
-      { $inc: { totalBookings: 1, totalGuests: parseInt(booking.guestCount) } },
+      { date: new Date(eventDate) },
+      {
+        $inc: {
+          totalBookings: 1,
+          totalGuests: parseInt(booking.guestCount),
+        },
+      },
       { upsert: true, new: true }
     );
 
     await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
 
-    return res.status(200).json({ success: true, message: 'Order placed successfully' });
+    return res.status(200).json({ success: true, message: "Order placed successfully" });
+  // try {
+  //   const userId = req.session.user_id;
+  //   const { address, paymentMethod, coupon, couponDiscount, finalAmount, codAdvanceOption } = req.body;
+
+  //   if (!address || !paymentMethod) {
+  //     return res.status(400).json({ success: false, error: 'Address and payment method are required.' });
+  //   }
+
+  //   const cart = await Cart.findOne({ user: userId }).populate('items.product');
+  //   if (!cart || cart.items.length === 0) {
+  //     return res.status(400).json({ success: false, error: 'Your cart is empty.' });
+  //   }
+
+  //   const booking = await Booking.findOne({ user: userId, status: 'active' });
+  //   if (!booking) return res.status(400).json({ success: false, error: 'Booking not found.' });
+
+  //   // Step 1: Prepare base prices
+  //   const orderItems = cart.items.map((item) => {
+  //     const product = item.product;
+  //     const price = product.item_price;
+  //     return {
+  //       product: product._id,
+  //       quantity: item.quantity,
+  //       price,
+  //       total: price * item.quantity,
+  //     };
+  //   });
+
+  //   const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
+  //   const totalSubtotal = totalAmount;
+
+  //   // Step 2: Payment Handling
+  //   let paymentStatus = 'pending';
+  //   let amountPaid = 0;
+
+  //   // 25% of final amount
+  //   const advanceAmount = Math.round(finalAmount * 0.25);
+
+  //   if (paymentMethod === 'wallet') {
+  //     console.log('hell is now')
+  //     const wallet = await Wallet.findById(userId);
+  //     if (!wallet || wallet.balance < finalAmount) {
+  //       return res.status(400).json({ success: false, error: 'Insufficient wallet balance.' });
+  //     }
+  //     wallet.balance -= finalAmount;
+  //     await wallet.save();
+  //     paymentStatus = 'paid';
+  //     amountPaid = finalAmount;
+  //   }
+
+  //   if (paymentMethod === 'cashondelivery') {
+  //     if (codAdvanceOption === 'wallet') {
+  //       const wallet = await Wallet.findById(userId);
+  //       if (!wallet || wallet.balance < advanceAmount) {
+  //         return res.status(400).json({ success: false, error: 'Insufficient wallet balance for COD advance.' });
+  //       }
+  //       wallet.balance -= advanceAmount;
+  //       await wallet.save();
+  //       paymentStatus = 'partial';
+  //       amountPaid = advanceAmount;
+  //     }
+  //     // If Razorpay, advance payment is handled on client-side Razorpay callback
+  //     if (codAdvanceOption === 'razorpay') {
+  //       paymentStatus = 'partial';
+  //       amountPaid = advanceAmount; // Will be validated in Razorpay verification route
+  //     }
+  //   }
+
+  //   // Step 3: Split couponDiscount across items
+  //   const distributedItems = [];
+  //   let distributed = 0;
+
+  //   orderItems.forEach((item, index) => {
+  //     let share = Math.floor((item.total / totalSubtotal) * couponDiscount);
+  //     if (index === orderItems.length - 1) {
+  //       share = couponDiscount - distributed;
+  //     }
+  //     distributed += share;
+
+  //     distributedItems.push({
+  //       product: item.product,
+  //       quantity: item.quantity,
+  //       price: item.price,
+  //       status: 'ordered',
+  //       offerDiscount: 0,
+  //       couponDiscount: share,
+  //     });
+  //   });
+
+  //   // Step 4: Create and save order
+  //   const newOrder = new Order({
+  //     user: userId,
+  //     booking: booking._id,
+  //     deliveryDate: booking.eventDate,
+  //     paymentMethod,
+  //     paymentStatus,
+  //     status: 'confirmed',
+  //     totalAmount,
+  //     finalAmount,
+  //     couponUsed: coupon || null,
+  //     couponDiscount: couponDiscount || 0,
+  //     advancePaid: amountPaid,
+  //     items: distributedItems,
+  //   });
+
+  //   await newOrder.save();
+
+  //   // Step 5: Final clean-up
+  //   booking.status = 'completed';
+  //   await booking.save();
+
+  //   const eventDay = new Date(booking.eventDate).toISOString().split('T')[0];
+  //   await DailyCount.findOneAndUpdate(
+  //     { date: new Date(eventDay) },
+  //     { $inc: { totalBookings: 1, totalGuests: parseInt(booking.guestCount) } },
+  //     { upsert: true, new: true }
+  //   );
+
+  //   await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
+
+  //   return res.status(200).json({ success: true, message: 'Order placed successfully' });
 
   } catch (err) {
     console.error('Checkout Error:', err);
@@ -639,6 +783,7 @@ const verifyPayment = async (req, res) => {
 
     if (generatedSignature !== razorpay_signature) {
       return res.status(400).json({ success: false, error: "Invalid payment signature" });
+      
     }
 
     // 🛒 Step 2: Fetch cart and booking

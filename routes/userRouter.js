@@ -10,7 +10,7 @@ const wishlistController = require('../controller/wishlistController');
 const cartController = require('../controller/cartController');
 const eventController = require('../controller/eventController');
 const orderController = require('../controller/orderController');
-const couponController = require('../controller/couponController')
+const couponController = require('../controller/couponController');
 
 
 
@@ -71,6 +71,10 @@ router.post('/changePasswordFromProfile',islogin,addressController.changePasswor
 router.get('/wishlist',islogin,wishlistController.loadWishlist);
 router.post('/addToWishlist',islogin,wishlistController.addToWishlist)
 router.delete('/removeWishlist',islogin,wishlistController.removeFromWishlist)
+
+//WALLET 
+router.get('/wallet',islogin,userController.loadWallet)
+
 
 
 //EVENT DETAILS

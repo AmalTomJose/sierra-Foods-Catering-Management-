@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const {Schema} = mongoose;
+const {ObjectId} = require('mongodb')
+
 
 
 const userSchema = new Schema ({
@@ -56,6 +58,16 @@ const userSchema = new Schema ({
    token:{
     type:String,
     default:''
+   },
+   referralCode :{
+    type:String,
+    unique:true
+
+   },
+   referredBy:{
+    type:ObjectId,
+    ref:'User',
+    default:null
    }
   
  });

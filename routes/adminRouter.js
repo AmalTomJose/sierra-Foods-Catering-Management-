@@ -23,7 +23,7 @@ router.post('/',adminAuth.islogout,adminController.verifyLogin);
 
 //HOME
 router.get('/home',adminAuth.islogin,adminController.loadHome)
-
+router.get('/salesReport',adminAuth.islogin,adminController.getSalesReport)
 
 //userDashboard
 router.get('/userDashboard',adminAuth.islogin,adminController.loadUserpage)
