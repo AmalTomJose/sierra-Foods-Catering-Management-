@@ -12,8 +12,7 @@ const cartItemSchema = new Schema({
     },
     quantity:{
         type:Number,
-        required:true,
-        min:100
+        required:true
     },
     discountedPrice:{
         type:Number,

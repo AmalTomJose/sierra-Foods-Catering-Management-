@@ -15,6 +15,14 @@ const Offer = require('../models/offerModel')
 const Coupon = require('../models/coupenModel')
 
 
+
+const failurePage = async (req, res) => {
+  const userId = req.session.user_id;
+  const orderId = req.params.id;
+  res.render('user/order/orderFailure', { orderId,user:userId });
+};
+
+
 // Utility function outside controller
 function calculateOffer(offer, price) {
   if (offer.discountType === "percentage") {
@@ -781,11 +789,14 @@ const verifyPayment = async (req, res) => {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    if (generatedSignature !== razorpay_signature) {
-      return res.status(400).json({ success: false, error: "Invalid payment signature" });
-      
-    }
-
+      if (generatedSignature !== razorpay_signature) {
+        console.warn("❌ Razorpay Signature Mismatch");
+        return res.status(200).json({
+          success: false,
+          error: "Payment verification failed",
+          orderId: null  // optional, if order is not created yet
+        });
+      }
     // 🛒 Step 2: Fetch cart and booking
     const userCart = await Cart.findOne({ user: userId }).populate("items.product");
     if (!userCart || userCart.items.length === 0) {
@@ -904,8 +915,11 @@ const verifyPayment = async (req, res) => {
 
     await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
 
-    return res.status(200).json({ success: true, message: "Order placed successfully" });
-
+    return res.status(200).json({
+      success: true,
+      message: "Order placed successfully",
+      orderId: newOrder._id
+    })
   } catch (err) {
     console.error("Razorpay Verify Error:", err);
     return res.status(500).json({ success: false, error: "Payment verification failed" });
@@ -1054,5 +1068,6 @@ module.exports = {
     updateBooking,
     loadOrderSuccess,
     createRazorpayOrder,
-    verifyPayment
+    verifyPayment,
+    failurePage
 }

@@ -2,9 +2,10 @@ const Cart  = require('../models/cartModel');
 const User = require('../models/userSchema');
 const Product = require('../models/itemModel');
 const Booking = require('../models/bookingModel')
-const Offer = require('../models/offerModel')
+const Offer = require('../models/offerModel');
+const Wishlist = require('../models/wishlistModel')
 
-const loadCart = async (req, res) => {
+const  loadCart = async (req, res) => {
   try {
     const user = req.session.user_id;
 
@@ -30,7 +31,7 @@ const loadCart = async (req, res) => {
       .select("guestCount");
 
     if (!booking) return res.redirect('/eventDetails');
-    const qty = booking.guestCount;
+    const qty =booking.guestCount;
 
     // Offer fetching
     const activeOffers = await Offer.find({
@@ -139,7 +140,7 @@ const addtoCart = async (req, res) => {
       const { productId, qty } = req.body;
   
       // Validate input
-      if (!productId || !qty || isNaN(qty)) {
+      if (!productId || !qty  ) {
         return res.status(400).json({ success: false, error: "Invalid input data" });
       }
   
@@ -164,6 +165,7 @@ const addtoCart = async (req, res) => {
         );
   
         if (existingItem) {
+          
           return res.json({ success: false, error: 'Product already in cart!' });
         } else {
           existingCart.items.push({ product: productId, quantity: parseInt(qty, 10) });
@@ -172,6 +174,7 @@ const addtoCart = async (req, res) => {
       }
   
       await existingCart.save();
+      await  Wishlist.updateOne({user:userId},{$pull:{items:{product:productId}}});
       return res.json({ success: true, message: 'Product added to cart successfully!' });
   
     } catch (error) {

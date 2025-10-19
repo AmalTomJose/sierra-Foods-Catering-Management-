@@ -18,6 +18,20 @@
           <small class="text-muted">Order Status:</small>
           <% if (order.status) { %>
             <span class="badge badge-pill badge-soft-warning"><%= order.status %></span>
+            <form action="/admin/updateorderStatus" method="POST" class="mt-2">
+              <input type="hidden" name="orderId" value="<%= order._id %>">
+              <div class="d-flex align-items-center gap-2">
+                <select name="status" class="form-select form-select-sm w-auto">
+                  <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                  <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                  <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                  <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                  <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-success">Update</button>
+              </div>
+            </form>
+            
           <% } %><br>
           <small class="text-muted">Delivery Date:</small> <b><%= new Date(order.booking.eventDate).toLocaleDateString() %></b>
         </div>

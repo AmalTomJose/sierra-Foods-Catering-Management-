@@ -17,17 +17,36 @@
             <small class="text-muted">Order ID: <%= order.orderId %></small><br>
             <small class="text-muted">Order Date:</small>
             <div>
-              <b><%= new Date(order.orderDate).toLocaleString() %></b>
+              <b>
+                <%= new Date(order.orderDate).toLocaleDateString('en-IN', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }) %>
+              </b>
             </div>
           </div>
           <% if (order.status !== 'failed') { %>
             <div class="col-md-6">
               <small class="text-muted">Delivery Date:</small>
               <div>
-               <b><%= new Date(order.deliveryDate).toLocaleString() %></b>
+                <b>
+                  <%= new Date(order.deliveryDate).toLocaleDateString('en-IN', { 
+                      weekday: 'long', 
+                      day: 'numeric', 
+                      month: 'long', 
+                      year: 'numeric', 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                  }) %>
+                </b>
               </div>
             </div>
           <% } %>
+          
         </div>
       </header>
 

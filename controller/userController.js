@@ -101,6 +101,8 @@ const loadHomepage = async(req,res)=>{
         console.log("Home page not found");
         res.status(500).send("Server Error");
     }
+
+
 }
 
 const loadProductDetail = async (req, res) => {
@@ -168,11 +170,19 @@ const loadProductDetail = async (req, res) => {
 
     const qty = booking?.guestCount || 1;
 
+    // ✅ Fetch similar products (same category, exclude current product)
+    const similarProducts = await Product.find({
+      category: product.category?._id,
+      _id: { $ne: product._id }
+    })
+    .limit(5);
+
     return res.render('user/product/singleProduct', {
       user: userData,
       product,
       qty,
       error: booking ? null : 'Please Book an Event',
+      similarProducts // ✅ pass to view
     });
 
   } catch (error) {
@@ -180,6 +190,85 @@ const loadProductDetail = async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 };
+
+
+// const loadProductDetail = async (req, res) => {
+//   try {
+//     const userId = req.session.user_id;
+//     const userData = await User.findById(userId);
+//     const id = req.params.id;
+
+//     const product = await Product.findById(id)
+//       .populate('category')
+//       .populate('subcategory');
+
+//     const booking = await Booking.findOne({ user: userId, status: 'active' })
+//       .sort({ createdAt: -1 })
+//       .select('guestCount');
+
+//     const today = new Date();
+
+//     const activeOffers = await Offer.find({
+//       isActive: true,
+//       startDate: { $lte: today },
+//       endDate: { $gte: today },
+//     });
+
+//     const productOffer = activeOffers.find(o =>
+//       o.applicableTo === 'product' &&
+//       Array.isArray(o.products) &&
+//       o.products.some(pid => pid.toString() === product._id.toString())
+//     );
+
+//     const categoryOffer = activeOffers.find(o =>
+//       o.applicableTo === 'category' &&
+//       o.category?.toString() === product.category?._id?.toString()
+//     );
+
+//     let bestOffer = null;
+//     let bestDiscount = 0;
+
+//     if (productOffer) {
+//       const discount = productOffer.discountType === 'percentage'
+//         ? (product.item_price * productOffer.discountValue) / 100
+//         : productOffer.discountValue;
+
+//       if (discount > bestDiscount) {
+//         bestDiscount = discount;
+//         bestOffer = productOffer;
+//       }
+//     }
+
+//     if (categoryOffer) {
+//       const discount = categoryOffer.discountType === 'percentage'
+//         ? (product.item_price * categoryOffer.discountValue) / 100
+//         : categoryOffer.discountValue;
+
+//       if (discount > bestDiscount) {
+//         bestDiscount = discount;
+//         bestOffer = categoryOffer;
+//       }
+//     }
+
+//     if (bestOffer) {
+//       product.offerPrice = Math.max(product.item_price - bestDiscount, 0);
+//       product.appliedOffer = bestOffer;
+//     }
+
+//     const qty = booking?.guestCount || 1;
+
+//     return res.render('user/product/singleProduct', {
+//       user: userData,
+//       product,
+//       qty,
+//       error: booking ? null : 'Please Book an Event',
+//     });
+
+//   } catch (error) {
+//     console.log(error.message);
+//     res.status(500).send('Internal Server Error');
+//   }
+// };
 
 
 // const loadProductDetail = async(req,res)=>{

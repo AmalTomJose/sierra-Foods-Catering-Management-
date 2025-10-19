@@ -1,68 +1,113 @@
 
 
-    <div class="container mt-4">
-        <h2>Admin Dashboard</h2>
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="card text-white bg-primary mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Users</h5>
-                        <p class="card-text" id="totalUsers"><%=totalActiveUsers%></p>
+        <div class="container mt-4">
+            <h2>Admin Dashboard</h2>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card text-white bg-primary mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Users</h5>
+                            <p class="card-text" id="totalUsers"><%=totalActiveUsers%></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-success mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Orders</h5>
+                            <p class="card-text" id="totalOrders"><%=totalActiveOrders%></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-warning mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Revenue</h5>
+                            <p class="card-text" id="totalRevenue"><%=totalRevenue%></p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card text-white bg-success mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Orders</h5>
-                        <p class="card-text" id="totalOrders"><%=totalActiveOrders%></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-white bg-warning mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Revenue</h5>
-                        <p class="card-text" id="totalRevenue"><%=totalRevenue%></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-<h1>Genrate Sales Report</h1>
-<form method="get" action="/admin/salesReport">
-    <select name="filterType" onchange="toggleDateInputs(this.value)">
-      <option value="daily">Daily</option>
-      <option value="weekly">Weekly</option>
-      <option value="monthly">Monthly</option>
-      <option value="custom">Custom Range</option>
+            <h3 class="mb-3">Admin Dashboard</h3>
+
+    <select id="filter" class="form-select w-auto mb-3">
+    <option value="monthly">Monthly</option>
+    <option value="yearly">Yearly</option>
     </select>
-  
-    <div id="custom-range" >
-      <input type="date" name="startDate" required />
-      <input type="date" name="endDate" required />
+
+    <div class="card p-3 mb-4">
+    <canvas id="salesChart" height="100"></canvas>
     </div>
-  
-    <button type="submit">Generate Report</button>
-  </form>
-  
-  <script>
-    function toggleDateInputs(val) {
-      document.getElementById('custom-range').style.display =
-        val === 'custom' ? 'block' : 'none';
-    }
-  </script>
-  
-       
+
+    <div class="row">
+    <div class="col-md-4">
+        <h5>Top 10 Products</h5>
+        <ul id="productList"></ul>
     </div>
+    <div class="col-md-4">
+        <h5>Top 10 Categories</h5>
+        <ul id="categoryList"></ul>
+    </div>
+    <div class="col-md-4">
+        <h5>Top 10 Brands</h5>
+        <ul id="brandList"></ul>
+    </div>
+    </div>
+
+
+
+    <h1>Genrate Sales Report</h1>
+    
+    <button type="button" onclick="window.location.href='/admin/salesReport'">Generate Report</button>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        function toggleDateInputs(val) {
-          const range = document.getElementById('custom-range');
-          range.style.display = val === 'custom' ? 'block' : 'none';
-        }
-      
-        document.addEventListener('DOMContentLoaded', function () {
-          const filter = document.querySelector("select[name='filterType']");
-          toggleDateInputs(filter.value);
-        });
-      </script>
-          
+    let salesChartInstance;
+    
+    async function loadDashboard(filter = 'monthly') {
+      const res = await fetch(`/admin/dashboard-data?filter=${filter}`);
+      const data = await res.json();
+    
+      // ----- SALES CHART -----
+      const labels = data.salesData.map(item => {
+        if (filter === 'yearly') return item._id.year;
+        return `${item._id.month}-${item._id.year}`;
+      });
+      const values = data.salesData.map(item => item.totalSales);
+    
+      if (salesChartInstance) {
+        salesChartInstance.destroy(); // avoid stacking charts
+      }
+    
+      salesChartInstance = new Chart(document.getElementById('salesChart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Sales Amount',
+            data: values,
+            backgroundColor: '#007bff'
+          }]
+        },
+        options: { responsive: true }
+      });
+    
+      // ----- TOP PRODUCTS -----
+      document.getElementById('productList').innerHTML =
+        data.bestSellingProducts.map(p => `<li>${p.name} (${p.totalSold})</li>`).join('');
+    
+      // ----- TOP CATEGORIES -----
+      document.getElementById('categoryList').innerHTML =
+        data.bestSellingCategories.map(c => `<li>${c.categoryName || 'Uncategorized'} (${c.totalSold})</li>`).join('');
+    
+      // ----- TOP SUBCATEGORIES -----
+      document.getElementById('brandList').innerHTML =
+        data.bestSellingSubcategories.map(s => `<li>${s.subcategoryName || 'Uncategorized'} (${s.totalSold})</li>`).join('');
+    }
+    
+    document.getElementById('filter').addEventListener('change', (e) => {
+      loadDashboard(e.target.value);
+    });
+    
+    loadDashboard();
+    </script>
+    

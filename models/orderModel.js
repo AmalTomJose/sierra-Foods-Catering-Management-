@@ -89,7 +89,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'requested', 'approved'],
+    enum: ['pending', 'confirmed','failed', 'shipped', 'delivered', 'cancelled', 'requested', 'approved'],
     default: 'pending',
   },
   cancelReason: {
@@ -105,7 +105,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid','partial'],
+    enum: ['pending', 'paid','failed','partial'],
     default: 'pending',
   },
   advanceAmount:{

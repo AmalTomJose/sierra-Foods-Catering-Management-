@@ -1,33 +1,23 @@
 
 <section class="content-main">
-  <div class="content-header">
-      <div>
-          <h2 class="content-title card-title">Category List</h2>
-          <p>Lorem ipsum dolor sit amet.</p>
-      </div>
-      <div>
-          <a href="#" class="btn btn-light rounded font-md">Export</a>
-          <a href="#" class="btn btn-light rounded  font-md">Import</a>
-          <a href="/admin/addCategory" class="btn btn-primary btn-sm rounded">Create new</a>
-      </div>
-  </div>
+  
   <div class="card mb-4">
       <header class="card-header">
           <div class="row align-items-center">
               
-              <form action="/category" method="get">
+              <form action="/admin/category" method="get">
 
                   <div style="display: flex;  align-items: center;">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Search for products...">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search for category   ...">
 
                    
                     <div class="col-md-3 col-12 me-auto mb-md-0 mb-3" style="display: flex;">
 
                       <label for="status" class="form-control">Select Status:</label>
                       <select name="status" class="form-select" id="status">
-                          <option value="" selected>All</option>
-                          <option value="listed">Listed</option>
-                          <option value="unlisted">Unlisted</option>
+                          <option name ='all' value="" selected>All</option>
+                      
+                          <option name = "block" value="block">Blocked</option>
                       </select>
                     </div>
    
@@ -90,6 +80,9 @@
                 <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-sm font-sm rounded btn-light">
                   <i class="material-icons md-edit"></i> Edit
                 </a>
+                <a href="/admin/deleteCategory?id=<%= category._id %>" class="btn btn-sm font-sm rounded btn-light">
+                  <i class="material-icons "></i> Delete
+                </a>
               </td>
               <td>
                 <a href="/admin/subCategory?id=<%= category._id %>" class="btn btn-sm font-sm rounded btn-light">View
@@ -116,6 +109,9 @@
    
       </div> <!-- card-body end// -->
   </div> <!-- card end// -->
+
+
+
 
     
 </section> <!-- content-main end// -->
@@ -176,10 +172,21 @@ function ProductUnlist(productId) {
             }
           }).catch(error => {
             Swal.fire("Error!", "Failed to delete product", "error");
-          });
+          });      
         }
       });
     }
 
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const succcess = '<%= success&&success.length>0?success[0]:null%>'
 
+if(success ){
+    swal.fire({
+      icon:'success',
+      title:'Deleted Category',
+      text:'<%=success[0]%>'
+    })
+   }
+  </script>

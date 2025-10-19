@@ -96,10 +96,14 @@ app.use((req, res, next) => {
   next();
 });
 
+
 //setting Routers..
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 app.use("/auth", authRoute);
+
+
+
 
 app.use((req, res, next) => {
   res

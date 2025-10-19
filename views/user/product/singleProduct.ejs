@@ -133,14 +133,23 @@
           <div class="row g-2 align-items-center">
             <!-- Quantity Input -->
             <div class="col-auto">
-              <input type="number" name="qty" id="qty" class="form-control" value="<%=qty%>" min="50" max="<%=qty%>" style="width: 120px;">
+              <input type="number" name="qty" id="qty" class="form-control" value="<%=qty%>" min="1" max="<%=qty%>" style="width: 120px;">
             </div>
         
             <!-- Add to Cart Button -->
             <div class="col-auto">
-              <button type="submit" id="addToCartBtn" class="btn btn-success px-4">
-                <span>Add To Cart</span>
-              </button>
+              <%if(qty&&qty>1){%>
+                <button type="submit" id="addToCartBtn" class="btn btn-success px-4">
+                  <span>Add To Cart</span>
+                </button>
+
+              <%}else{%>
+                <button class="btn btn-danger px-4">
+                  <a href="/eventDetails" class=" btn btn-danger px-4">Book an Event</a> 
+                </button>
+
+             <% }%>
+              
             </div>
           </div>
       
@@ -160,12 +169,43 @@
             <%= error %>
           </div>
         <% } %>
+
+
+    
+
         
 
       </div>
     </div>
   </div>
 </div>
+    <!-- Similar Products Section -->
+    <div class="container mt-5">
+      <h3 class="mb-4">Similar Products</h3>
+      <div class="row g-4">
+        <% if (similarProducts && similarProducts.length > 0) { %>
+          <% similarProducts.forEach(similar => { %>
+            <div class="col-md-4 col-lg-3">
+              <div class="card h-100 shadow-sm">
+                <img src="/admin-assets/imgs/productIMG/<%= similar.item_image[0] %>" 
+                     class="card-img-top" 
+                     alt="<%= similar.item_name %>" 
+                     style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                  <h6 class="card-title"><%= similar.item_name %></h6>
+                  <p class="text-primary fw-bold">₹<%= similar.item_price %></p>
+                  <a href="/product/<%= similar._id %>" class="btn btn-sm btn-outline-success">
+                    View Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p class="text-muted">No similar products found.</p>
+        <% } %>
+      </div>
+    </div>
 <!-- Product Detail End -->
 
 <!-- Styles -->

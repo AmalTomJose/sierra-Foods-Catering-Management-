@@ -2,6 +2,7 @@ const Wishlist = require('../models/wishlistModel');
 const User = require('../models/userSchema');
 const Product = require('../models/itemModel');
 const { accessSync } = require('fs');
+const Booking = require('../models/bookingModel')
 
 
 
@@ -11,13 +12,19 @@ const { accessSync } = require('fs');
 
 
         const user = req.session.user_id;
-        const userWishlist = await Wishlist.findOne({user:user}).populate('items.product')
+        const userWishlist = await Wishlist.findOne({user:user}).populate('items.product');
+        const booking = await Booking.findOne({user:user,status:'active'}).sort({createdAt:-1}).select('guestCount');
+
+
+
+
+const qty = booking?.guestCount || 0;
 
 
 
          const userWishlistItems = userWishlist ?userWishlist :[] ;
 
-         res.render('user/product/wishlist',{Wishlist:userWishlistItems,user})
+         res.render('user/product/wishlist',{Wishlist:userWishlistItems,qty,user,error:booking?'':'please book an event'})
 
 
     }

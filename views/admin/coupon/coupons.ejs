@@ -1,8 +1,14 @@
-
+<header class="card-header">
+  <div class="row align-items-center">
+    <div style="display: flex; align-items: center;">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search coupon..." />
+    </div>
+  </div>
+</header>
 
 <h3>Coupon List</h3>
 
-<table class="table">
+<table class="table" id="couponTable">
   <thead>
     <tr>
       <th>Code</th>
@@ -25,14 +31,21 @@
         <td><%= coupon.usedBy.length %></td>
         <td>
           <button class="btn btn-danger btn-sm" onclick="confirmDelete('<%= coupon._id %>')">Delete</button>
-
         </td>
       </tr>
     <% }) %>
   </tbody>
 </table>
 
+<div class="d-flex justify-content-end gap-2" id="pagination">
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <button class="page-btn <%= i === currentPage ? 'active' : '' %>" data-page="<%= i %>">
+      <%= i %>
+    </button>
+  <% } %>
+</div>
 
+<!-- SweetAlert Delete -->
 <script>
   function confirmDelete(couponId) {
     Swal.fire({
@@ -46,7 +59,6 @@
       cancelButtonColor: '#3085d6'
     }).then((result) => {
       if (result.isConfirmed) {
-        // Submit the deletion via POST using a hidden form
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/admin/coupon/delete/${couponId}`;
@@ -55,4 +67,79 @@
       }
     });
   }
+</script>
+
+<!-- AJAX Pagination + Search -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const table = document.getElementById("couponTable");
+    const paginationContainer = document.getElementById("pagination");
+    let currentPage = 1;
+    let debounceTimer;
+
+    async function fetchCoupons(page = 1, search = "") {
+      const res = await fetch(`/admin/coupons?page=${page}&search=${search}`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      });
+      const data = await res.json();
+
+      const tbody = table.querySelector("tbody");
+      tbody.innerHTML = "";
+
+      if (data.coupons.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No coupons found</td></tr>`;
+      } else {
+        data.coupons.forEach((coupon) => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${coupon.code}</td>
+              <td>${coupon.discountType}</td>
+              <td>${coupon.discountValue}</td>
+              <td>${coupon.minOrderAmount}</td>
+              <td>${new Date(coupon.expiryDate).toLocaleDateString()}</td>
+              <td>${coupon.usedBy.length}</td>
+              <td>
+                <button class="btn btn-danger btn-sm" onclick="confirmDelete('${coupon._id}')">Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      // Update pagination
+      paginationContainer.innerHTML = "";
+      for (let i = 1; i <= data.totalPages; i++) {
+        paginationContainer.innerHTML += `
+          <button class="page-btn ${i === data.currentPage ? 'active' : ''}" data-page="${i}">
+            ${i}
+          </button>
+        `;
+      }
+
+      attachPaginationEvents(search);
+    }
+
+    function attachPaginationEvents(search = "") {
+      const buttons = document.querySelectorAll(".page-btn");
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentPage = parseInt(btn.dataset.page);
+          fetchCoupons(currentPage, search);
+        });
+      });
+    }
+
+    // Debounced live search
+    searchInput.addEventListener("keyup", () => {
+      const searchValue = searchInput.value.trim();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        currentPage = 1;
+        fetchCoupons(currentPage, searchValue);
+      }, 400); // 400ms delay
+    });
+
+    attachPaginationEvents();
+  });
 </script>

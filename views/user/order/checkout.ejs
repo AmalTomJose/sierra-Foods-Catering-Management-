@@ -275,77 +275,102 @@ removeBtn.addEventListener('click', () => {
       finalAmount: finalAmountValue,
       codAdvance: codAdvance
     };
-
     if (selectedPaymentMethod === 'cashondelivery') {
-      Swal.fire({
-        title: "Pay 25% COD Advance",
-        text: `You need to pay ₹${codAdvance} now to confirm your COD order.`,
-        showCancelButton: true,
-        confirmButtonText: "Pay with Razorpay",
-        cancelButtonText: "Use Wallet",
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#2ecc71"
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Razorpay COD advance
-          fetch('/checkout/create-razorpay-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...requestData, finalAmount: codAdvance })
-          })
-          .then(res => res.json())
-          .then(order => {
-            const rzp = new Razorpay({
-              key: '<%= razorpayKey %>',
-              amount: order.amount,
-              currency: "INR",
-              name: "Catering COD Advance",
-              description: "COD Advance Payment",
-              order_id: order.id,
-              handler: function (response) {
-                console.log("Razorpay response received:", response); // ✅ Debug log
+  Swal.fire({
+    title: "Pay 25% COD Advance",
+    text: `You need to pay ₹${codAdvance} now to confirm your COD order.`,
+    showCancelButton: true,
+    confirmButtonText: "Pay with Razorpay",
+    cancelButtonText: "Use Wallet",
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#2ecc71"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Razorpay COD Advance Payment
+      fetch('/checkout/create-razorpay-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...requestData, finalAmount: codAdvance })
+      })
+        .then(res => res.json())
+        .then(order => {
+          const rzp = new Razorpay({
+            key: '<%= razorpayKey %>',
+            amount: order.amount,
+            currency: "INR",
+            name: "Catering COD Advance",
+            description: "COD Advance Payment",
+            order_id: order.id,
+            modal: {
+              ondismiss: function () {
+                Swal.fire("Payment Cancelled", "You closed the payment popup.", "info")
+                  .then(() => {
+                    window.location.href = "/orderFailed";
+                  });
+              }
+            },
+            handler: function (response) {
+              console.log("Razorpay response received:", response);
 
-                fetch('/checkout/verify-razorpay', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    ...response,
-                    ...requestData
-                  })
+              fetch('/checkout/verify-razorpay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ...response,
+                  ...requestData
                 })
+              })
                 .then(res => res.json())
                 .then(result => {
                   if (result.success) {
                     Swal.fire({ icon: "success", title: result.message })
                       .then(() => window.location.href = '/orderSuccess');
                   } else {
-                    Swal.fire("Error", result.error, "error");
+                    Swal.fire("Error", result.error, "error")
+                      .then(() => {
+                        if (result.orderId) {
+                          window.location.href = `/order/${result.orderId}/failure`;
+                        } else {
+                          window.location.href = '/orderFailed';
+                        }
+                      });
                   }
                 });
-              }
-            });
-            rzp.open();
-          });
-        } else {
-          // Wallet COD advance
-          fetch('/checkout/pay-cod-wallet', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestData)
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              Swal.fire("Success", data.message, "success").then(() => {
-                window.location.href = "/orderSuccess";
-              });
-            } else {
-              Swal.fire("Error", data.error, "error");
             }
           });
-        }
-      });
-    } else if (selectedPaymentMethod === 'online') {
+          rzp.open();
+        });
+
+    } else {
+      // Wallet COD Advance Payment
+      fetch('/checkout/pay-cod-wallet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire("Success", data.message, "success")
+              .then(() => {
+                window.location.href = "/orderSuccess";
+              });
+          } else {
+            Swal.fire("Error", data.error, "error")
+              .then(() => {
+                if (data.orderId) {
+                  window.location.href = `/order/${data.orderId}/failure`;
+                } else {
+                  window.location.href = '/orderFailed';
+                }
+              });
+          }
+        });
+    }
+  });
+}
+
+    else if (selectedPaymentMethod === 'online') {
       // Full payment online
       fetch('/checkout/create-razorpay-order', {
         method: 'POST',
@@ -361,6 +386,16 @@ removeBtn.addEventListener('click', () => {
           name: "Catering Service",
           description: "Order Payment",
           order_id: order.id,
+          modal: {
+  ondismiss: function () {
+    Swal.fire("Payment Cancelled", "You closed the payment popup.", "info")
+      .then(() => {
+        // Redirect user to failure page or order summary
+        window.location.href = "/orderFailed";  // or `/order/:id/failure` if ID is known
+      });
+  }
+},        
+
           handler: function (response) {
             fetch('/checkout/verify-razorpay', {
               method: 'POST',
@@ -376,7 +411,15 @@ removeBtn.addEventListener('click', () => {
                 Swal.fire({ title: "Success", text: result.message, icon: "success" })
                   .then(() => window.location.href = '/orderSuccess');
               } else {
-                Swal.fire("Error!", result.error, "error");
+                Swal.fire("Error", result.error, "error")
+      .then(() => {
+        if (result.orderId) {
+          window.location.href = `/order/${result.orderId}/failure`;
+        } else {
+          window.location.href = '/orderFailed'; // fallback
+        }
+      });
+
               }
             });
           },

@@ -8,6 +8,25 @@ const Notification = require('../models/notificationModel');
 
 
 
+const updateOrderStatus = async (req, res) => {
+  try {
+    
+    const { orderId, status } = req.body;
+
+    await Order.findByIdAndUpdate(orderId, {
+      status: status,
+    });
+
+    req.flash('success', 'Order status updated successfully');
+    res.redirect('back');
+  } catch (error) {
+    console.error(error);
+    req.flash('error', 'Failed to update order status');
+    res.redirect('back');
+  }
+};
+
+
 
 //admin Login//
 const   adminLogin = async (req, res) => {
@@ -76,33 +95,162 @@ const loadUserpage=async (req,res)=>{
   }
 };
 
-const loadHome= async(req,res)=>{
-  try{
-    const totalActiveUsers = await User.countDocuments({ isBlocked: 0 });
-    const totalActiveOrders = await Order.countDocuments({status:'confirmed'});
+
+
+
+const loadHome = async (req, res) => {
+  try {
+    const totalActiveUsers = await User.countDocuments({ isBlocked: false });
+    const totalActiveOrders = await Order.countDocuments({ status: 'confirmed' });
+
     const totalRevenueData = await Order.aggregate([
       { $match: { paymentStatus: 'paid' } },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$finalAmount" }
-        }
-      }
+      { $group: { _id: null, total: { $sum: "$finalAmount" } } }
     ]);
     const totalRevenue = totalRevenueData[0]?.total || 0;
 
-    
-    res.render('admin/dashboard/dashboard',{totalActiveOrders,totalActiveUsers,totalRevenue})
-
+    res.render('admin/dashboard/dashboard', {
+      totalActiveUsers,
+      totalActiveOrders,
+      totalRevenue
+    });
+  } catch (error) {
+    console.error("Dashboard Render Error:", error);
+    res.status(500).send("Error loading dashboard");
   }
-  catch(error)
-  {
-    console.log(error.message)
+};
+
+const getDashboardData = async (req, res) => {
+  try {
+    const filter = req.query.filter || 'monthly';
+    let groupStage;
+
+    if (filter === 'yearly') {
+      groupStage = { year: { $year: "$createdAt" } };
+    } else {
+      groupStage = {
+        year: { $year: "$createdAt" },
+        month: { $month: "$createdAt" }
+      };
+    }
+
+    // 🔹 SALES CHART
+    const salesData = await Order.aggregate([
+      { $match: { paymentStatus: "paid" } },
+      {
+        $group: {
+          _id: groupStage,
+          totalSales: { $sum: "$finalAmount" },
+          totalOrders: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+
+    // 🔹 TOP PRODUCTS
+    const bestSellingProducts = await Order.aggregate([
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.product",
+          totalSold: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "items",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product"
+        }
+      },
+      { $unwind: "$product" },
+      {
+        $project: {
+          _id: 0,
+          name: "$product.item_name",
+          totalSold: 1
+        }
+      }
+    ]);
+
+    // 🔹 TOP CATEGORIES
+    const bestSellingCategories = await Order.aggregate([
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "items",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "product"
+        }
+      },
+      { $unwind: "$product" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "product.category",
+          foreignField: "_id",
+          as: "category"
+        }
+      },
+      { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$category._id",
+          categoryName: { $first: "$category.cat_name" },
+          totalSold: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // 🔹 TOP SUBCATEGORIES
+    const bestSellingSubcategories = await Order.aggregate([
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "items",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "product"
+        }
+      },
+      { $unwind: "$product" },
+      {
+        $lookup: {
+          from: "subcategories",
+          localField: "product.subcategory",
+          foreignField: "_id",
+          as: "subcategory"
+        }
+      },
+      { $unwind: { path: "$subcategory", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$subcategory._id",
+          subcategoryName: { $first: "$subcategory.subcat_name" },
+          totalSold: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 }
+    ]);
+
+    res.json({
+      salesData,
+      bestSellingProducts,
+      bestSellingCategories,
+      bestSellingSubcategories
+    });
+  } catch (error) {
+    console.error("Dashboard Data Error:", error);
+    res.status(500).json({ error: "Error fetching dashboard data" });
   }
-}
-
-
-
+};
 
 
 
@@ -272,11 +420,13 @@ module.exports = {
   verifyLogin,
   adminLogout,
   loadHome,
+  getDashboardData,
   loadUserpage,
   listUser,
   viewNotifications,
   markAllAsRead,
   getUnreadCount,
+  updateOrderStatus,
   getSalesReport
 
   

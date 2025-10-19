@@ -37,12 +37,17 @@
           
           <div class="d-flex border-top">
             <small class="w-50 text-center border-end py-2">
-              <a class="text-body" href="/product/<%= product._id %>"><i class="fa fa-eye text-primary me-2"></i>View</a>
+              <a class="text-body" href="/product/<%= product._id %>">
+                <i class="fa fa-eye text-primary me-2"></i> View
+              </a>
             </small>
-            <small class="w-50 text-center py-2">
-              <a class="text-body" href="#"><i class="fa fa-shopping-bag text-primary me-2"></i>Add</a>
+            <small class="w-50 text-center border-end py-2">
+              <a class="text-body" href="javascript:void(0)" onclick="addToWishlist('<%= product._id %>')">
+                <i class="bi bi-heart-fill text-success me-2"></i> Wishlist
+              </a>
             </small>
           </div>
+          
         </div>
       </div>
     <% } %>
@@ -74,5 +79,30 @@
         </ul>
       </nav>
     <% } %>
+    <script>
+
+  function addToWishlist(productId) {
+    fetch('/addToWishlist', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      Swal.fire({
+        title: data.success ? "Success!" : "Error!",
+        text: data.success ? data.message : data.error || "Failed to add to wishlist.",
+        icon: data.success ? "success" : "error"
+      });
+    })
+    .catch(error => {
+      console.error('Wishlist Error:', error);
+      Swal.fire("Error!", "Something went wrong.", "error");
+    });
+  }
+
+    </script>
 
 

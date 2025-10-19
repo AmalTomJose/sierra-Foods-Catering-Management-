@@ -1,9 +1,15 @@
 <h3>Add Coupon</h3>
 
-<form method="POST" action="/admin/saveCoupon" onsubmit="console.log('Submitting...')">
+<form method="POST" action="/admin/saveCoupon" onsubmit="return validationChecking()">
     <div class="mb-2">
     <label>Coupon Code:</label>
-    <input type="text" name="code" class="form-control" required>
+    <input  id = "couponcode" type="text" name="code" class="form-control" required>
+    <div class="error-message" style="color: red;" id="coupon_name-error"></div>
+    <%if(error&&error.length>0){%>
+      <p class="text-danger"><%=error%></p>
+
+   <%}%>
+
   </div>
 
   <div class="mb-2">
@@ -21,8 +27,8 @@
 
   <div class="mb-2">
     <label>Minimum Order Amount:</label>
-    <input type="number" name="minOrderAmount" class="form-control">
-  </div>
+    <input type="number" name="minOrderAmount" class="form-control" required>
+  </div> 
 
   <div class="mb-2">
     <label>Expiry Date:</label>
@@ -31,3 +37,8 @@
 
   <button type="submit" class="btn btn-success mt-2">Add Coupon</button>
 </form>
+<script>
+  const couponCode = document.getElementById('coupon code');
+  const couponCodeError = document.getElementById('coupon_name-error');
+
+</script>

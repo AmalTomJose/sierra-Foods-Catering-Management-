@@ -105,12 +105,18 @@ router.post('/checkout/create-razorpay-order',islogin,orderController.createRazo
 router.post('/checkout/verify-razorpay',islogin,orderController.verifyPayment)
 
 
+router.get('/order/:id/failure', orderController.failurePage);
+router.get('/orderFailed', orderController.failurePage);
+
+
 //orderSuccess
 router.get('/orders',islogin,orderController.loadOrderDetails)
 router.get('/orderSuccess',islogin,orderController.loadOrderSuccess)
 router.get('/orderDetails/:id',islogin,orderController.loadOrderHistory)
 router.post('/cancel-item/:orderId/:itemId', orderController.cancelItem);
 router.post('/cancel-order/:orderId',islogin,orderController.cancelOrder);
+
+
 
 
 //coupon

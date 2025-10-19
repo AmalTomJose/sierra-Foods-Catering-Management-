@@ -8,11 +8,20 @@ const Subcategory = require('../models/subcategoryModel');
 const loadSubcategory = async (req,res)=>{
     try{
         const categoryid = req.query.id;
-        console.log('testing inside loadSubcategory')
-        console.log(categoryid)
-        const subcategoryData = await Subcategory.find({category:categoryid})
-        console.log(subcategoryData);
-        res.render('admin/subcategory/subcategory',{subcategories:subcategoryData,categoryid})
+         const {status}=req.query;
+        let subcategoryData ='';
+         if(status=='block'){
+           subcategoryData = await Subcategory.find({category:categoryid,subcat_status:false})
+
+         }
+         else{
+       subcategoryData = await Subcategory.find({category:categoryid})
+
+
+         }
+         res.render('admin/subcategory/subcategory',{subcategories:subcategoryData,categoryid})
+
+
 
     }
     catch(error)

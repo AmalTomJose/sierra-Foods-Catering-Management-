@@ -151,49 +151,60 @@
       res.status(500).json({ message: 'Server error' });
     }
   };
-  
   const itemStatus = async (req, res) => {
-  const { orderId, itemId, status } = req.body;
-  const userId = req.session.user_id;
-
-  try {
-    // Step 1: Update the item's refundStatus
-    await Order.updateOne(
-      { _id: orderId, 'items._id': itemId },
-      { $set: { 'items.$.refundStatus': status } }
-    );
-
-    // Step 2: If approved, process refund
-    if (status === 'approved') {
-      const wallet = await Wallet.findOne({ user: userId });
-
-      if (!wallet) {
-        return res.status(400).json({ message: 'Wallet not found' });
+    const { orderId, itemId, status } = req.body;
+    const userId = req.session.user_id;
+  
+    try {
+      // Step 1: Update the item's refundStatus
+      await Order.updateOne(
+        { _id: orderId, 'items._id': itemId },
+        { $set: { 'items.$.refundStatus': status } }
+      );
+  
+      // Step 2: If approved, process refund
+      if (status === 'approved') {
+        const wallet = await Wallet.findOne({ user: userId });
+  
+        if (!wallet) {
+          return res.status(400).json({ message: 'Wallet not found' });
+        }
+  
+        const order = await Order.findOne({ _id: orderId });
+        const item = order.items.find(item => item._id.toString() === itemId);
+  
+        if (!item) {
+          return res.status(400).json({ message: 'Item not found in order' });
+        }
+  
+        const itemPrice = item.price;
+        const quantity = item.quantity;
+        const couponDiscount = item.couponDiscount || 0;
+  
+        const totalRefund = (itemPrice * quantity) - couponDiscount;
+  
+        wallet.balance += totalRefund;
+        await wallet.save();
       }
-
-      const order = await Order.findOne({ _id: orderId });
-      const item = order.items.find(item => item._id.toString() === itemId);
-
-      if (!item) {
-        return res.status(400).json({ message: 'Item not found in order' });
+  
+      // Step 3: Check if all items are "approved" or "cancelled"
+      const updatedOrder = await Order.findOne({ _id: orderId });
+      const allResolved = updatedOrder.items.every(
+        (item) => item.refundStatus === 'approved' || item.refundStatus === 'cancelled'
+      );
+  
+      if (allResolved) {
+        updatedOrder.orderStatus = 'cancelled'; // or 'completed' if you prefer
+        await updatedOrder.save();
       }
-
-      const itemPrice = item.price;
-      const quantity = item.quantity;
-      const couponDiscount = item.couponDiscount || 0;
-
-      const totalRefund = (itemPrice * quantity) - couponDiscount;
-
-      wallet.balance += totalRefund;
-      await wallet.save();
+  
+      res.json({ updatedStatus: status });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: 'Server error' });
     }
-
-    res.json({ updatedStatus: status });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+  };
+  
 
   module.exports= {
     listUserOrders,

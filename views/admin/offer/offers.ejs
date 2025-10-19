@@ -1,6 +1,14 @@
 <h3>Offer List</h3>
 
-<table class="table">
+<header class="card-header">
+  <div class="row align-items-center">
+    <div style="display: flex; align-items: center;">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search offer..." />
+    </div>
+  </div>
+</header>
+
+<table class="table" id="offerTable">
   <thead>
     <tr>
       <th>Title</th>
@@ -31,6 +39,15 @@
   </tbody>
 </table>
 
+<div class="d-flex justify-content-end gap-2" id="pagination">
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <button class="page-btn <%= i === currentPage ? 'active' : '' %>" data-page="<%= i %>">
+      <%= i %>
+    </button>
+  <% } %>
+</div>
+
+<!-- SweetAlert Delete -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   function confirmOfferDelete(offerId) {
@@ -53,4 +70,80 @@
       }
     });
   }
+</script>
+
+<!-- AJAX Pagination + Search -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const table = document.getElementById("offerTable");
+    const paginationContainer = document.getElementById("pagination");
+    let currentPage = 1;
+    let debounceTimer;
+
+    async function fetchOffers(page = 1, search = "") {
+      const res = await fetch(`/admin/offers?page=${page}&search=${search}`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      });
+      const data = await res.json();
+
+      const tbody = table.querySelector("tbody");
+      tbody.innerHTML = "";
+
+      if (data.offers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No offers found</td></tr>`;
+      } else {
+        data.offers.forEach((offer) => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${offer.title}</td>
+              <td>${offer.discountType}</td>
+              <td>${offer.discountValue}</td>
+              <td>${offer.applicableTo}</td>
+              <td>${offer.category ? offer.category.cat_name : '-'}</td>
+              <td>${new Date(offer.startDate).toLocaleDateString()}</td>
+              <td>${new Date(offer.endDate).toLocaleDateString()}</td>
+              <td>
+                <button class="btn btn-danger btn-sm" onclick="confirmOfferDelete('${offer._id}')">Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      // Update pagination buttons
+      paginationContainer.innerHTML = "";
+      for (let i = 1; i <= data.totalPages; i++) {
+        paginationContainer.innerHTML += `
+          <button class="page-btn ${i === data.currentPage ? 'active' : ''}" data-page="${i}">
+            ${i}
+          </button>
+        `;
+      }
+
+      attachPaginationEvents(search);
+    }
+
+    function attachPaginationEvents(search = "") {
+      const buttons = document.querySelectorAll(".page-btn");
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentPage = parseInt(btn.dataset.page);
+          fetchOffers(currentPage, search);
+        });
+      });
+    }
+
+    // Debounced live search
+    searchInput.addEventListener("keyup", () => {
+      const searchValue = searchInput.value.trim();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        currentPage = 1;
+        fetchOffers(currentPage, searchValue);
+      }, 400);
+    });
+
+    attachPaginationEvents();
+  });
 </script>

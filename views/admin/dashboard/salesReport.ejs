@@ -1,14 +1,77 @@
-<% if (salesData && salesData.totalOrders !== undefined) { %>
-    <h3>Sales Report (<%= filterType %>)</h3>
-    <ul>
-      <li>Total Orders: <%= salesData.totalOrders %></li>
-      <li>Total Sales: ₹<%= salesData.totalSales.toFixed(2) %></li>
-      <li>Coupon Discount: ₹<%= salesData.couponDiscount.toFixed(2) %></li>
-      <li>Offer Discount: ₹<%= salesData.offerDiscount.toFixed(2) %></li>
-      <li>Total Discount: ₹<%= salesData.totalDiscount.toFixed(2) %></li>
-      <li><strong>Net Revenue: ₹<%= salesData.netRevenue.toFixed(2) %></strong></li>
-    </ul>
-  <% } else { %>
-    <p>No sales data found for the selected range.</p>
-  <% } %>
-  
+<form action="/admin/salesReport/filter" method="POST" class="mb-3">
+  <select name="rangeType" id="rangeType" class="form-select" onchange="toggleDateInputs()">
+    <option value="today">Today</option>
+    <option value="week">This Week</option>
+    <option value="month">This Month</option>
+    <option value="custom">Custom Date Range</option>
+  </select>
+
+  <div id="customDateInputs" style="display: none;">
+    <input type="date" name="startDate" class="form-control mt-2" >
+    <input type="date" name="endDate" class="form-control mt-2" >
+  </div>
+
+  <button type="submit" class="btn btn-primary mt-3">Generate Report</button>
+</form>
+
+<% if (report) { %>
+  <div class="mb-3">
+    <a href="/admin/salesReport/download/pdf?rangeType=<%=report.rangeType%>&startDate=<%=report.startDate%>&endDate=<%=report.endDate%>" class="btn btn-danger">Download PDF</a>
+    <a href="/admin/salesReport/download/excel?rangeType=<%=report.rangeType%>&startDate=<%=report.startDate%>&endDate=<%=report.endDate%>" class="btn btn-success">Download Excel</a>
+  </div>
+
+  <div class="card p-3">
+    <h5>Summary</h5>
+    <p>Total Orders: <%=report.totalSales%></p>
+    <p>Total Amount: ₹<%=report.totalAmount%></p>
+    <p>Total Discount: ₹<%=report.totalDiscount%></p>
+  </div>
+
+  <table class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Amount</th>
+        <th>Discount</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (report.orders.length > 0) { %>
+        <% report.orders.forEach(order => { %>
+          <tr>
+            <td><%= order._id %></td>
+            <td><%= order.user?.firstname || 'Guest' %></td>
+            <td>₹<%= order.finalAmount %></td>
+            <td>₹<%= order.couponDiscount || 0 %></td>
+            <td><%= order.createdAt.toDateString() %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="5" class="text-center">No orders found</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+<% } else { %>
+  <h4>No reports to display</h4>
+<% } %>
+
+<script>
+  function toggleDateInputs() {
+    const rangeType = document.getElementById('rangeType').value;
+    const start = document.getElementById('startDate');
+    const end = document.getElementById('endDate');
+    const customInputs = document.getElementById('customDateInputs');
+
+    if (rangeType === 'custom') {
+      customInputs.style.display = 'block';
+      start.required = true;
+      end.required = true;
+    } else {
+      customInputs.style.display = 'none';
+      start.required = false;
+      end.required = false;
+    }
+  }
+</script>

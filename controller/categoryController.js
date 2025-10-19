@@ -2,9 +2,38 @@ const Category = require('../models/categoryModels');
 
 
 
+const deleteCategory =async(req,res)=>{
+  try{
+    console.log('hi deletecategory')
+    const  categoryId = req.query.id;
+    console.log(categoryId)
+    await Category.deleteOne({_id:categoryId});
+    req.flash('success','category deleted')
+    res.redirect('/admin/category')
+
+
+  }
+  catch(error){
+    console.log(error)
+  }
+}
+
 const loadCategory = async (req,res)=>{
     try{
-        const categorydata = await Category.find({});
+      const {status} = req.query;
+      console.log(status)
+      let categorydata=''
+      
+
+    if(status=='block'){
+categorydata = await Category.find({cat_status:false});
+
+
+
+    }
+    else{
+       categorydata=await Category.find({});}
+
         res.render('admin/category/category',{
             categorydata
         })
@@ -129,6 +158,7 @@ const unlistCategory = async(req,res)=>{
   const addCategory = async (req, res) => {
     try {
       let category_name = req.body.categoryname.trim().toLowerCase(); // Normalize
+      console.log('the console is :',category_name)
   
       // Check if a category with the same trimmed name exists (case-insensitive)
       const existingCategory = await Category.findOne({
@@ -178,5 +208,6 @@ module.exports ={
     editCategory,
     loadaddCategory,
     addCategory,
-    loadcategory
+    loadcategory,
+    deleteCategory
 }

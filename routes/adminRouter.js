@@ -9,10 +9,11 @@ const productController = require('../controller/productController');
 const multer= require('../middlewares/multer');
 const adminOrderController = require('../controller/adminOrderController')
 const adminEventControlller = require('../controller/adminEventController');
-const adminCouponController = require('../controller/adminCouponController')
+const adminCouponController = require('../controller/adminCouponController');
+const salesReportController = require('../controller/salesReportController')
 
 
-//Setting layout for adminside
+//Setting layout for adminside   
 router.use(expressEjsLayouts);
 router.set('layout','./layouts/admin')
 
@@ -22,8 +23,18 @@ router.post('/',adminAuth.islogout,adminController.verifyLogin);
 
 
 //HOME
-router.get('/home',adminAuth.islogin,adminController.loadHome)
-router.get('/salesReport',adminAuth.islogin,adminController.getSalesReport)
+router.get('/home',adminAuth.islogin,adminController.loadHome);
+// Dashboard data (for AJAX Chart.js)
+router.get('/dashboard-data', adminController.getDashboardData);
+
+
+// routes/admin/salesReport.js
+router.get('/salesReport', adminAuth.islogin, salesReportController.renderPage);
+router.post('/salesReport/filter', adminAuth.islogin, salesReportController.getFilteredReport);
+router.get('/salesReport/download/:type', adminAuth.islogin, salesReportController.downloadReport);
+
+
+
 
 //userDashboard
 router.get('/userDashboard',adminAuth.islogin,adminController.loadUserpage)
@@ -34,10 +45,11 @@ router.get('/category',adminAuth.islogin,categoryController.loadCategory)
 router.get('/unlistCategory',adminAuth.islogin,categoryController.unlistCategory)
 router.get('/editCategory',adminAuth.islogin,categoryController.loadeditCategory)
 router.post('/editCategory',categoryController.editCategory)
+router.get('/deleteCategory',adminAuth.islogin,categoryController.deleteCategory)
 
 
 router.get('/addCategory',adminAuth.islogin,categoryController.loadaddCategory)
-router.post('/addCategory',categoryController.addCategory)//adminAuth.islogin
+router.post('/addCategory',adminAuth.islogin,categoryController.addCategory)//adminAuth.islogin
 
 
 
@@ -73,6 +85,11 @@ router.get('/allOrder',adminAuth.islogin,adminOrderController.listUserOrders)
 router.get('/orderDetails',adminAuth.islogin,adminOrderController.listOrderDetails)
 router.post('/orderstatus',adminAuth.islogin,adminOrderController.orderStatus)
 router.post('/update-item-status',adminAuth.islogin,adminOrderController.itemStatus)
+
+
+
+router.post('/updateOrderStatus',adminAuth.islogin, adminController.updateOrderStatus);
+
 
 //ALL EVENTS
 router.get('/events',adminAuth.islogin,adminEventControlller.listEvents)

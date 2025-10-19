@@ -5,7 +5,7 @@ const offerSchema = new mongoose.Schema({
   description:String,
   discountType: { type: String, enum: ['percentage', 'amount'], required: true },
   discountValue: { type: Number, required: true }, // e.g. 10 (for 10%) or 100 (₹100 off)
-  applicableTo: { type: String, enum: ['product', 'category'], required: true },
+  applicableTo: { type: String, enum: ['product', 'category','all'], required: true },
   products: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Item'
