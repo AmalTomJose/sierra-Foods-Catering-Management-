@@ -113,6 +113,13 @@
   </div>
   <small id="couponFeedback" class="text-success"></small>
 </div>
+<div class="mt-3">
+  <h6>Available Coupons</h6>
+  <div id="availableCoupons" class="border p-3 rounded" style="max-height: 150px; overflow-y: auto;">
+    <p class="text-muted">Loading available coupons...</p>
+  </div>
+</div>
+
 
 
             <!-- Payment Method -->
@@ -452,4 +459,59 @@ removeBtn.addEventListener('click', () => {
       });
     }
   });
+</script>
+<script>
+
+// Fetch available coupons when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/availableCoupons', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cartTotal: finalAmountValue })
+  })
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById('availableCoupons');
+    container.innerHTML = ''; // clear loading text
+
+    if (!data.success || data.coupons.length === 0) {
+      container.innerHTML = '<p class="text-muted">No available coupons right now.</p>';
+      return;
+    }
+
+    data.coupons.forEach(coupon => {
+      const couponDiv = document.createElement('div');
+      couponDiv.classList.add('d-flex', 'justify-content-between', 'align-items-center', 'border-bottom', 'py-2');
+      couponDiv.innerHTML = `
+        <div>
+          <strong>${coupon.code}</strong>
+          <p class="mb-0 small text-muted">
+            ${coupon.description || ''}
+            <br>
+            ${coupon.discountType === 'percentage'
+              ? `Discount: ${coupon.discountValue}%`
+              : `Discount: ₹${coupon.discountValue}`}
+          </p>
+        </div>
+        <button class="btn btn-sm btn-outline-success apply-this-coupon" data-code="${coupon.code}">
+          Apply
+        </button>
+      `;
+      container.appendChild(couponDiv);
+    });
+
+    // Attach event listener for "Apply" buttons
+    document.querySelectorAll('.apply-this-coupon').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const code = e.target.getAttribute('data-code');
+        document.getElementById('couponCode').value = code;
+        document.getElementById('applyCouponBtn').click();
+      });
+    });
+  })
+  .catch(err => {
+    document.getElementById('availableCoupons').innerHTML = '<p class="text-danger">Failed to load coupons.</p>';
+    console.error(err);
+  });
+});
 </script>

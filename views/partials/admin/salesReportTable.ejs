@@ -1,0 +1,40 @@
+<table class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Amount</th>
+        <th>Discount</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (report.orders.length > 0) { %>
+        <% report.orders.forEach(order => { %>
+          <tr>
+            <td><%= order._id %></td>
+            <td><%= order.user?.firstname || 'Guest' %></td>
+            <td>₹<%= order.finalAmount %></td>
+            <td>₹<%= order.couponDiscount || 0 %></td>
+            <td><%= order.createdAt.toDateString() %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="5" class="text-center">No orders found</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+  
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+    <div class="d-flex justify-content-end gap-2 mt-3" id="pagination">
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <button 
+          class="btn btn-sm <%= i === currentPage ? 'btn-primary' : 'btn-outline-primary' %> page-btn" 
+          data-page="<%= i %>">
+          <%= i %>
+        </button>
+      <% } %>
+    </div>
+  <% } %>
+  

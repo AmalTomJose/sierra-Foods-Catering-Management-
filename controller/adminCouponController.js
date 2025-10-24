@@ -19,7 +19,7 @@ const getCoupons = async(req,res)=>{
 
      
 
-      const [coupons,total] = await Promise.all([Coupon.find(searchFilter).skip(skip).limit(limit),Coupon.countDocuments(searchFilter)]) 
+      const [coupons,total] = await Promise.all([Coupon.find(searchFilter).skip(skip).limit(limit).sort({createdAt:-1}),Coupon.countDocuments(searchFilter)]) 
       if(req.xhr){
         return res.json({
             coupons,

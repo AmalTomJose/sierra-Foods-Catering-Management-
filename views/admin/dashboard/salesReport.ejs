@@ -26,36 +26,16 @@
     <p>Total Amount: ₹<%=report.totalAmount%></p>
     <p>Total Discount: ₹<%=report.totalDiscount%></p>
   </div>
+  <div id="reportContainer">
+    <%- include('../../partials/admin/salesReportTable') %>
+  </div>
+  
 
-  <table class="table table-bordered mt-3">
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Customer</th>
-        <th>Amount</th>
-        <th>Discount</th>
-        <th>Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (report.orders.length > 0) { %>
-        <% report.orders.forEach(order => { %>
-          <tr>
-            <td><%= order._id %></td>
-            <td><%= order.user?.firstname || 'Guest' %></td>
-            <td>₹<%= order.finalAmount %></td>
-            <td>₹<%= order.couponDiscount || 0 %></td>
-            <td><%= order.createdAt.toDateString() %></td>
-          </tr>
-        <% }) %>
-      <% } else { %>
-        <tr><td colspan="5" class="text-center">No orders found</td></tr>
-      <% } %>
-    </tbody>
-  </table>
+
 <% } else { %>
   <h4>No reports to display</h4>
 <% } %>
+
 
 <script>
   function toggleDateInputs() {
@@ -74,4 +54,29 @@
       end.required = false;
     }
   }
+</script>
+<script>
+  document.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("page-btn")) {
+      e.preventDefault();
+
+      const page = e.target.dataset.page;
+      const rangeType = "<%= report.rangeType %>";
+      const startDate = "<%= report.startDate %>";
+      const endDate = "<%= report.endDate %>";
+
+      try {
+        const response = await fetch(`/admin/salesReport/filter?page=${page}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+          body: JSON.stringify({ rangeType, startDate, endDate })
+        });
+
+        const html = await response.text();
+        document.getElementById("reportContainer").innerHTML = html;
+      } catch (err) {
+        console.error("Pagination failed:", err);
+      }
+    }
+  });
 </script>

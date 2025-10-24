@@ -121,6 +121,8 @@ router.post('/cancel-order/:orderId',islogin,orderController.cancelOrder);
 
 //coupon
 router.post('/applyCoupon',islogin,couponController.applyCoupon)     
+router.post('/availableCoupons',islogin, couponController.getAvailableCoupons);
+
 
 
 

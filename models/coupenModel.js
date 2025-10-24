@@ -7,7 +7,8 @@ const couponSchema = new mongoose.Schema({
     minOrderAmount:{type:Number,default:0},
     expiryDate:{type:Date,required:true},
     usageLimit:{type:Number,default:1},
-    usedBy:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}]
+    usedBy:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
+    createdAt:{type:Date,default:Date.now}
 })
 
 
