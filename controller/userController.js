@@ -32,19 +32,22 @@ const createWalletForUser = async (userId) => {
 };
 
 
+const loadWallet = async (req, res) => {
+  try {
+    const userId = req.session.user_id;
+    let wallet = await Wallet.findOne({ user: userId });
 
-const loadWallet = async(req,res)=>{
-  try{
-      const userId = req.session.user_id;
-      const wallet = await Wallet.findOne({user:userId});
-   
-      res.render('user/profile/wallet',{user:userId,wallet})
+    // If wallet doesn't exist, create a new one with zero balance
+    if (!wallet) {
+      wallet = await Wallet.create({ user: userId, balance: 0 });
+    }
 
+    res.render('user/profile/wallet', { user: userId, wallet });
+  } catch (err) {
+    console.error('Error loading wallet:', err);
+    res.status(500).render('error', { message: 'Failed to load wallet' });
   }
-  catch(err){
-      console.log(err)
-  }
-}
+};
 
 
 
@@ -111,22 +114,26 @@ const loadProductDetail = async (req, res) => {
     const userData = await User.findById(userId);
     const id = req.params.id;
 
+    // 🛍️ Fetch product details
     const product = await Product.findById(id)
       .populate('category')
       .populate('subcategory');
 
+    // 🧾 Fetch user's active booking (for guest count)
     const booking = await Booking.findOne({ user: userId, status: 'active' })
       .sort({ createdAt: -1 })
       .select('guestCount');
 
     const today = new Date();
 
+    // 🎯 Fetch active offers (product, category, global)
     const activeOffers = await Offer.find({
       isActive: true,
       startDate: { $lte: today },
       endDate: { $gte: today },
     });
 
+    // 🔎 Find offers related to this product
     const productOffer = activeOffers.find(o =>
       o.applicableTo === 'product' &&
       Array.isArray(o.products) &&
@@ -138,55 +145,57 @@ const loadProductDetail = async (req, res) => {
       o.category?.toString() === product.category?._id?.toString()
     );
 
+    const globalOffer = activeOffers.find(o => o.applicableTo === 'all');
+
+    // ⚙️ Determine best offer (product / category / global)
     let bestOffer = null;
     let bestDiscount = 0;
 
-    if (productOffer) {
-      const discount = productOffer.discountType === 'percentage'
-        ? (product.item_price * productOffer.discountValue) / 100
-        : productOffer.discountValue;
+    const calculateDiscount = (offer) => {
+      if (!offer) return 0;
+      return offer.discountType === 'percentage'
+        ? (product.item_price * offer.discountValue) / 100
+        : offer.discountValue;
+    };
 
+    const offers = [productOffer, categoryOffer, globalOffer];
+    for (const offer of offers) {
+      const discount = calculateDiscount(offer);
       if (discount > bestDiscount) {
         bestDiscount = discount;
-        bestOffer = productOffer;
+        bestOffer = offer;
       }
     }
 
-    if (categoryOffer) {
-      const discount = categoryOffer.discountType === 'percentage'
-        ? (product.item_price * categoryOffer.discountValue) / 100
-        : categoryOffer.discountValue;
-
-      if (discount > bestDiscount) {
-        bestDiscount = discount;
-        bestOffer = categoryOffer;
-      }
-    }
-
+    // 💰 Apply best offer
     if (bestOffer) {
       product.offerPrice = Math.max(product.item_price - bestDiscount, 0);
       product.appliedOffer = bestOffer;
+    } else {
+      product.offerPrice = product.item_price;
     }
 
+    // 👥 Get guest count from booking (or 1 by default)
     const qty = booking?.guestCount || 1;
 
-    // ✅ Fetch similar products (same category, exclude current product)
+    // 🧩 Fetch similar products (same category, exclude current one)
     const similarProducts = await Product.find({
       category: product.category?._id,
-      _id: { $ne: product._id }
-    })
-    .limit(5);
+      _id: { $ne: product._id },
+      item_status: true
+    }).limit(5);
 
+    // 🧭 Render single product page
     return res.render('user/product/singleProduct', {
       user: userData,
       product,
       qty,
       error: booking ? null : 'Please Book an Event',
-      similarProducts // ✅ pass to view
+      similarProducts
     });
 
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
     res.status(500).send('Internal Server Error');
   }
 };
@@ -820,14 +829,17 @@ const loadShop = async (req, res) => {
     const perPage = 8;
     let query = { item_status: true };
 
+    // 🔍 Search filter
     if (search) {
       query.item_name = { $regex: new RegExp(search, 'i') };
     }
 
+    // 🏷️ Category filter
     if (category) {
       query.category = new mongoose.Types.ObjectId(category);
     }
 
+    // 🔢 Sorting
     let sortOption = { item_price: 1 };
     if (sort === 'desc') {
       sortOption = { item_price: -1 };
@@ -835,13 +847,14 @@ const loadShop = async (req, res) => {
 
     const today = new Date();
 
-    // ✅ Fetch active offers
+    // 🎯 Fetch active offers (including product/category/global)
     const activeOffers = await Offer.find({
       isActive: true,
       startDate: { $lte: today },
       endDate: { $gte: today }
     });
 
+    // 🛍️ Fetch products
     const productData = await Product.aggregate([
       { $match: query },
       {
@@ -853,63 +866,61 @@ const loadShop = async (req, res) => {
         }
       },
       { $unwind: '$category' },
-      { $match: { 'category.cat_status': true }},
+      { $match: { 'category.cat_status': true } },
       { $sort: sortOption },
       { $skip: (page - 1) * perPage },
       { $limit: perPage }
     ]);
 
-    // ✅ Apply best offer to each product
+    // ⚡ Apply best offer logic
     const updatedProducts = productData.map(product => {
-      // Product Offer Match
+      // Find matching offers
       const productOffer = activeOffers.find(o =>
         o.applicableTo === 'product' &&
         Array.isArray(o.products) &&
         o.products.some(pid => pid.toString() === product._id.toString())
       );
-    
-      console.log('the sample for product offer is :',productOffer)
-      
-      let categoryOffer = activeOffers.find(
-        o => o.applicableTo === 'category' && o.category?.toString() === product.category._id.toString()
+
+      const categoryOffer = activeOffers.find(o =>
+        o.applicableTo === 'category' &&
+        o.category?.toString() === product.category._id.toString()
       );
-console.log(categoryOffer)
+
+      const globalOffer = activeOffers.find(o => o.applicableTo === 'all');
+
+      // Determine best discount
       let bestOffer = null;
       let bestDiscount = 0;
 
-      // Calculate product offer discount
-      if (productOffer) {
-        const discount = productOffer.discountType === 'percentage'
-          ? (product.item_price * productOffer.discountValue) / 100
-          : productOffer.discountValue;
+      const calculateDiscount = (offer) => {
+        if (!offer) return 0;
+        return offer.discountType === 'percentage'
+          ? (product.item_price * offer.discountValue) / 100
+          : offer.discountValue;
+      };
 
+      // Compare offers
+      const offers = [productOffer, categoryOffer, globalOffer];
+      for (const offer of offers) {
+        const discount = calculateDiscount(offer);
         if (discount > bestDiscount) {
           bestDiscount = discount;
-          bestOffer = productOffer;
+          bestOffer = offer;
         }
       }
 
-      // Calculate category offer discount
-      if (categoryOffer) {
-        const discount = categoryOffer.discountType === 'percentage'
-          ? (product.item_price * categoryOffer.discountValue) / 100
-          : categoryOffer.discountValue;
-
-        if (discount > bestDiscount) {
-          bestDiscount = discount;
-          bestOffer = categoryOffer;
-        }
-      }
-
+      // Apply best offer
       if (bestOffer) {
-        product.offerPrice = Math.max(product.item_price - bestDiscount, 0); // Ensure non-negative
+        product.offerPrice = Math.max(product.item_price - bestDiscount, 0);
         product.appliedOffer = bestOffer;
+      } else {
+        product.offerPrice = product.item_price;
       }
-      console.log('the final product befoe passing is :',product)
 
       return product;
     });
 
+    // 📊 Pagination count
     const totalCountResult = await Product.aggregate([
       { $match: query },
       {
@@ -921,14 +932,17 @@ console.log(categoryOffer)
         }
       },
       { $unwind: '$category' },
-      { $match: { 'category.cat_status': true }},
+      { $match: { 'category.cat_status': true } },
       { $count: 'total' }
     ]);
 
     const totalProducts = totalCountResult[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / perPage);
     const categories = await Category.find({ cat_status: true });
+    console.log("********************");
+    console.log("updatedProducts:",updatedProducts)
 
+    // 🧭 Render shop page
     res.render('user/product/shop', {
       products: updatedProducts,
       user: userData,
@@ -940,14 +954,10 @@ console.log(categoryOffer)
     });
 
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
     res.status(500).send('Internal Server Error');
   }
 };
-
-
-
-
 
 
 

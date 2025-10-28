@@ -1,7 +1,7 @@
 <div class="container mt-5" style="padding-top: 100px;">
   <div class="text-end mb-3">
     <button onclick="printContent()" class="btn btn-secondary">
-      <i class="material-icons">print</i> Download PDF
+      <i class="material-icons"></i> Download Invoice
     </button>
   </div>
 
@@ -158,12 +158,18 @@
           </table>
         </div>
 
-        <div class="text-center mt-4">
-          <% if (order.status == 'confirmed' ) { %>
-            <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
-              <i class="material-icons"></i> Cancel Order
-            </button>
-          <% } %>
+        <% 
+  // Check if all items are cancelled
+  const allItemsCancelled = order.items.every(item => item.status === 'cancelled');
+%>
+
+<div class="text-center mt-4">
+  <% if (order.status == 'confirmed' && !allItemsCancelled) { %>
+    <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
+      <i class="material-icons"></i> Cancel Order
+    </button>
+  <% } %>
+
           <% if (order.status === 'requested') { %>
             <h6 class="text-danger">Requested for cancellation</h6>
           <% } %>
@@ -186,7 +192,7 @@
 
       </div>
     </div>
-  </section>
+  </section>                    
 </div>
 
 <script>

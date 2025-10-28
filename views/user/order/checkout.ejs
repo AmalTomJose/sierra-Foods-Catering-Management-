@@ -83,7 +83,7 @@
                       <td colspan="2" class="text-success">- ₹<%= offerDiscount %></td>
                     </tr>
                     <tr><th>SubTotal</th><td colspan="2" id="subtotalAmount">₹<%= subtotalWithShipping %></td></tr>
-                    <tr><th>Shipping</th><td colspan="2"><em>Free Shipping</em></td></tr>
+                    <tr><th>Delivery</th><td colspan="2"><em>Free Delivery</em></td></tr>
                 
                     <tr id="discountRow" style="display: none;">
                       <th>Coupon Discount</th>
@@ -145,7 +145,11 @@
             </div>
 
             <!-- Place Order Button -->
-            <a href="#" id="btn_checkout" class="btn btn-fill-out btn-block mt-30">Place Order</a>
+            <a href="#" id="btn_checkout" 
+   class="btn btn-success btn-block mt-30 fw-semibold shadow-sm px-4 py-2"
+   style="background-color:#16a34a; border:none; border-radius:8px; color:white; font-size:16px; transition:0.3s;">
+   <i class="fi-rs-box-alt me-2"></i> Place Order
+</a>
           </div>
         </div>
       </div>

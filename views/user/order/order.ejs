@@ -1,107 +1,101 @@
 <main class="main" style="padding-top: 100px;">
     <section class="pt-150 pb-150">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12 m-auto">
-                    <div class="row">
-                        <!-- Sidebar -->
-                        <div class="col-md-3">
-                            <div class="dashboard-menu">
-                                <ul class="nav flex-column" role="tablist">
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="/userprofile"><i class="fi-rs-user mr-10"></i>Account details</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="/userAddress"><i class="fi-rs-marker mr-10"></i>My Address</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link active" href="/orderSuccess"><i class="fi-rs-shopping-bag mr-10"></i>Orders</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="/wishlist"><i class="fi-rs-heart mr-10"></i>Your List</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="/Wallet"><i class="fi-rs-shopping-bag mr-10"></i>Wallets</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="/coupon"><i class="fi-rs-shopping-bag mr-10"></i>Coupon</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="/logout"><i class="fi-rs-sign-out mr-10"></i>Logout</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Orders Table -->
-                        <div class="col-md-9">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">Your Orders</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table id="orders" class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Order</th>
-                                                    <th>Order Date</th>
-                                                    <th>Delivery Date</th>
-                                                    <th>Status</th>
-                                                    <th>Total</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <% orders.forEach(function(order_data) { %>
-                                                    <tr>
-                                                        <td><%= order_data.orderId %></td>
-                                                        <td><%= new Date(order_data.orderDate).toLocaleDateString() %></td>
-                                                        <td><%= new Date(order_data.deliveryDate).toLocaleDateString() %></td>
-                                                        <td><%= order_data.status %></td>
-                                                        <td>₹ <%= order_data.finalAmount %></td>
-                                                        <td>
-                                                            <a href="/orderDetails/<%= order_data._id %>" class="btn-small d-block">View</a>
-                                                        </td>
-                                                    </tr>
-                                                <% }) %>
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <!-- Pagination -->
-                                    <nav class="mt-4" aria-label="Page navigation">
-                                        <ul class="pagination">
-                                            <% if (currentPage > 1) { %>
-                                                <li class="page-item">
-                                                    <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
-                                                        <span aria-hidden="true">&laquo;</span>
-                                                    </a>
-                                                </li>
-                                            <% } %>
-
-                                            <% for (let i = 1; i <= totalPages; i++) { %>
-                                                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                                                    <a class="page-link" href="?page=<%= i %>"><%= i %></a>
-                                                </li>
-                                            <% } %>
-
-                                            <% if (currentPage < totalPages) { %>
-                                                <li class="page-item">
-                                                    <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
-                                                        <span aria-hidden="true">&raquo;</span>
-                                                    </a>
-                                                </li>
-                                            <% } %>
-                                        </ul>
-                                    </nav>
-
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-10">
+  
+            <!-- 🧾 Orders Card -->
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-light bg-opacity-25 text-primary d-flex justify-content-between align-items-center rounded-top-4">
+                    <h4 class="mb-0 fw-semibold">
+                      <i class="bi bi-basket2-fill me-2 text-primary"></i>Your Orders
+                    </h4>
+                  </div>
+                  
+                  
+                  
+  
+              <div class="card-body bg-light">
+                <% if (orders.length === 0) { %>
+                  <div class="text-center py-5">
+                    <i class="bi bi-clipboard-x text-secondary fs-1"></i>
+                    <p class="mt-3 mb-0 text-muted fs-5">No orders found</p>
+                  </div>
+                <% } else { %>
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                      <thead class="table-primary text-center">
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Order Date</th>
+                          <th>Delivery Date</th>
+                          <th>Status</th>
+                          <th>Total</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% orders.forEach(function(order_data) { 
+                          let statusClass = '';
+                          switch (order_data.status.toLowerCase()) {
+                            case 'delivered': statusClass = 'badge bg-success'; break;
+                            case 'pending': statusClass = 'badge bg-warning text-dark'; break;
+                            case 'cancelled': statusClass = 'badge bg-danger'; break;
+                            case 'processing': statusClass = 'badge bg-info text-dark'; break;
+                            default: statusClass = 'badge bg-secondary';
+                          }
+                        %>
+                          <tr class="text-center">
+                            <td><strong><%= order_data.orderId %></strong></td>
+                            <td><%= new Date(order_data.orderDate).toLocaleDateString() %></td>
+                            <td><%= new Date(order_data.deliveryDate).toLocaleDateString() %></td>
+                            <td><span class="<%= statusClass %> px-3 py-2"><%= order_data.status %></span></td>
+                            <td class="fw-semibold text-success">₹ <%= order_data.finalAmount.toLocaleString() %></td>
+                            <td>
+                              <a href="/orderDetails/<%= order_data._id %>" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                <i class="bi bi-eye me-1"></i> View
+                              </a>
+                            </td>
+                          </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                  </div>
+  
+                  <!-- Pagination -->
+                  <nav class="mt-4" aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                      <% if (currentPage > 1) { %>
+                        <li class="page-item">
+                          <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                          </a>
+                        </li>
+                      <% } %>
+  
+                      <% for (let i = 1; i <= totalPages; i++) { %>
+                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                        </li>
+                      <% } %>
+  
+                      <% if (currentPage < totalPages) { %>
+                        <li class="page-item">
+                          <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                          </a>
+                        </li>
+                      <% } %>
+                    </ul>
+                  </nav>
+                <% } %>
+              </div>
             </div>
+            <!-- /Orders Card -->
+  
+          </div>
+        </div>
+      </div>
     </section>
-</main>
+  </main>
+  

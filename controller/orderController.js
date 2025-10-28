@@ -31,7 +31,6 @@ function calculateOffer(offer, price) {
     return offer.discountValue;
   }
 }
-
 const loadCheckout = async (req, res) => {
   try {
     const userId = req.session.user_id;
@@ -68,6 +67,7 @@ const loadCheckout = async (req, res) => {
       const product = item.product;
       const quantity = item.quantity;
 
+      // 🔹 Find product-specific offer
       const productOffer = activeOffers.find(
         (o) =>
           o.applicableTo === "product" &&
@@ -75,11 +75,15 @@ const loadCheckout = async (req, res) => {
           o.products.some((pid) => pid.toString() === product._id.toString())
       );
 
+      // 🔹 Find category-specific offer
       const categoryOffer = activeOffers.find(
         (o) =>
           o.applicableTo === "category" &&
           o.category?.toString() === product.category._id.toString()
       );
+
+      // 🔹 Find universal offer (applicable to all products)
+      const universalOffer = activeOffers.find((o) => o.applicableTo === "all");
 
       let discountPerItem = 0;
 
@@ -87,6 +91,8 @@ const loadCheckout = async (req, res) => {
         discountPerItem = calculateOffer(productOffer, product.item_price);
       } else if (categoryOffer) {
         discountPerItem = calculateOffer(categoryOffer, product.item_price);
+      } else if (universalOffer) {
+        discountPerItem = calculateOffer(universalOffer, product.item_price);
       }
 
       const discountedPrice = product.item_price - discountPerItem;
@@ -97,16 +103,17 @@ const loadCheckout = async (req, res) => {
       productTotal.push(totalForItem);
     }
 
-    const subtotalWithShipping = subtotal; // shipping is free for now
-    req.session.subtotalwithshipping = subtotalWithShipping > 50000 ? 50000 : subtotalWithShipping;
+    const subtotalWithShipping = subtotal; // free shipping
+    req.session.subtotalwithshipping =
+      subtotalWithShipping > 50000 ? 50000 : subtotalWithShipping;
 
-    // Get user address for checkout
+    // Get user's active address
     const addressData = await Booking.findOne({ user: userId, status: "active" });
     if (!addressData) {
       return res.redirect("/eventDetails");
     }
 
-    // Validate each item with guestCount
+    // Validate quantities vs guest count
     for (let item of cartItems) {
       if (item.quantity > addressData.guestCount) {
         return res.redirect("/cart");
@@ -129,22 +136,12 @@ const loadCheckout = async (req, res) => {
   }
 };
 
-
 const checkOutPost = async (req, res) => {
   try {
-    const {
-      address,
-      paymentMethod,
-      coupon,
-      couponDiscount,
-      finalAmount,
-    } = req.body;
-
+    const { address, paymentMethod, coupon, couponDiscount, finalAmount } = req.body;
     const userId = req.session.user_id;
 
-
-
-    // 🛒 Step 2: Fetch cart and booking
+    // 🛒 Step 1: Fetch cart and booking
     const userCart = await Cart.findOne({ user: userId }).populate("items.product");
     if (!userCart || userCart.items.length === 0) {
       return res.status(400).json({ success: false, error: "Cart is empty" });
@@ -155,26 +152,21 @@ const checkOutPost = async (req, res) => {
       return res.status(400).json({ success: false, error: "Booking not found" });
     }
 
-    if(paymentMethod == 'wallet'){
-
-      const wallet = await Wallet.findOne({user:userId})
-      if(!wallet){
+    // 💰 Step 2: Wallet payment validation
+    if (paymentMethod === "wallet") {
+      const wallet = await Wallet.findOne({ user: userId });
+      if (!wallet) {
         return res.status(400).json({ success: false, error: "Wallet not found for the User!" });
-        
-
       }
 
-      if(wallet.balance<finalAmount)
-      {
-       return res.status(400).json({ success: false, error: 'Insufficient wallet balance.' });
-
+      if (wallet.balance < finalAmount) {
+        return res.status(400).json({ success: false, error: "Insufficient wallet balance." });
       }
-      wallet.balance -=finalAmount
+
+      wallet.balance -= finalAmount;
       await wallet.save();
-
-
-
     }
+
     // 🎁 Step 3: Fetch active offers
     const activeOffers = await Offer.find({
       startDate: { $lte: new Date() },
@@ -185,28 +177,37 @@ const checkOutPost = async (req, res) => {
     let subtotal = 0;
     const orderItems = [];
 
-    // 🧾 Step 4: Process cart items with offer discount
+    // 🧾 Step 4: Apply offer logic
     for (const item of userCart.items) {
       const product = item.product;
       const quantity = item.quantity;
-
       let discountPerItem = 0;
 
-      const productOffer = activeOffers.find(o =>
-        o.applicableTo === "product" &&
-        Array.isArray(o.products) &&
-        o.products.some(pid => pid.toString() === product._id.toString())
+      // 🔹 Product-specific offer
+      const productOffer = activeOffers.find(
+        (o) =>
+          o.applicableTo === "product" &&
+          Array.isArray(o.products) &&
+          o.products.some((pid) => pid.toString() === product._id.toString())
       );
 
-      const categoryOffer = activeOffers.find(o =>
-        o.applicableTo === "category" &&
-        o.category?.toString() === product.category?._id.toString()
+      // 🔹 Category-specific offer
+      const categoryOffer = activeOffers.find(
+        (o) =>
+          o.applicableTo === "category" &&
+          o.category?.toString() === product.category?._id.toString()
       );
 
+      // 🔹 Universal (ALL) offer
+      const universalOffer = activeOffers.find((o) => o.applicableTo === "all");
+
+      // ✅ Apply in order of priority: product → category → all
       if (productOffer) {
         discountPerItem = calculateOffer(productOffer, product.item_price);
       } else if (categoryOffer) {
         discountPerItem = calculateOffer(categoryOffer, product.item_price);
+      } else if (universalOffer) {
+        discountPerItem = calculateOffer(universalOffer, product.item_price);
       }
 
       const discountedPrice = product.item_price - discountPerItem;
@@ -219,16 +220,17 @@ const checkOutPost = async (req, res) => {
         price: discountedPrice,
         offerDiscount: discountPerItem,
         status: "ordered",
-        couponDiscount: 0, // to be distributed
+        couponDiscount: 0, // to be distributed later
       });
     }
 
-    // 🎟️ Step 5: Distribute coupon discount
+    // 🎟️ Step 5: Distribute coupon discount proportionally
     let distributed = 0;
     for (let i = 0; i < orderItems.length; i++) {
       const itemTotal = orderItems[i].price * orderItems[i].quantity;
       let share = Math.floor((itemTotal / subtotal) * couponDiscount);
 
+      // Ensure the last item gets remaining discount
       if (i === orderItems.length - 1) {
         share = couponDiscount - distributed;
       }
@@ -237,15 +239,13 @@ const checkOutPost = async (req, res) => {
       orderItems[i].couponDiscount = share;
     }
 
-
-
-    // 📝 Step 7: Save order
+    // 🧾 Step 6: Save new order
     const newOrder = new Order({
       user: userId,
       booking: booking._id,
       deliveryDate: booking.eventDate,
       paymentMethod,
-      paymentStatus:'paid',
+      paymentStatus: "paid",
       totalAmount: subtotal,
       finalAmount,
       couponUsed: coupon || null,
@@ -256,7 +256,7 @@ const checkOutPost = async (req, res) => {
 
     await newOrder.save();
 
-    // 🧹 Step 8: Cleanup
+    // 🧹 Step 7: Cleanup after order
     booking.status = "completed";
     await booking.save();
 
@@ -275,222 +275,21 @@ const checkOutPost = async (req, res) => {
     await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
 
     return res.status(200).json({ success: true, message: "Order placed successfully" });
-  // try {
-  //   const userId = req.session.user_id;
-  //   const { address, paymentMethod, coupon, couponDiscount, finalAmount, codAdvanceOption } = req.body;
-
-  //   if (!address || !paymentMethod) {
-  //     return res.status(400).json({ success: false, error: 'Address and payment method are required.' });
-  //   }
-
-  //   const cart = await Cart.findOne({ user: userId }).populate('items.product');
-  //   if (!cart || cart.items.length === 0) {
-  //     return res.status(400).json({ success: false, error: 'Your cart is empty.' });
-  //   }
-
-  //   const booking = await Booking.findOne({ user: userId, status: 'active' });
-  //   if (!booking) return res.status(400).json({ success: false, error: 'Booking not found.' });
-
-  //   // Step 1: Prepare base prices
-  //   const orderItems = cart.items.map((item) => {
-  //     const product = item.product;
-  //     const price = product.item_price;
-  //     return {
-  //       product: product._id,
-  //       quantity: item.quantity,
-  //       price,
-  //       total: price * item.quantity,
-  //     };
-  //   });
-
-  //   const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
-  //   const totalSubtotal = totalAmount;
-
-  //   // Step 2: Payment Handling
-  //   let paymentStatus = 'pending';
-  //   let amountPaid = 0;
-
-  //   // 25% of final amount
-  //   const advanceAmount = Math.round(finalAmount * 0.25);
-
-  //   if (paymentMethod === 'wallet') {
-  //     console.log('hell is now')
-  //     const wallet = await Wallet.findById(userId);
-  //     if (!wallet || wallet.balance < finalAmount) {
-  //       return res.status(400).json({ success: false, error: 'Insufficient wallet balance.' });
-  //     }
-  //     wallet.balance -= finalAmount;
-  //     await wallet.save();
-  //     paymentStatus = 'paid';
-  //     amountPaid = finalAmount;
-  //   }
-
-  //   if (paymentMethod === 'cashondelivery') {
-  //     if (codAdvanceOption === 'wallet') {
-  //       const wallet = await Wallet.findById(userId);
-  //       if (!wallet || wallet.balance < advanceAmount) {
-  //         return res.status(400).json({ success: false, error: 'Insufficient wallet balance for COD advance.' });
-  //       }
-  //       wallet.balance -= advanceAmount;
-  //       await wallet.save();
-  //       paymentStatus = 'partial';
-  //       amountPaid = advanceAmount;
-  //     }
-  //     // If Razorpay, advance payment is handled on client-side Razorpay callback
-  //     if (codAdvanceOption === 'razorpay') {
-  //       paymentStatus = 'partial';
-  //       amountPaid = advanceAmount; // Will be validated in Razorpay verification route
-  //     }
-  //   }
-
-  //   // Step 3: Split couponDiscount across items
-  //   const distributedItems = [];
-  //   let distributed = 0;
-
-  //   orderItems.forEach((item, index) => {
-  //     let share = Math.floor((item.total / totalSubtotal) * couponDiscount);
-  //     if (index === orderItems.length - 1) {
-  //       share = couponDiscount - distributed;
-  //     }
-  //     distributed += share;
-
-  //     distributedItems.push({
-  //       product: item.product,
-  //       quantity: item.quantity,
-  //       price: item.price,
-  //       status: 'ordered',
-  //       offerDiscount: 0,
-  //       couponDiscount: share,
-  //     });
-  //   });
-
-  //   // Step 4: Create and save order
-  //   const newOrder = new Order({
-  //     user: userId,
-  //     booking: booking._id,
-  //     deliveryDate: booking.eventDate,
-  //     paymentMethod,
-  //     paymentStatus,
-  //     status: 'confirmed',
-  //     totalAmount,
-  //     finalAmount,
-  //     couponUsed: coupon || null,
-  //     couponDiscount: couponDiscount || 0,
-  //     advancePaid: amountPaid,
-  //     items: distributedItems,
-  //   });
-
-  //   await newOrder.save();
-
-  //   // Step 5: Final clean-up
-  //   booking.status = 'completed';
-  //   await booking.save();
-
-  //   const eventDay = new Date(booking.eventDate).toISOString().split('T')[0];
-  //   await DailyCount.findOneAndUpdate(
-  //     { date: new Date(eventDay) },
-  //     { $inc: { totalBookings: 1, totalGuests: parseInt(booking.guestCount) } },
-  //     { upsert: true, new: true }
-  //   );
-
-  //   await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
-
-  //   return res.status(200).json({ success: true, message: 'Order placed successfully' });
-
   } catch (err) {
-    console.error('Checkout Error:', err);
-    return res.status(500).json({ success: false, error: 'dnnsadndInternal Server Error' });
+    console.error("Checkout Error:", err);
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
 
-// const   checkOutPost = async (req, res) => {
-//   try {
-//     const userId = req.session.user_id;
-//     const { address, paymentMethod } = req.body;
+// Utility: Offer Calculation
+function calculateOffer(offer, price) {
+  if (offer.discountType === "percentage") {
+    return Math.round((price * offer.discountValue) / 100);
+  } else {
+    return offer.discountValue;
+  }
+}
 
-//     if (!address || !paymentMethod) {
-//       return res.status(400).json({ success: false, error: 'Address and payment method are required.' });
-//     }
-
-//     const cart = await Cart.findOne({ user: userId }).populate('items.product');
-//     if (!cart || cart.items.length === 0) {
-//       return res.status(400).json({ success: false, error: 'Your cart is empty.' });
-//     }
-
-//     const orderItems = cart.items.map((item) => {
-//       const product = item.product;
-//       const price = product.discout_status ? product.item_price : product.discount_price;
-//       return {
-//         product: product._id,
-//         quantity: item.quantity,
-//         price,
-//         status: 'ordered',
-//         // paymentStatus: paymentMethod === 'Wallet' ? 'paid' : 'pending',
-//       };
-//     });
-
-//     const totalAmount = orderItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
-
-//     // Wallet check
-//     let paymentStatus = 'pending';
-
-//     if (paymentMethod === 'Wallet') {
-//       const walletBalance = await Wallet.findById(userId);
-
-//       if(!walletBalance){
-//         return res.status(400).json({ success: false, error: 'Wallet not found ! ' });
-
-//       }
-//       if (walletBalance.balance < totalAmount) {
-//         return res.status(400).json({ success: false, error: 'Insufficient wallet balance.' });
-//       }
-//       walletBalance.balance -= totalAmount;
-//       paymentStatus = 'paid';
-  
-//       await walletBalance.save();
-
-//     }
-
-//     const booking = await Booking.findOne({ user: userId, status: 'active' });
-
-//     if (!booking) return res.status(400).json({ success: false, error: 'Booking not found.' });
-
-//     const newOrder = new Order({
-//       user: userId,
-//       booking: booking._id,
-//       deliveryDate:booking.eventDate,
-//       paymentMethod,
-//       status:'confirmed',
-//       paymentStatus:paymentStatus || 'pending',
-//       totalAmount,
-//       items: orderItems,
-//     });
-
-//     await newOrder.save();
-
-//     booking.status = 'completed';
-//     await booking.save();
-
-//     const eventDay = new Date(booking.eventDate).toISOString().split('T')[0];
-//     await DailyCount.findOneAndUpdate(
-//       { date: new Date(eventDay) },
-//       {
-//         $inc: {
-//           totalBookings: 1,
-//           totalGuests: parseInt(booking.guestCount),
-//         },
-//       },
-//       { upsert: true, new: true }
-//     );
-
-//     await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
-
-//     return res.status(200).json({ success: true, message: 'Order placed successfully' });
-//   } catch (err) {
-//     console.error('Checkout Error:', err);
-//     return res.status(500).json({ success: false, error: 'Internal Server Error' });
-//   }
-// };
 
 
 
@@ -593,35 +392,49 @@ const loadOrderDetails = async (req, res) => {
   };
 
 
-const loadOrderHistory = async (req, res) => {
+  const loadOrderHistory = async (req, res) => {
     try {
-        const userId = req.session.user_id;
-        const orderId = req.params.id;
-        const userData = await User.findById(userId);
-        // const ordering = await Order.findById(orderId);
-        // console.log('Fuckeeeeeerrrrr::',ordering)
-        const order = await Order.findById(orderId)
-            .populate("user")
-            .populate({
-                path: "booking",
-                model: "Booking",
-            })
-            .populate({
-                path: "items.product",
-                model: "Item",
-            });
+      const userId = req.session.user_id;
+      const orderId = req.params.id;
+  
+      const userData = await User.findById(userId);
+  
+      // Find order that belongs to the logged-in user only
+      const order = await Order.findOne({ _id: orderId, user: userId })
+        .populate("user")
+        .populate({
+          path: "booking",
+          model: "Booking",
+        })
+        .populate({
+          path: "items.product",
+          model: "Item",
+        });
+  
+      // If order not found or not owned by user
+      if (!order) {
+        return res.status(403).render("user/general/pagenotfound", {
+          message: "Access Denied: You are not authorized to view this order.",
+          user: userData,
+        });
+      }
+  
+      console.log("To view order details:", order);
 
-        console.log('To view order details::',order); // Log the order object to check the coupon information
-
-
-        // Extract order ID from the order object without re-declaring the variable
-        const extractedOrderId = order.orderId;
-
-        res.render("user/order/orderDetails", {user:userId, userData, order, orderId: extractedOrderId }); // Pass coupon information to the template
+      const extractedOrderId = order.orderId;
+  
+      res.render("user/order/orderDetails", {
+        user: userId,
+        userData,
+        order,
+        orderId: extractedOrderId,
+      });
     } catch (error) {
-        console.log(error.message);
+      console.error("Error loading order details:", error);
+      res.status(500).render("user/error", { message: "Internal Server Error" });
     }
-};
+  };
+  
 
 const loadUpdateBooking= async (req, res) => {
   try {
@@ -769,162 +582,175 @@ function calculateOffer(offer, price) {
     : offer.discountValue;
 }
 
-  const verifyPayment = async (req, res) => {
-    try {
-      const {
-        razorpay_payment_id,
-        razorpay_order_id,
-        razorpay_signature,
-        paymentMethod,
-        coupon,
-        couponDiscount,
-        finalAmount,
-      } = req.body;
+const verifyPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      paymentMethod,
+      coupon,
+      couponDiscount,
+      finalAmount,
+    } = req.body;
 
-      const userId = req.session.user_id;
+    const userId = req.session.user_id;
 
-      // 🔐 Step 1: Verify Razorpay Signature
-      const generatedSignature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest("hex");
+    // 🔐 Step 1: Verify Razorpay Signature
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
 
-        if (generatedSignature !== razorpay_signature) {
-          console.warn("❌ Razorpay Signature Mismatch");
-          return res.status(200).json({
-            success: false,
-            error: "Payment verification failed",
-            orderId: null  // optional, if order is not created yet
-          });
-        }
-      // 🛒 Step 2: Fetch cart and booking
-      const userCart = await Cart.findOne({ user: userId }).populate("items.product");
-      if (!userCart || userCart.items.length === 0) {
-        return res.status(400).json({ success: false, error: "Cart is empty" });
-      }
-
-      const booking = await Booking.findOne({ user: userId, status: "active" });
-      if (!booking) {
-        return res.status(400).json({ success: false, error: "Booking not found" });
-      }
-
-      // 🎁 Step 3: Fetch active offers
-      const activeOffers = await Offer.find({
-        startDate: { $lte: new Date() },
-        endDate: { $gte: new Date() },
-        isActive: true,
+    if (generatedSignature !== razorpay_signature) {
+      console.warn("❌ Razorpay Signature Mismatch");
+      return res.status(200).json({
+        success: false,
+        error: "Payment verification failed",
+        orderId: null,
       });
+    }
 
-      let subtotal = 0;
-      const orderItems = [];
+    // 🛒 Step 2: Fetch cart and booking
+    const userCart = await Cart.findOne({ user: userId }).populate("items.product");
+    if (!userCart || userCart.items.length === 0) {
+      return res.status(400).json({ success: false, error: "Cart is empty" });
+    }
 
-      // 🧾 Step 4: Process cart items with offer discount
-      for (const item of userCart.items) {
-        const product = item.product;
-        const quantity = item.quantity;
+    const booking = await Booking.findOne({ user: userId, status: "active" });
+    if (!booking) {
+      return res.status(400).json({ success: false, error: "Booking not found" });
+    }
 
-        let discountPerItem = 0;
+    // 🎁 Step 3: Fetch active offers
+    const activeOffers = await Offer.find({
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
+      isActive: true,
+    });
 
-        const productOffer = activeOffers.find(o =>
+    let subtotal = 0;
+    const orderItems = [];
+
+    // 🧾 Step 4: Process cart items with offer discount
+    for (const item of userCart.items) {
+      const product = item.product;
+      const quantity = item.quantity;
+
+      let discountPerItem = 0;
+
+      // 🔹 Product-level offer
+      const productOffer = activeOffers.find(
+        (o) =>
           o.applicableTo === "product" &&
           Array.isArray(o.products) &&
-          o.products.some(pid => pid.toString() === product._id.toString())
-        );
-
-        const categoryOffer = activeOffers.find(o =>
-          o.applicableTo === "category" &&
-          o.category?.toString() === product.category?._id.toString()
-        );
-
-        if (productOffer) {
-          discountPerItem = calculateOffer(productOffer, product.item_price);
-        } else if (categoryOffer) {
-          discountPerItem = calculateOffer(categoryOffer, product.item_price);
-        }
-
-        const discountedPrice = product.item_price - discountPerItem;
-        const itemTotal = discountedPrice * quantity;
-        subtotal += itemTotal;
-
-        orderItems.push({
-          product: product._id,
-          quantity,
-          price: discountedPrice,
-          offerDiscount: discountPerItem,
-          status: "ordered",
-          couponDiscount: 0, // to be distributed
-        });
-      }
-
-      // 🎟️ Step 5: Distribute coupon discount
-      let distributed = 0;
-      for (let i = 0; i < orderItems.length; i++) {
-        const itemTotal = orderItems[i].price * orderItems[i].quantity;
-        let share = Math.floor((itemTotal / subtotal) * couponDiscount);
-
-        if (i === orderItems.length - 1) {
-          share = couponDiscount - distributed;
-        }
-
-        distributed += share;
-        orderItems[i].couponDiscount = share;
-      }
-
-      // 💳 Step 6: Set payment status and advance
-      let paymentStatus = "paid";
-      let advanceAmount = finalAmount;
-
-      if (paymentMethod === "cashondelivery") {
-        paymentStatus = "partial";
-        advanceAmount = Math.round(finalAmount * 0.25);
-      }
-
-      // 📝 Step 7: Save order
-      const newOrder = new Order({
-        user: userId,
-        booking: booking._id,
-        deliveryDate: booking.eventDate,
-        paymentMethod,
-        paymentStatus,
-        totalAmount: subtotal,
-        finalAmount,
-        couponUsed: coupon || null,
-        couponDiscount: couponDiscount || 0,
-        advanceAmount,
-        status: "confirmed",
-        items: orderItems,
-      });
-
-      await newOrder.save();
-
-      // 🧹 Step 8: Cleanup
-      booking.status = "completed";
-      await booking.save();
-
-      const eventDate = new Date(booking.eventDate).toISOString().split("T")[0];
-      await DailyCount.findOneAndUpdate(
-        { date: new Date(eventDate) },
-        {
-          $inc: {
-            totalBookings: 1,
-            totalGuests: parseInt(booking.guestCount),
-          },
-        },
-        { upsert: true, new: true }
+          o.products.some((pid) => pid.toString() === product._id.toString())
       );
 
-      await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
+      // 🔹 Category-level offer
+      const categoryOffer = activeOffers.find(
+        (o) =>
+          o.applicableTo === "category" &&
+          o.category?.toString() === product.category?._id.toString()
+      );
 
-      return res.status(200).json({
-        success: true,
-        message: "Order placed successfully",
-        orderId: newOrder._id
-      })
-    } catch (err) {
-      console.error("Razorpay Verify Error:", err);
-      return res.status(500).json({ success: false, error: "Payment verification failed" });
+      // 🔹 Universal offer (applies to all)
+      const universalOffer = activeOffers.find((o) => o.applicableTo === "all");
+
+      // 🧮 Apply highest priority: product → category → all
+      if (productOffer) {
+        discountPerItem = calculateOffer(productOffer, product.item_price);
+      } else if (categoryOffer) {
+        discountPerItem = calculateOffer(categoryOffer, product.item_price);
+      } else if (universalOffer) {
+        discountPerItem = calculateOffer(universalOffer, product.item_price);
+      }
+
+      const discountedPrice = product.item_price - discountPerItem;
+      const itemTotal = discountedPrice * quantity;
+      subtotal += itemTotal;
+
+      orderItems.push({
+        product: product._id,
+        quantity,
+        price: discountedPrice,
+        offerDiscount: discountPerItem,
+        status: "ordered",
+        couponDiscount: 0, // will be distributed later
+      });
     }
-  };
+
+    // 🎟️ Step 5: Distribute coupon discount proportionally
+    let distributed = 0;
+    for (let i = 0; i < orderItems.length; i++) {
+      const itemTotal = orderItems[i].price * orderItems[i].quantity;
+      let share = Math.floor((itemTotal / subtotal) * couponDiscount);
+
+      // Make sure last item gets remaining discount
+      if (i === orderItems.length - 1) {
+        share = couponDiscount - distributed;
+      }
+
+      distributed += share;
+      orderItems[i].couponDiscount = share;
+    }
+
+    // 💳 Step 6: Payment logic
+    let paymentStatus = "paid";
+    let advanceAmount = finalAmount;
+
+    if (paymentMethod === "cashondelivery") {
+      paymentStatus = "partial";
+      advanceAmount = Math.round(finalAmount * 0.25);
+    }
+
+    // 📝 Step 7: Save order
+    const newOrder = new Order({
+      user: userId,
+      booking: booking._id,
+      deliveryDate: booking.eventDate,
+      paymentMethod,
+      paymentStatus,
+      totalAmount: subtotal,
+      finalAmount,
+      couponUsed: coupon || null,
+      couponDiscount: couponDiscount || 0,
+      advanceAmount,
+      status: "confirmed",
+      items: orderItems,
+    });
+
+    await newOrder.save();
+
+    // 🧹 Step 8: Cleanup
+    booking.status = "completed";
+    await booking.save();
+
+    const eventDate = new Date(booking.eventDate).toISOString().split("T")[0];
+    await DailyCount.findOneAndUpdate(
+      { date: new Date(eventDate) },
+      {
+        $inc: {
+          totalBookings: 1,
+          totalGuests: parseInt(booking.guestCount),
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [], total: 0 } });
+
+    return res.status(200).json({
+      success: true,
+      message: "Order placed successfully",
+      orderId: newOrder._id,
+    });
+  } catch (err) {
+    console.error("Razorpay Verify Error:", err);
+    return res.status(500).json({ success: false, error: "Payment verification failed" });
+  }
+};
+
 
 
     

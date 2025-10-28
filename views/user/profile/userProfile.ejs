@@ -8,11 +8,10 @@
               <div class="dashboard-menu">
                 <ul class="nav flex-column" role="tablist">
                   <li class="nav-item"><a class="nav-link" href="/userprofile"><i class="fi-rs-user mr-10"></i>Account details</a></li>
-                  <li class="nav-item"><a class="nav-link" href="/userAddress"><i class="fi-rs-marker mr-10"></i>My Address</a></li>
                   <li class="nav-item"><a class="nav-link" href="/orders"><i class="fi-rs-shopping-bag mr-10"></i>Orders</a></li>
-                  <li class="nav-item"><a class="nav-link" href="/wishlist"><i class="fi-rs-heart mr-10"></i>Yourlist</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/wishlist"><i class="fi-rs-heart mr-10"></i>Wishlist</a></li>
                   <li class="nav-item"><a class="nav-link" href="/wallet"><i class="fi-rs-shopping-bag mr-10"></i>Wallet</a></li>
-                  <li class="nav-item"><a class="nav-link" href="/coupon"><i class="fi-rs-shopping-bag mr-10"></i>Coupon</a></li>
+                  <li class="nav-item"><a class="nav-link" href="/bookedEvents"><i class="fi-rs-shopping-bag mr-10"></i>Booked Events.</a></li>
                   <li class="nav-item"><a class="nav-link" href="/logout"><i class="fi-rs-sign-out mr-10"></i>Logout</a></li>
                 </ul>
               </div>
@@ -57,19 +56,17 @@
 
                       <aside class="col-lg-4">
                         <figure class="text-lg-center">
-                          <% if (user.image) { %>
-                            <img class="img-lg mb-3 img-avatar" id="previewImage" src="user-assets/imgs/user/<%= user.image %>" alt="User Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
-                          <% } else { %>
-                            <img class="img-lg mb-3 img-avatar" id="previewImage" src="admin-assets/imgs/people/avatar1.jpg" alt="User Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
-                          <% } %>
-                          <figcaption>
-                            <label for="fileUpload" class="btn btn-light rounded font-md">
-                              <i class="icons material-icons md-backup font-md"></i> Upload
-                            </label>
-                            <input type="file" name="image" id="fileUpload" style="display: none;">
-                            <div id="errorfileUpload" class="ms-2 text-danger"></div>
-                          </figcaption>
+                          <!-- Default profile picture (generic avatar) -->
+                          <img 
+                            class="img-lg mb-3 img-avatar" 
+                            id="previewImage" 
+                            src="/admin-assets/imgs/theme/sierra logo.png" 
+                            alt="Default User Avatar" 
+                            style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
+                        
+                          
                         </figure>
+                        
                       </aside>
                     </div>
 

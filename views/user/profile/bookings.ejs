@@ -1,0 +1,81 @@
+<div class="container mt-5">
+    <h2 class="mb-4 text-center fw-bold text-primary">My Booked Events</h2>
+  
+    <% if (message) { %>
+      <div class="alert alert-info text-center shadow-sm rounded-pill"><%= message %></div>
+    <% } else { %>
+      <div class="row">
+        <% bookings.forEach((booking) => { %>
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-lg border-0 rounded-4 h-100 d-flex flex-column">
+  
+              <div class="card-body">
+                <h5 class="card-title fw-bold text-dark">
+                  <i class="bi bi-calendar-event text-primary me-2"></i>
+                  <%= booking.eventType %>
+                </h5>
+  
+                <p class="card-text mt-3 mb-3">
+                  <i class="bi bi-calendar-check text-success me-2"></i>
+                  <strong>Date:</strong> <%= new Date(booking.eventDate).toLocaleDateString() %><br>
+  
+                  <i class="bi bi-people text-warning me-2"></i>
+                  <strong>Guests:</strong> <%= booking.guestCount %><br>
+  
+                  <i class="bi bi-geo-alt text-danger me-2"></i>
+                  <strong>Location(Pin Code):</strong> <%= booking.eventPincode || 'N/A' %>
+                </p>
+  
+                <% 
+                  let badgeClass;
+                  switch (booking.status) {
+                    case 'active':
+                      badgeClass = 'bg-success';
+                      break;
+                    case 'completed':
+                      badgeClass = 'bg-primary';
+                      break;
+                    case 'cancelled':
+                      badgeClass = 'bg-danger';
+                      break;
+                    case 'pending':
+                      badgeClass = 'bg-warning text-dark';
+                      break;
+                    default:
+                      badgeClass = 'bg-secondary';
+                  }
+                %>
+  
+                <div class="text-end mt-auto">
+                  <span class="badge <%= badgeClass %> px-3 py-2 text-uppercase shadow-sm">
+                    <%= booking.status %>
+                  </span>
+                </div>
+              </div>
+  
+              <div class="card-footer bg-light border-0 text-center mt-auto">
+                <% if (booking.status === 'active') { %>
+                  <a href="/updateBooking?id=<%= booking._id %>" 
+                     class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <i class="bi bi-pencil-square me-1"></i> Update
+                  </a>
+                <% } else if (booking.status === 'completed' && booking.order) { %>
+                  <a href="/orderDetails/<%= booking.order._id %>" 
+                     class="btn btn-outline-success btn-sm rounded-pill px-3">
+                    <i class="bi bi-receipt me-1"></i> View Order
+                  </a>
+                <% } else { %>
+                  <button class="btn btn-secondary btn-sm rounded-pill px-3" disabled>
+                    <i class="bi bi-check-circle me-1"></i>
+                    <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+                  </button>
+                <% } %>
+              </div>
+  
+            </div> <!-- card -->
+          </div> <!-- col -->
+        <% }) %>
+      </div> <!-- row -->
+    <% } %>
+  </div>
+  

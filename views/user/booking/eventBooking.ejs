@@ -1,101 +1,166 @@
+<head>
+  <meta charset="UTF-8">
+  <title>Book Your Event</title>
+  <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
   <style>
     body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f3f4f6;
       margin: 0;
-      padding: 40px;
-      font-family: 'Inter', sans-serif;
-      background-color: #f7f9fc;
+      padding: 30px;
     }
 
     .main-wrapper {
       display: flex;
       flex-wrap: wrap;
-      gap: 40px;
       justify-content: center;
       align-items: flex-start;
-      padding-top: 60px;
+      gap: 40px;
     }
 
-    .form-card, .calendar-card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.07);
+    .form-card,
+    .calendar-card {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       padding: 30px;
-      flex: 1 1 400px;
+      flex: 1 1 420px;
       max-width: 500px;
-      transition: transform 0.2s ease-in-out;
+      transition: all 0.3s ease;
     }
 
-    .form-card:hover, .calendar-card:hover {
-      transform: translateY(-4px);
+    .form-card:hover,
+    .calendar-card:hover {
+      transform: translateY(-5px);
     }
 
     h2 {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 600;
+      color: #2563eb;
       margin-bottom: 20px;
-    }
-
-    form > div {
-      margin-bottom: 20px;
+      text-align: center;
     }
 
     label {
+      font-weight: 600;
       display: block;
       margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 0.95rem;
+      color: #374151;
     }
 
     input[type="text"],
     select {
       width: 100%;
-      padding: 12px 16px;
-      border: 1px solid #cbd5e0;
+      padding: 12px 15px;
       border-radius: 10px;
-      background-color: #edf2f7;
-      font-size: 0.95rem;
+      border: 1px solid #d1d5db;
+      background-color: #f9fafb;
       transition: all 0.3s ease;
+      font-size: 0.95rem;
     }
 
     input[type="text"]:focus,
     select:focus {
-      background-color: #fff;
-      border-color: #3182ce;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
       outline: none;
-      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3);
+      background-color: #fff;
     }
 
-    select:invalid {
-      color: #a0aec0;
+    .btn {
+      width: 100%;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #1e40af;
     }
 
     #calendar {
       border-radius: 14px;
       overflow: hidden;
-      min-height: 500px;
+      margin-top: 10px;
+      background-color: white;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
     }
 
-    @media (max-width: 768px) {
-      .main-wrapper {
-        flex-direction: column;
-        align-items: center;
-      }
+    /* ✅ Calendar Custom Styles */
+    .fc .fc-daygrid-day.fc-day-today {
+      background-color: #dbeafe !important;
+      border: 1px solid #2563eb !important;
+    }
+
+    .fc .fc-toolbar-title {
+      font-weight: 600;
+      color: #1e3a8a;
+    }
+
+    .fc-daygrid-day-number {
+      font-weight: 500;
+    }
+
+    .fc-button-primary {
+      background: #2563eb !important;
+      border: none !important;
+      border-radius: 8px !important;
+      transition: all 0.3s ease;
+    }
+
+    .fc-button-primary:hover {
+      background: #1e40af !important;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1px solid #d1d5db;
     }
   </style>
 </head>
+
 <body>
   <div class="main-wrapper">
+    <!-- ✅ Booking Form -->
     <div class="form-card">
-      <h2 class="text-primary">Book Your Event</h2>
-      <form action="/bookings" method="POST">
+      <h2>Book Your Event</h2>
+      <form id="bookingForm" action="/bookings" method="POST">
         <div>
           <label for="venueDate">Venue Date</label>
-          <input type="text" id="venueDate" name="date" required placeholder="Select from calendar" readonly />
+          <input type="text" id="venueDate" name="date" placeholder="Select from calendar" readonly required />
         </div>
+
         <div>
           <label for="eventType">Event Type</label>
-          <select name="event" id="eventType" required>
+          <select id="eventType" name="event" required>
             <option value="" disabled selected>Select event type</option>
             <option value="Wedding">Wedding</option>
             <option value="Birthday">Birthday</option>
@@ -103,9 +168,10 @@
             <option value="Party">Party</option>
           </select>
         </div>
+
         <div>
           <label for="guestCount">Number of Guests</label>
-          <select name="guest" id="guestCount" required>
+          <select id="guestCount" name="guest" required>
             <option value="" disabled selected>Select guest range</option>
             <option value="200">Under 200</option>
             <option value="400">Under 400</option>
@@ -114,21 +180,25 @@
             <option value="1000">Under 1000</option>
           </select>
         </div>
+
         <div>
           <label for="venuePlace">Venue Place</label>
-          <input type="text" id="venuePlace" name="place" required placeholder="Enter venue place" />
+          <input type="text" id="venuePlace" name="place" placeholder="Enter venue place" required />
         </div>
+
         <div>
           <label for="venueTime">Venue Time</label>
-          <input type="text" id="venueTime" name="time" required placeholder="e.g., 6:00 PM" />
+          <input type="text" id="venueTime" name="time" placeholder="Select event time" required />
         </div>
+
         <div>
           <label for="venueDistrict">Venue District</label>
           <input type="text" id="venueDistrict" name="district" value="Ernakulam" readonly />
         </div>
+
         <div>
           <label for="venuePincode">Venue Pincode</label>
-          <select name="pincode" id="venuePincode" required>
+          <select id="venuePincode" name="pincode" required>
             <option value="" disabled selected>Select pincode</option>
             <option value="682001">682001</option>
             <option value="682002">682002</option>
@@ -138,26 +208,59 @@
             <option value="682017">682017</option>
           </select>
         </div>
-        <button class="btn btn-primary" type="submit">Book Now</button>
+
+        <button type="submit" class="btn">Book Now</button>
       </form>
     </div>
 
+    <!-- ✅ Calendar -->
     <div class="calendar-card">
-      <h2 class="text-primary">Availability Calendar</h2>
+      <h2>Availability Calendar</h2>
       <div id="calendar"></div>
+
+      <!-- ✅ Legend -->
+      <div class="legend">
+        <div class="legend-item"><span class="legend-color" style="background-color:#22c55e;"></span> Available</div>
+        <div class="legend-item"><span class="legend-color" style="background-color:#facc15;"></span> Limited Slots</div>
+        <div class="legend-item"><span class="legend-color" style="background-color:#ef4444;"></span> Fully Booked</div>
+        <div class="legend-item"><span class="legend-color" style="background-color:#9ca3af;"></span> Blocked</div>
+      </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-   
+    // ✅ Modern Time Picker
+    flatpickr("#venueTime", {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "h:i K",
+      minTime: "06:00",
+      maxTime: "23:00",
+      defaultHour: 18,
+      defaultMinute: 0,
+    });
+
+    // ✅ Form validation
+    document.getElementById('bookingForm').addEventListener('submit', e => {
+      if (!document.getElementById('venueTime').value.trim()) {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Please select a time!',
+          text: 'Event time is required.',
+          confirmButtonColor: '#2563eb'
+        });
+      }
+    });
+
+    // ✅ Calendar Setup
+    document.addEventListener('DOMContentLoaded', async () => {
       const calendarEl = document.getElementById('calendar');
       const venueDateInput = document.getElementById('venueDate');
-
       const today = new Date();
       const blockedDates = [];
+
+      // Example: next 7 days blocked
       for (let i = 0; i <= 7; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
@@ -173,124 +276,47 @@
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         height: 'auto',
-        validRange: {
-          start: today.toISOString().split('T')[0]
-        },
-        dayCellDidMount: function (info) {
-          const day = new Date(info.date);
-
-         // Extract year, month, and date
-         const year = day.getFullYear();
-const month = String(day.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed, so add 1
-const date = String(day.getDate()).padStart(2, '0'); // Ensure two-digit date format
-
-// Combine them to form the date string in YYYY-MM-DD format
-const formattedDay = `${year}-${month}-${date}`;
-
-console.log('The days are:', formattedDay);
+        selectable: true,
+        validRange: { start: today.toISOString().split('T')[0] },
+        dayCellDidMount(info) {
+          const formattedDay = info.date.toISOString().split('T')[0];
+          const cell = info.el;
 
           if (blockedDates.includes(formattedDay)) {
-            info.el.style.backgroundColor = '#a0aec0';
-            info.el.style.color = 'white';
-            info.el.style.pointerEvents = 'none';
-            info.el.style.cursor = 'not-allowed';
+            cell.style.backgroundColor = '#9ca3af'; // gray
+            cell.style.color = 'white';
+            cell.style.cursor = 'not-allowed';
+            cell.style.pointerEvents = 'none';
           } else if (redDays.includes(formattedDay)) {
-            info.el.style.backgroundColor = '#e53e3e';
-            info.el.style.color = 'white';
+            cell.style.backgroundColor = '#ef4444'; // red
+            cell.style.color = 'white';
           } else if (yellowDays.includes(formattedDay)) {
-            info.el.style.backgroundColor = '#f6ad55';
-            info.el.style.color = 'white';
+            cell.style.backgroundColor = '#facc15'; // yellow
+            cell.style.color = '#111827';
+          } else {
+            cell.style.backgroundColor = '#22c55e1a'; // light green tint for available
           }
         },
-        dateClick: function (info) {
-          console.log('Hiaodsifoadiusbfvpoiuqbwaeopufbci w eioufcg qwibluerjgbkuywgilu')
+        dateClick(info) {
           const selected = info.dateStr;
-          console.log(selected);
-          
-          const selectedDateData = data.find(d => d.date === selected)
-          const bookedCount = selectedDateData ? selectedDateData.count : 0;
-          console.log('The booked count for the date is:',bookedCount)
 
           if (blockedDates.includes(selected)) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Date Blocked',
-              text: 'This date is blocked for booking.',
-              confirmButtonColor: '#d33'
-            });
+            Swal.fire('Date Blocked', 'This date is not available for booking.', 'error');
             return;
           }
-
           if (redDays.includes(selected)) {
-            Swal.fire({
-              icon: 'warning',
-              title: 'Fully Booked',
-              text: 'No slots available on this date.',
-              confirmButtonColor: '#d33'
-            });
+            Swal.fire('Fully Booked', 'All slots are filled on this date.', 'error');
             return;
           }
-
           if (yellowDays.includes(selected)) {
-            Swal.fire({
-              icon: 'info',
-              title: 'Hurry!',
-              text: 'Few slots left on this date.',
-              confirmButtonColor: '#f59e0b'
-            });
+            Swal.fire('Limited Slots', 'Few slots left. Hurry up!', 'info');
           }
 
           venueDateInput.value = selected;
-          updateGuestOptions(bookedCount);
         }
       });
 
       calendar.render();
     });
-    function updateGuestOptions(bookedCount) {
-  const guestSelect = document.getElementById('guestCount');
-  const options = guestSelect.options;
-
-  for (let i = 0; i < options.length; i++) {
-    const option = options[i];
-    const value = parseInt(option.value);
-    if (isNaN(value)) continue;
-
-    let disable = false;
-
-    if (bookedCount >= 2000) {
-      disable = true; // Disable all options
-    } else if (bookedCount >= 1800) {
-      // Disable 1000, 800, 600, and 400
-      if ([1000, 800, 600, 400].includes(value)) disable = true;
-    } else if (bookedCount >= 1600) {
-      // Disable 1000, 800, and 600
-      if ([1000, 800, 600].includes(value)) disable = true;
-    } else if (bookedCount >= 1400) {
-      // Disable 1000 and 800
-      if ([1000, 800].includes(value)) disable = true;
-    } else if (bookedCount >= 1200) {
-      // Disable 1000 only
-      if (value === 1000) disable = true;
-    }
-
-    option.disabled = disable;
-  }
-}
-
-
-   
-  </script> 
-  
-   <% if (success && success.length > 0) { %>
-    <script>
-      Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: '<%= success[0] %>',
-        confirmButtonColor: '#3085d6'
-      });
-    </script>
-    <% } %>
-  
-    
+  </script>
+</body>
