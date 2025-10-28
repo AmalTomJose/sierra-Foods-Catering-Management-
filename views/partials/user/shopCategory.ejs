@@ -6,9 +6,9 @@
         <div class="product-item">
           <div class="position-relative bg-light overflow-hidden">
             <% if (product.item_image && product.item_image.length > 0) { %>
-              <img class="img-fluid w-100" src="/admin-assets/imgs/productIMG/<%= product.item_image[0] %>" alt="">
+              <a class="text-body" href="/product/<%= product._id %>"><img class="img-fluid w-100" src="/admin-assets/imgs/productIMG/<%= product.item_image[0] %>" alt=""></a>
             <% } else { %>
-              <img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image">
+              <a class="text-body" href="/product/<%= product._id %>"><img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image"></a>
             <% } %>
             <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
           </div><div class="text-center p-4">

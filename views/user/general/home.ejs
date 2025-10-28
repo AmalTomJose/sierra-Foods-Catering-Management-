@@ -56,14 +56,14 @@
                 
             </div>
             <div class="row">
-                <% for (const product of products) { %>
+                <% for (const product of products.slice(0, 8)) { %>
                     <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
                         <div class="product-item">
                             <div class="position-relative bg-light overflow-hidden">
                                 <% if (product.item_image && product.item_image.length > 0) { %>
-                                    <img class="img-fluid w-100" src="/admin-assets/imgs/productIMG/<%= product.item_image[0]%>" alt="">
+                                    <a class="text-body" href="/product/<%=product._id%>"><img class="img-fluid w-100" src="/admin-assets/imgs/productIMG/<%= product.item_image[0]%>" alt=""></a>
                                 <% } else { %>
-                                    <img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image">
+                                    <a class="text-body" href="/product/<%=product._id%>"><img class="img-fluid w-100" src="/path/to/default-image.jpg" alt="No image"></a>
                                 <% } %>
                                 <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
                             </div>
@@ -85,8 +85,14 @@
                         </div>
                     </div>
                 <% } %>
-
             </div>
+            <br>
+            <div class="d-flex align-items-center justify-content-center">
+                <br>
+                    <a href="/shop"><button style="border: 1rem; size: 2rem; color: rgb(21, 180, 21); height: 3rem; width: 10rem; font-size: 1.2rem;">View All</button></a>
+                <br>
+            </div>
+
          
             
             
