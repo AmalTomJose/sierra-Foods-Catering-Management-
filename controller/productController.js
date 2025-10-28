@@ -2,7 +2,7 @@ const Category = require('../models/categoryModels');
 const SubCategory = require('../models/subcategoryModel');
 const Product = require('../models/itemModel');
 const sharp = require('sharp');
-const fs = require('fs').promises;
+const fs = require('fs');
 
 const path = require('path');
 
@@ -81,43 +81,112 @@ const blockProduct = async(req,res)=>{
   }
 }
 
-const loadeditProduct = async(req,res)=>{
-  try{
+const loadeditProduct = async (req, res) => {
+  try {
     const id = req.query.id;
-    const product= await Product.findOne({_id:id});
+    const product = await Product.findById(id);
     const categories = await Category.find();
-    const subcategories = await SubCategory.find();
+    let subcategories = [];
+
+    if (product && product.category) {
+      subcategories = await SubCategory.find({ category: product.category });
+    }
+
     if (product) {
-      res.render("admin/product/editProduct", { categories,subcategories, product });
-  } else {
+      res.render("admin/product/editProduct", {
+        categories,
+        subcategories,
+        product,
+        oldData: {},
+        error: null,
+      });
+    } else {
       res.redirect("/admin/products");
-  }
-
-  }
-  catch(error)
-  {
-    console.log(error.message)
-  }
-}
-
-
-
-const loadAddproduct = async (req,res)=>{
-    try{
-      let categories = await Category.find();
-      const productImages = Product.images || [];
-
-        res.render('admin/product/addproduct',{categories,productImages})
-
     }
-    catch(error){
-        console.log(error.message);
-    }
-}
+  } catch (error) {
+    console.log("❌ Error loading edit product:", error.message);
+    res.status(500).send("Server Error");
+  }
+};
+
+
+
+const loadAddproduct = async (req, res) => {
+  try {
+    const categories = await Category.find();
+
+    // Always send oldData, even if it's empty
+    res.render("admin/product/addproduct", {
+      categories,
+      productImages: [],
+      oldData: {},     // 👈 this fixes the ReferenceError
+      error: null,
+      success: null
+    });
+
+  } catch (error) {
+    console.log("Error loading add product page:", error.message);
+    res.status(500).send("Server Error");
+  }
+};
+
+
+
 const addProduct = async (req, res) => {
   try {
+    const { name, price, discountprice, description, categoryid, subcategoryid } = req.body;
     const imageData = [];
+    const oldData = { name, price, discountprice, description, categoryid, subcategoryid };
 
+    // ✅ Validate product name
+    const productName = name.trim();
+    const validNameRegex = /^[A-Za-z\s]+$/;
+    if (!validNameRegex.test(productName)) {
+      return res.render("admin/product/addProduct", {
+        error: "Product name can only contain letters and spaces.",
+        oldData,
+      });
+    }
+
+    // ✅ Check duplicate product name
+    const existingProduct = await Product.findOne({
+      item_name: { $regex: new RegExp(`^${productName}$`, "i") },
+    });
+    if (existingProduct) {
+      return res.render("admin/product/addProduct", {
+        error: "Product with this name already exists.",
+        oldData,
+      });
+    }
+
+    // ✅ Validate price
+    if (price <= 0) {
+      return res.render("admin/product/addProduct", {
+        error: "Price must be greater than zero.",
+        oldData,
+      });
+    }
+
+    // ✅ Validate discount
+    if (discountprice < 0) {
+      return res.render("admin/product/addProduct", {
+        error: "Discount price cannot be negative.",
+        oldData,
+      });
+    }
+
+    // ✅ Validate images
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    for (const file of req.files) {
+      if (!allowedTypes.includes(file.mimetype)) {
+        return res.render("admin/product/addProduct", {
+          error: "Only PNG, JPEG, and JPG image formats are allowed.",
+          oldData,
+        });
+      }
+    }
+
+    // ✅ Image resizing
     for (const file of req.files) {
       const randomInteger = Math.floor(Math.random() * 20000001);
       const imgFileName = "cropped" + randomInteger + ".jpg";
@@ -131,10 +200,9 @@ const addProduct = async (req, res) => {
       imageData.push(imgFileName);
     }
 
-    const { name, price, discountprice, description, categoryid, subcategoryid } = req.body;
-
+    // ✅ Save product
     const newProduct = new Product({
-      item_name: name,
+      item_name: productName,
       item_price: price,
       discount_price: discountprice,
       item_description: description,
@@ -144,8 +212,9 @@ const addProduct = async (req, res) => {
     });
 
     await newProduct.save();
-    req.flash('success','Sucessfully added')
+    req.flash('success', 'Product added successfully!');
     res.redirect('/admin/products');
+
   } catch (error) {
     console.error('Error adding product:', error.message);
     res.status(500).send('Error while adding product');
@@ -154,39 +223,103 @@ const addProduct = async (req, res) => {
 
 const storeEditProduct = async (req, res) => {
   try {
-    const productId = req.body.product_id;
-    const product = await Product.findById(productId);
+    const { product_id, name, price, discountprice, description, categoryid, subcategoryid } = req.body;
+    const productName = name.trim();
+    const product = await Product.findById(product_id);
+    const categories = await Category.find();
+    const subcategories = await SubCategory.find({ category: categoryid });
     let images = Array.isArray(product.item_image) ? product.item_image : [];
 
+    // ✅ Name validation
+    const validNameRegex = /^[A-Za-z\s]+$/;
+    if (!validNameRegex.test(productName)) {
+      return res.render("admin/product/editProduct", {
+        error: "Product name can only contain letters and spaces.",
+        oldData: req.body,
+        product,
+        categories,
+        subcategories
+      });
+    }
+
+    // ✅ Price validation
+    if (price <= 0) {
+      return res.render("admin/product/editProduct", {
+        error: "Price must be greater than zero.",
+        oldData: req.body,
+        product,
+        categories,
+        subcategories
+      });
+    }
+
+    // ✅ Discount validation
+    if (discountprice < 0) {
+      return res.render("admin/product/editProduct", {
+        error: "Discount price cannot be negative.",
+        oldData: req.body,
+        product,
+        categories,
+        subcategories
+      });
+    }
+
+    // ✅ Validate image types
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        if (!allowedTypes.includes(file.mimetype)) {
+          return res.render("admin/product/editProduct", {
+            error: "Only PNG, JPEG, and JPG image formats are allowed.",
+            oldData: req.body,
+            product,
+            categories,
+            subcategories
+          });
+        }
+      }
+    }
+
+    // ✅ Handle deleted images
     if (req.body.deleteImages) {
       const deleteImages = Array.isArray(req.body.deleteImages)
         ? req.body.deleteImages
         : [req.body.deleteImages];
 
       for (const filename of deleteImages) {
-        const imagePath = path.join('public', 'admin-assets', 'imgs', 'productIMG', filename);
-        await fs.unlink(imagePath);
-        images = images.filter(img => img !== filename);
+        const filePath = path.join("public", "admin-assets", "imgs", "productIMG", filename);
+
+        try {
+          await fs.promises.access(filePath); // check if exists
+          await fs.promises.unlink(filePath); // delete
+          console.log(`🗑️ Deleted: ${filePath}`);
+        } catch (err) {
+          console.log(`⚠️ File not found or already deleted: ${filePath}`);
+        }
+
+        images = images.filter((img) => img !== filename);
       }
     }
 
-    for (const file of req.files) {
-      const randomInteger = Math.floor(Math.random() * 20000001);
-      const imgFileName = "cropped" + randomInteger + ".jpg";
-      const imagePath = path.join('public', 'admin-assets', 'imgs', 'productIMG', imgFileName);
+    // ✅ Resize & add new images
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const randomInteger = Math.floor(Math.random() * 20000001);
+        const imgFileName = `cropped${randomInteger}.jpg`;
+        const imagePath = path.join("public", "admin-assets", "imgs", "productIMG", imgFileName);
 
-      await sharp(file.path)
-        .resize({ width: 300, height: 300, fit: 'cover' })
-        .toFile(imagePath);
+        await sharp(file.path)
+          .resize({ width: 300, height: 300, fit: "cover" })
+          .toFile(imagePath);
 
-      images.push(imgFileName);
+        images.push(imgFileName);
+      }
     }
 
-    const { name, price, discountprice, description, categoryid, subcategoryid } = req.body;
-
-    await Product.findByIdAndUpdate(productId, {
+    // ✅ Update product
+    await Product.findByIdAndUpdate(product_id, {
       $set: {
-        item_name: name,
+        item_name: productName,
         item_price: price,
         discount_price: discountprice,
         item_description: description,
@@ -196,10 +329,11 @@ const storeEditProduct = async (req, res) => {
       },
     });
 
-    res.redirect('/admin/products');
+    req.flash("success", "Product updated successfully!");
+    res.redirect("/admin/products");
   } catch (error) {
-    console.error('Error updating product:', error.message);
-    res.status(500).send('Error while updating product');
+    console.error("❌ Error in storeEditProduct:", error);
+    res.status(500).send("Error while updating product");
   }
 };
 
@@ -211,7 +345,7 @@ const storeEditProduct = async (req, res) => {
 //     // Ensure product.image is an array, or initialize it as an empty array if not
 //     let images = Array.isArray(product.item_image) ? product.item_image : [];
 
-//     let deleteData = [];
+//     let deleteData = [];     
 
 //     const {
 //       name,

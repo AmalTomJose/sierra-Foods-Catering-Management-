@@ -1,472 +1,148 @@
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<main class="main" style="margin-top: 80px;">
+  <div class="container">
 
-    <style>
-        input[type="file"] {
-            display: block;
-        }
+    <h2 class="mb-4">Add New Product</h2>
 
-        .imageThumb {
-            max-height: 75px;
-            border: 2px solid;
-            padding: 1px;
-            cursor: pointer;
-        }
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-danger text-center"><%= error %></div>
+    <% } %>
 
-        .pip {
-            display: inline-block;
-            margin: 10px 10px 0 0;
-        }
+    <% if (locals.success) { %>
+      <div class="alert alert-success text-center"><%= success %></div>
+    <% } %>
 
-        .remove {
-            display: block;
-            background: #444;
-            border: 1px solid black;
-            color: white;
-            text-align: center;
-            cursor: pointer;
-        }
+    <form action="/admin/addproduct" method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
+      <div class="card shadow-sm p-4">
 
-        .remove:hover {
-            background: white;
-            color: black;
-        }
-    </style>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Product Name</label>
+          <input type="text" name="name" class="form-control"
+            placeholder="Enter product name"
+            value="<%= oldData ? oldData.name : '' %>" required>
+          <small class="text-danger" id="nameError"></small>
+        </div>
 
-    <link rel="stylesheet" href="./node_modules/cropperjs/dist/cropper.min.css">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Price</label>
+            <input type="number" name="price" class="form-control"
+              placeholder="Enter price"
+              value="<%= oldData ? oldData.price : '' %>" required>
+            <small class="text-danger" id="priceError"></small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Discount Price</label>
+            <input type="number" name="discountprice" class="form-control"
+              placeholder="Enter discount price"
+              value="<%= oldData ? oldData.discountprice : '' %>" required>
+            <small class="text-danger" id="discountError"></small>
+          </div>
+        </div>
 
-    <form action="/admin/addproduct" method="post" enctype="multipart/form-data" id="product-form"
-    onsubmit="return validationChecking()"
-    
-    >
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Category</label>
+            <select id="categorySelect" name="categoryid" class="form-control" required>
+              <option value="">Select category</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Subcategory</label>
+            <select id="subcategorySelect" name="subcategoryid" class="form-control" required>
+              <option value="">Select subcategory</option>
+            </select>
+          </div>
+        </div>
 
-        <section class="content-main">
-            <div class="row">
-                <div class="col-12">
-                    <div class="content-header">
-                        <h2 class="content-title">Add New Product</h2>
-                        <div>
-                            <a href='/admin/prdoucts'> <button
-                                    class="btn btn-light rounded font-sm mr-5 text-body hover-up">cancel</button></a>
-                            <input type="submit" class="btn btn-md rounded font-sm hover-up" value="Upload">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Description</label>
+          <textarea name="description" class="form-control" rows="4"
+            placeholder="Enter product description"><%= oldData ? oldData.description : '' %></textarea>
+          <small class="text-danger" id="descError"></small>
+        </div>
 
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-9">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <div class="mb-4">
-                                <label for="product_title" class="form-label">Product Name</label>
-                                <input type="text" placeholder="Type here" name="name" class="form-control"
-                                    id="product_title">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Upload Product Images (Min 3)</label>
+          <input type="file" name="image" id="imageInput" class="form-control" multiple accept="image/*" required>
+          <small class="text-danger" id="imageError"></small>
+        </div>
 
-                                <div class="error-message" style="color: red;" id="product_title-error"></div>
+        <div class="text-end">
+          <a href="/admin/products" class="btn btn-light">Cancel</a>
+          <button type="submit" class="btn btn-primary">Add Product</button>
+        </div>
 
-                            </div>
-                            <div class="row">
-                              <label>Category:</label>
-                              <select id="categorySelect"  name="categoryid" required>    
-                                  <option value="">Select category</option>
-                              </select>
+      </div>
+    </form>
+  </div>
+</main>
 
-                              <label>Sub-Category:</label>
-    <select id="subcategorySelect"  name="subcategoryid" required>    
-        <option value="">Select sub-category</option>
-    </select>
-                          
-                               
-                            </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const categorySelect = document.getElementById("categorySelect");
+  const subcategorySelect = document.getElementById("subcategorySelect");
 
-                        </div> <!-- card end// -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <div class="row gx-3">
-                                    <div class="col-md-4">
-                                        <label for="inputPrice" class="form-label">Price</label>
-                                        <input type="text" class="form-control" name="price"
-                                            placeholder="Enter the price" id="product_price">
-                                        <div class="error-message" style="color: red;" id="product_price-error"></div>
-                                    </div>
-                                    
-
-
-                                    <div class="col-md-4 mb-3">
-
-
-
-
-
-                                        </select>
-                                        <div class="error-message" style="color: red;" id="gender-error"></div>
-                                    </div>
-
-                                </div>
-                                <div class="row gx-3">
-                                    <div class="col-md-12 card mb-4">
-                                        <div class="card-body">
-
-                                            <div class="size-container">
-                                                <!-- Add Product Images Here -->
-                                            </div>
-
-
-
-                                        </div>
-                                    </div>
-                                </div>
-
-
-
-
-                                <div>
-                                    <label class="form-label">Description</label>
-                                    <textarea placeholder="Type here" name="description" class="form-control" rows="4"
-                                        id="description"></textarea>
-                                    <div class="error-message" style="color: red;" id="description-error"></div>
-
-                                </div>
-                            </div>
-                        </div> <!-- card end// -->
-
-                    </div>
-
-
-                    <div class="col-lg-3">
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h4>Picture</h4> 
-                            </div>
-                            <div class="card-body">
-                                <div class="card mb-4">
-                                    <div class="card-body">
-                                        <div class="images-container">
-                                            <div
-                                                class="image-preview-container d-flex flex-wrap justify-content-center">
-                                            </div>
-
-                                            <input class="form-control" name="image" multiple="multiple" type="file"
-                                                id="files" onchange="displayImages(this)">
-                                            <div class="error-message" style="color: red;" id="product_image-error">
-                                            </div>
-
-                                            <script
-                                                src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
-
-                                                <script>
-                                                  document.addEventListener("DOMContentLoaded", function () {
-    const categorySelect = document.getElementById("categorySelect");
-    const subcategorySelect = document.getElementById("subcategorySelect");
-
-    if (!categorySelect || !subcategorySelect) {
-        console.error("Category or Subcategory select element not found!");
-        return;
-    }
-
-    // Load categories
-    fetch("/admin/loadcategory")
-        .then(res => res.json())       
-        .then(data => {
-            categorySelect.innerHTML = '<option value="">Select category</option>'; // Default option
-            data.forEach(category => {
-                let option = new Option(category.cat_name, category._id);
-                categorySelect.add(option);
-            });
-        })
-        .catch(err => console.error("Error loading categories:", err));
-
-    // Handle category selection change
-    categorySelect.addEventListener("change", function () {
-        const categoryId = this.value;
-        if (!categoryId) {
-            subcategorySelect.innerHTML = '<option value="">Select sub-category</option>';
-            return;
-        }
-
-
-        fetch(`/admin/subCategory/${categoryId}`)
-            .then(res => res.json())
-            .then(data => {
-                subcategorySelect.innerHTML = '<option value="">Select sub-category</option>'; // Reset subcategories
-
-                data.forEach(subcategory => {
-                    let option = new Option(subcategory.subcat_name, subcategory._id);
-                    subcategorySelect.add(option);
-                });
-            })
-            .catch(err => console.error("Error loading subcategories:", err));
+  // Load categories
+  fetch("/admin/loadcategory")
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(category => {
+        let option = new Option(category.cat_name, category._id);
+        categorySelect.add(option);
+      });
     });
 
+  // Load subcategories on change
+  categorySelect.addEventListener("change", function () {
+    const categoryId = this.value;
+    subcategorySelect.innerHTML = '<option value="">Select subcategory</option>';
+    if (!categoryId) return;
+    fetch(`/admin/subCategory/${categoryId}`)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(subcat => {
+          let option = new Option(subcat.subcat_name, subcat._id);
+          subcategorySelect.add(option);
+        });
+      });
+  });
 });
-                                                    let imageCount = 0;
-                                                    let removedImages = []; // Keep track of removed images
-                                                
-                                                    function displayImages(input) {
-                                                        const previewContainer = $('.image-preview-container');
-                                                
-                                                        // Clear existing previews
-                                                        previewContainer.html('');
-                                                
-                                                        if (input.files && input.files.length > 0) {
-                                                            for (let i = 0; i < input.files.length; i++) {
-                                                                const reader = new FileReader();
-                                                                reader.onload = function (e) {
-                                                                    const imagePreview = createImagePreview(e.target.result, imageCount);
-                                                                    previewContainer.append(imagePreview);
-                                                                    cropImage(imageCount);
-                                                                    imageCount++;
-                                                                };
-                                                                reader.readAsDataURL(input.files[i]);
-                                                            }
-                                                        }
-                                                    }
-                                                
-                                                    function createImagePreview(src, index) {
-                                                        const imagePreview = $('<div class="image-container border-1 mb-4">' +
-                                                            '<img class="image-preview" src="' + src + '" alt="Product Image" id="image-preview' + index + '">' +
-                                                            '<canvas id="image-canvas' + index + '" style="display:none;"></canvas>' +
-                                                            '<br/><span class="remove" data-index="' + index + '">Remove image</span>' +
-                                                            '</div>');
-                                                        return imagePreview;
-                                                    }
-                                                
-                                                    function cropImage(imageNumber) {
-                                                        const image = document.getElementById('image-preview' + imageNumber);
-                                                        const canvas = document.getElementById('image-canvas' + imageNumber);
-                                                        const cropper = new Cropper(image, {
-                                                            aspectRatio: 1, // You can adjust the aspect ratio as needed
-                                                            viewMode: 1,
-                                                            crop: () => {
-                                                                const croppedData = cropper.getData();
-                                                                const croppedCanvas = cropper.getCroppedCanvas();
-                                                                canvas.width = croppedData.width;
-                                                                canvas.height = croppedData.height;
-                                                                const ctx = canvas.getContext('2d');
-                                                                ctx.drawImage(croppedCanvas, 0, 0, croppedData.width, croppedData.height);
-                                                            },
-                                                        });
-                                                    }
-                                                
-                                                    $(document).on('click', '.remove', function () {
-                                                        const index = $(this).data('index');
-                                                        const container = $(this).parent(".image-container");
-                                                        container.remove();
-                                                        removedImages.push(index);
-                                                    });
-                                                
-                                                    function saveProduct() {
-                                                        const productId = getProductId(); // Implement a function to get the product ID.
-                                                        // Use removedImages array to delete images in the server during save
-                                                        $.ajax({
-                                                            url: '/api/deleteImages',
-                                                            method: 'POST',
-                                                            data: { productId: productId, removedImages: removedImages },
-                                                            success: function (response) {
-                                                                // Handle the server response if needed
-                                                                console.log(response);
-                                                            },
-                                                            error: function (error) {
-                                                                // Handle the error if needed
-                                                                console.error(error);
-                                                            }
-                                                        });
-                                                    }
-                                                </script>
-                                                
 
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+// Client-side form validation
+function validateForm() {
+  let valid = true;
+  const name = document.querySelector("input[name='name']").value.trim();
+  const price = document.querySelector("input[name='price']").value.trim();
+  const discount = document.querySelector("input[name='discountprice']").value.trim();
+  const imageInput = document.getElementById("imageInput");
 
+  const validName = /^[A-Za-z\s]+$/;
+  document.getElementById("nameError").textContent = "";
+  document.getElementById("priceError").textContent = "";
+  document.getElementById("discountError").textContent = "";
+  document.getElementById("imageError").textContent = "";
 
-                        </div>
-                        <div id="invalid">
-                            <% if (typeof message !=='undefined' && message) { %>
-                                <p style="color: rgb(8, 96, 0);" id="message">
-                                    <%= message %>
-                                </p>
-                                <% } %>
-                                              
-                        </div>
-                    </div> <!-- card end// -->
-                </div>
+  if (!name.match(validName)) {
+    document.getElementById("nameError").textContent = "Only letters and spaces allowed.";
+    valid = false;
+  }
 
-            </div>
-            <div class="container">
-                <div>
-                    <div ></div>
-                    </div>
-        </section>
-    </form>
-    <script src="./node_module/cropperjs/dist/cropper.min.js"></script>
+  if (price <= 0) {
+    document.getElementById("priceError").textContent = "Price must be greater than zero.";
+    valid = false;
+  }
 
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script>
-function validationChecking() {
-// Get input elements and error message elements
-const product_title_input = document.getElementById("product_title");
-const product_category_input = document.getElementById("product_category");
-const description_input = document.getElementById("description"); // Update to match the HTML
-const product_price_input = document.getElementById("product_price"); // Update to match the HTML
-const product_stock_input = document.getElementById("product_stock");
-const discount_price_input = document.getElementById("discount_price"); // Update to match the HTML
-const product_price_error = document.getElementById("product_price-error");
-const product_stock_error = document.getElementById("product_stock-error");
-const discount_price_error = document.getElementById("discount_price-error"); // Update to match the HTML
-const product_title_error = document.getElementById("product_title-error");
-const product_category_error = document.getElementById("product_category-error");
-const description_error = document.getElementById("description-error");
-const filesInput = document.getElementById("files");
-const product_image_error = document.getElementById("product_image-error");
+  if (discount < 0) {
+    document.getElementById("discountError").textContent = "Discount cannot be negative.";
+    valid = false;
+  }
 
-// Convert values to numbers
-const product_price_value = parseFloat(product_price_input.value);
-const product_stock_value = parseInt(product_stock_input.value);
-const discount_price_value = parseFloat(discount_price_input.value);
+  if (imageInput.files.length < 3) {
+    document.getElementById("imageError").textContent = "Please upload at least 3 images.";
+    valid = false;
+  }
 
-// Check if the product title is empty
-if (product_title_input.value.trim() === "") {
-product_title_error.innerHTML = 'Product title is required.';
-} else {
-product_title_error.innerHTML = '';
-}
-
-// Check if the category is not selected
-if (product_category_input.value === "") {
-product_category_error.innerHTML = 'Please select a category.';
-} else {
-product_category_error.innerHTML = '';
-}
-
-// Check if the description is empty
-if (description_input.value.trim() === "") {
-description_error.innerHTML = 'Description is required.';
-} else {
-description_error.innerHTML = '';
-}
-
-// Check if the price is not entered or less than zero
-if (isNaN(product_price_value) || product_price_value <= 0) {
-product_price_error.innerHTML = 'Please enter a valid price greater than zero.';
-} else {
-product_price_error.innerHTML = '';
-}
-
-// Check if the stock is not entered or less than zero
-if (isNaN(product_stock_value) || product_stock_value < 0) {
-product_stock_error.innerHTML = 'Please enter a valid stock greater than or equal to zero.';
-} else {
-product_stock_error.innerHTML = '';
-}
-
-// Check if the discount price is not entered or less than zero
-if (isNaN(discount_price_value) || discount_price_value < 0) {
-discount_price_error.innerHTML = 'Please enter a valid discount price greater than or equal to zero.';
-} else {
-discount_price_error.innerHTML = '';
-}
-
-if (filesInput.files.length === 0) {
-product_image_error.innerHTML = 'Please select at least one image.';
-} else {
-product_image_error.innerHTML = '';
-}
-
-
-// If any validation fails, return false
-if (
-isNaN(product_price_value) || product_price_value <= 0 ||
-isNaN(product_stock_value) || product_stock_value < 0 ||
-isNaN(discount_price_value) || discount_price_value < 0 ||
-filesInput.files.length === 0
-) {
-return false;
-}
-
-// If all validations pass, return true
-return true;
+  return valid;
 }
 </script>
-<script>
-function validationChecking() {
-// Get inputs and error containers
-const product_title_input = document.getElementById("product_title");
-          const product_title_error = document.getElementById("product_title-error");
-      
-          const categorySelect = document.getElementById("categorySelect");
-          const subcategorySelect = document.getElementById("subcategorySelect");
-      
-          const product_price_input = document.getElementById("product_price");
-          const discount_price_input = document.getElementById("discount_price");
-      
-          const product_price_error = document.getElementById("product_price-error");
-          const discount_price_error = document.getElementById("discount_price-error");
-      
-          const description_input = document.getElementById("description");
-          const description_error = document.getElementById("description-error");
-      
-          const filesInput = document.getElementById("files");
-          const product_image_error = document.getElementById("product_image-error");
-      
-          let isValid = true;
-      
-          // Product name
-          if (product_title_input.value.trim() === "") {
-            product_title_error.innerHTML = 'Product name is required.';
-            isValid = false;
-          } else {
-            product_title_error.innerHTML = '';
-          }
-      
-          // Category
-          if (categorySelect.value === "") {
-            alert('Please select a category.');
-            isValid = false;
-          }
-      
-          // Sub-category
-          if (subcategorySelect.value === "") {
-            alert('Please select a sub-category.');
-            isValid = false;
-          }
-      
-          // Price
-          const price = parseFloat(product_price_input.value);
-          if (isNaN(price) || price <= 0) {
-            product_price_error.innerHTML = 'Please enter a valid price greater than zero.';
-            isValid = false;
-          } else {
-            product_price_error.innerHTML = '';
-          }
-      
-          // Discount price
-          const discount = parseFloat(discount_price_input.value);
-          if (isNaN(discount) || discount < 0) {
-            discount_price_error.innerHTML = 'Enter a valid discount price (0 or above).';
-            isValid = false;
-          } else {
-            discount_price_error.innerHTML = '';
-          }
-      
-          // Description
-          if (description_input.value.trim() === "") {
-            description_error.innerHTML = 'Description is required.';
-            isValid = false;
-          } else {
-            description_error.innerHTML = '';
-          }
-      
-          // Image check
-          if (filesInput.files.length === 0) {
-            product_image_error.innerHTML = 'Please upload at least one image.';
-            isValid = false;
-          } else {
-            product_image_error.innerHTML = '';
-          }
-      
-          return isValid;
-        }
-      </script>
-      
-

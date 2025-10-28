@@ -36,7 +36,7 @@
           <small class="text-muted">Delivery Date:</small> <b><%= new Date(order.booking.eventDate).toLocaleDateString() %></b>
         </div>
         <div class="col-lg-6 col-md-6 ms-auto text-md-end">
-          <% if (order.refundStatus !== undefined) { %>
+          <% if (order.refundStatus !== undefined && order.items.every(item => item.refundStatus === 'requested')) { %>
             <label for="refundStatusDropdown" class="form-label mt-3">Refund Status</label>
             <select id="refundStatusDropdown" class="form-select d-inline-block mb-lg-0 mb-15 mw-200">
               <option value="none" <%= order.refundStatus === 'none' ? 'selected' : '' %>>None</option>
@@ -73,7 +73,7 @@
             <div class="text">
               <h6 class="mb-1">Order Info</h6>
               <p class="mb-1">
-                Shipping: Fargo Express<br>
+                Delivery: Fargo Express<br>
                 Pay method: <%=order.paymentMethod %><br>
                 Status: <%=order.status %>
               </p>

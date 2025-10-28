@@ -4,12 +4,12 @@
       <div class="row">
         <div class="col-12">
 
+          <% if (error) { %>
+            <div class="alert text-center" style="color: red;">
+              <%= error %>
+            </div>
+          <% } %>
           <div class="table-responsive">
-            <% if (error) { %>
-              <div class="alert alert-danger text-center">
-                <%= error %>
-              </div>
-            <% } %>
 
             <% if (cart.length > 0) { %>
               <table class="table shopping-summery text-center clean">
@@ -108,16 +108,19 @@
                       <td class="text-success">- ₹<%= offerDiscount %></td>
                     </tr>
                     <tr>
-                      <td>Shipping</td>
-                      <td>Free Shipping</td>
+                      <td>Delivery</td>
+                      <td>Free Delivery</td>
                     </tr>
                     <tr>
                       <td><strong>Total</strong></td>
                       <td><strong>₹<%= subtotalWithShipping %></strong></td>
                     </tr>
                   </table>
-                  <a href="/checkout" class="btn mt-3"><i class="fi-rs-box-alt mr-10"></i> Proceed to Checkout</a>
-                </div>
+                  <a href="/checkout" class="btn btn-success mt-3 fw-semibold shadow-sm px-4 py-2" 
+                  style="background-color:#16a34a; border:none; border-radius:8px; color:white; font-size:16px; transition:0.3s;">
+                  <i class="fi-rs-box-alt me-2"></i> Proceed to Checkout
+               </a>
+                               </div>
               </div>
             </div>
           <% } %>

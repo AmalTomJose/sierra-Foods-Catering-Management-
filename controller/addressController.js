@@ -1,6 +1,64 @@
 const User = require('../models/userSchema');
 const Address = require('../models/addressModel');
+const Booking = require('../models/bookingModel');
+const Order = require('../models/orderModel');
 const bcrypt = require("bcrypt");
+
+
+
+const loadBookedEvents = async (req, res) => {
+  try {
+    const userId = req.session.user_id;
+    if (!userId) return res.redirect("/login");
+
+    const userData = await User.findById(userId);
+
+    // Get all bookings of the user
+    const bookings = await Booking.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Extract booking IDs
+    const bookingIds = bookings.map(b => b._id);
+
+    // Fetch orders linked to these bookings
+    const orders = await Order.find({ booking: { $in: bookingIds } })
+      .select("booking _id orderTotal createdAt")
+      .lean();
+
+    // Create a map for quick lookup
+    const orderMap = {};
+    orders.forEach(order => {
+      orderMap[order.booking.toString()] = order;
+    });
+
+    // Merge order info into bookings
+    const bookingsWithOrders = bookings.map(booking => ({
+      ...booking,
+      order: orderMap[booking._id.toString()] || null,
+    }));
+
+    // Render page
+    if (!bookings.length) {
+      return res.render("user/profile/bookings", {
+        user: userData,
+        bookings: [],
+        message: "You have not booked any events yet.",
+      });
+    }
+
+    return res.render("user/profile/bookings", {
+      user: userData,
+      bookings: bookingsWithOrders,
+      message: null,
+    });
+  } catch (error) {
+    console.error("Error fetching user bookings:", error);
+    
+  }
+};
+
+  
 
 
 
@@ -207,5 +265,6 @@ module.exports = {
     loadEditAddress,
     editAddress,
     deleteAddress,
-     changePasswordFromProfile
+     changePasswordFromProfile,
+     loadBookedEvents
 }

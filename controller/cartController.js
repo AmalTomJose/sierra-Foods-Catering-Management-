@@ -4,8 +4,7 @@ const Product = require('../models/itemModel');
 const Booking = require('../models/bookingModel')
 const Offer = require('../models/offerModel');
 const Wishlist = require('../models/wishlistModel')
-
-const  loadCart = async (req, res) => {
+const loadCart = async (req, res) => {
   try {
     const user = req.session.user_id;
 
@@ -25,15 +24,15 @@ const  loadCart = async (req, res) => {
 
     const cart = userCart.items;
 
-    // Get most recent booking for qty
-    const booking = await Booking.findOne({ user: user })
+    // 🧾 Get most recent booking for qty (guest count)
+    const booking = await Booking.findOne({ user })
       .sort({ createdAt: -1 })
       .select("guestCount");
 
     if (!booking) return res.redirect('/eventDetails');
-    const qty =booking.guestCount;
+    const qty = booking.guestCount;
 
-    // Offer fetching
+    // 🎯 Fetch active offers (product / category / all)
     const activeOffers = await Offer.find({
       startDate: { $lte: new Date() },
       endDate: { $gte: new Date() },
@@ -46,55 +45,58 @@ const  loadCart = async (req, res) => {
 
     const cartItemsWithDiscount = cart.map(item => {
       const product = item.product;
-      console.log('The testing for the product is :',product)
       const quantity = item.quantity;
 
-       const productOffer = activeOffers.find(o =>
+      // 🔎 Find all possible offers for this product
+      const productOffer = activeOffers.find(o =>
         o.applicableTo === 'product' &&
         Array.isArray(o.products) &&
         o.products.some(pid => pid.toString() === product._id.toString())
       );
-    
-      console.log('the sample for product offer is :',productOffer)
-      
-      let categoryOffer = activeOffers.find(
-        o => o.applicableTo === 'category' && o.category?.toString() === product.category._id.toString()
+
+      const categoryOffer = activeOffers.find(
+        o => o.applicableTo === 'category' &&
+        o.category?.toString() === product.category?._id?.toString()
       );
 
-      let discountPerItem = 0;
+      const globalOffer = activeOffers.find(o => o.applicableTo === 'all');
 
-      if (productOffer) {
-        discountPerItem = calculateOffer(productOffer, product.item_price);
-      } else if (categoryOffer) {
-        discountPerItem = calculateOffer(categoryOffer, product.item_price);
+      // ⚙️ Determine best offer
+      let bestOffer = null;
+      let bestDiscount = 0;
+
+      const offers = [productOffer, categoryOffer, globalOffer];
+      for (const offer of offers) {
+        if (!offer) continue;
+        const discount = calculateOffer(offer, product.item_price);
+        if (discount > bestDiscount) {
+          bestDiscount = discount;
+          bestOffer = offer;
+        }
       }
 
-      const discountedPrice = product.item_price - discountPerItem;
+      const discountedPrice = Math.max(product.item_price - bestDiscount, 0);
       const totalForItem = discountedPrice * quantity;
-      console.log('the totalforitem is for example:',totalForItem)
 
       subtotal += totalForItem;
-      offerDiscount += discountPerItem * quantity;
+      offerDiscount += bestDiscount * quantity;
       productTotal.push(totalForItem);
-     
 
       return {
         ...item._doc,
         discountedPrice,
-        offerApplied: discountPerItem,
+        offerApplied: bestDiscount,
+        appliedOffer: bestOffer,
       };
     });
-    
 
-  
-
-    const shipping = 0; // add shipping logic if needed
+    const shipping = 0; // Add shipping logic if needed
     const subtotalWithShipping = subtotal + shipping;
 
-    // Validate against guest count
+    // 🚫 Validate quantity limit (guest count)
     for (let item of cart) {
       if (item.quantity > qty) {
-        return res.render('user/product/cart', {
+        return res.render("user/product/cart", {
           user,
           cart: cartItemsWithDiscount,
           productTotal,
@@ -102,11 +104,12 @@ const  loadCart = async (req, res) => {
           qty,
           offerDiscount,
           totalAfterOffer: 0,
-          error: `The quantity for ${item.product.name} exceeds available Guest Count (${qty})!`,
+          error: `The quantity for ${item.product.item_name} exceeds available Guest Count (${qty})!`,
         });
       }
     }
 
+    // 🧾 Render cart with all calculations
     res.render("user/product/cart", {
       user,
       cart: cartItemsWithDiscount,
@@ -114,7 +117,7 @@ const  loadCart = async (req, res) => {
       subtotalWithShipping,
       qty,
       offerDiscount,
-      totalAfterOffer: subtotalWithShipping
+      totalAfterOffer: subtotalWithShipping,
     });
 
   } catch (error) {
@@ -123,14 +126,15 @@ const  loadCart = async (req, res) => {
   }
 };
 
-// Utility Function
+// 💡 Utility Function
 function calculateOffer(offer, price) {
+  if (!offer) return 0;
   if (offer.discountType === "percentage") {
     return Math.round((price * offer.discountValue) / 100);
-  } else {
-    return offer.discountValue;
   }
+  return offer.discountValue;
 }
+
 
 
 

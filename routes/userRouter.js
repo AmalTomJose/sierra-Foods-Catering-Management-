@@ -63,6 +63,7 @@ router.get('/editAddress',islogin,addressController.loadEditAddress)
 router.post('/editAddress',islogin,addressController.editAddress)
 router.get('/deleteAddress',islogin,addressController. deleteAddress)
 router.post('/changePasswordFromProfile',islogin,addressController.changePasswordFromProfile)
+router.get('/bookedEvents',islogin,addressController.loadBookedEvents)
 
 
 

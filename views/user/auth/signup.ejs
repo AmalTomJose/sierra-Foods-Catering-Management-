@@ -6,14 +6,16 @@
 
     <form action="/signup" method="post" id="form">
      
-            <%if(msg){%>
-                <p style="color: red;"><%=msg%></p>
-                
-            <%}%>
+      <% if (msg) { %>
+        <p style="color: red; background: black; border: 1px solid black; padding: 8px; border-radius: 2px; text-align: center;">
+          <%= msg %>
+        </p>
+      <% } %>
+      
             <div class="input-div">
         <input type="text" name="firstname" id="Firstname" placeholder="Firstname" class="input-fields" onkeyup="validateFirstname()">
         </div>
-          <div class="text-danger p-0 " id="FirstnameError">FirstName is required</div>
+          <div class="text-danger bg-dark p-0 " id="FirstnameError">FirstName is required</div>
       
         <div class="input-div">
         <input type="text" name="lastname" id="Lastname" placeholder="Lastname" class="input-fields" onkeyup="validateLastname()">

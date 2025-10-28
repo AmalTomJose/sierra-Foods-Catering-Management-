@@ -157,21 +157,29 @@ const unlistCategory = async(req,res)=>{
   }
   const addCategory = async (req, res) => {
     try {
-      let category_name = req.body.categoryname.trim().toLowerCase(); // Normalize
-      console.log('the console is :',category_name)
+      let category_name = req.body.categoryname.trim().toLowerCase();
   
-      // Check if a category with the same trimmed name exists (case-insensitive)
+      // ✅ Validation: Allow only alphabets and spaces
+      const validNameRegex = /^[A-Za-z\s]+$/;
+  
+      if (!validNameRegex.test(category_name)) {
+        return res.render("admin/category/addCategory", {
+          error: "Category name can only contain letters and spaces.",
+        });
+      }
+  
+      // ✅ Check if a category with same name already exists (case-insensitive)
       const existingCategory = await Category.findOne({
-        cat_name: { $regex: new RegExp(`^${category_name}$`, 'i') },
+        cat_name: { $regex: new RegExp(`^${category_name}$`, "i") },
       });
   
       if (existingCategory) {
         return res.render("admin/category/addCategory", {
-          error: "Category with this name already exists",
+          error: "Category with this name already exists.",
         });
       }
   
-      // Save with trimmed & normalized name
+      // ✅ Save normalized name
       const category = new Category({
         cat_name: category_name,
         cat_status: true,
@@ -179,12 +187,12 @@ const unlistCategory = async(req,res)=>{
   
       await category.save();
       return res.redirect("/admin/category");
-  
     } catch (error) {
       console.log(error.message);
       res.status(500).send("Server Error");
     }
   };
+  
   
   
 const loadcategory = async (req,res)=>{

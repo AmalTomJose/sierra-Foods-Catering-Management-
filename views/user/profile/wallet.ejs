@@ -1,18 +1,23 @@
-<main class="main" style="margin-top: 200px; margin-bottom: 100px;">
+<main class="main" style="margin-top: 160px; margin-bottom: 100px;">
   <div class="container">
-    <h2 class="mb-4">My Wallet</h2>
+    <div class="text-center mb-5">
+      <h2 class="fw-bold text-success">
+        <i class="bi bi-wallet2 me-2"></i>My Wallet
+      </h2>
+    </div>
 
-    <div class="card p-4 shadow-sm">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h4>Wallet Balance</h4>
-          <p class="text-muted">Available balance in your wallet:</p>
+    <div class="card shadow-sm border-0 rounded-4 mx-auto" style="max-width: 500px;">
+      <div class="card-body text-center py-5">
+        <div class="mb-3">
+          <i class="bi bi-cash-stack text-success" style="font-size: 60px;"></i>
         </div>
-        <div>
-          <h2 class="text-success">₹ <%= wallet.balance %></h2>
-        </div>
+        <h4 class="fw-semibold mb-2">Wallet Balance</h4>
+        <p class="text-muted mb-4">Available balance in your account</p>
+
+        <h1 class="fw-bold text-success mb-4">₹ <%= wallet.balance.toFixed(2) %></h1>
+
+        
       </div>
     </div>
-
-    </div>
-    </main>
+  </div>
+</main>
