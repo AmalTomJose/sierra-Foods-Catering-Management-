@@ -1,6 +1,8 @@
 // controllers/admin/salesReportController.js
 const Order = require('../models/orderModel');
-const moment = require('moment');
+// const moment = require('moment');
+const moment = require("moment-timezone");
+
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit-table');
 const fs = require('fs');
@@ -23,6 +25,7 @@ const renderPage = (req, res) => {
 
 
 
+
 const getFilteredReport = async (req, res) => {
   try {
     const { rangeType, startDate, endDate } = req.body;
@@ -33,18 +36,20 @@ const getFilteredReport = async (req, res) => {
     const filter = { status: "delivered" };
 
     let start, end;
+    const now = moment().tz("Asia/Kolkata");
+
     if (rangeType === "custom") {
-      start = moment.utc(startDate).startOf("day").toDate();
-      end = moment.utc(endDate).endOf("day").toDate();
+      start = moment.tz(startDate, "Asia/Kolkata").startOf("day").toDate();
+      end = moment.tz(endDate, "Asia/Kolkata").endOf("day").toDate();
     } else if (rangeType === "today") {
-      start = moment.utc().startOf("day").toDate();
-      end = moment.utc().endOf("day").toDate();
+      start = now.clone().startOf("day").toDate();
+      end = now.clone().endOf("day").toDate();
     } else if (rangeType === "week") {
-      start = moment.utc().startOf("week").toDate();
-      end = moment.utc().endOf("week").toDate();
+      start = now.clone().startOf("isoWeek").toDate(); // Monday
+      end = now.clone().endOf("isoWeek").toDate();     // Sunday
     } else if (rangeType === "month") {
-      start = moment.utc().startOf("month").toDate();
-      end = moment.utc().endOf("month").toDate();
+      start = now.clone().startOf("month").toDate();
+      end = now.clone().endOf("month").toDate();
     } else {
       return res.status(400).send("Invalid range");
     }
@@ -88,21 +93,29 @@ const getFilteredReport = async (req, res) => {
       currentPage: page,
     };
 
-    // ✅ If it's an AJAX request, send only partial HTML
     if (req.xhr) {
       return res.render("partials/admin/salesReportTable", {
-        ...data,
-        layout: false, // 🚀 prevent double layout
+        report: data.report,
+        totalPages: data.totalPages,
+        currentPage: data.currentPage,
+        layout: false
       });
     }
     
-    // Otherwise render full page
-    res.render("admin/dashboard/salesReport", data);
+
+    res.render("admin/dashboard/salesReport", {
+      report: data.report,
+      totalPages: data.totalPages,
+      currentPage: data.currentPage,
+      data,
+    });
   } catch (error) {
     console.error("Error generating sales report:", error);
     res.status(500).send("Internal Server Error");
   }
 };
+
+
 
 
 

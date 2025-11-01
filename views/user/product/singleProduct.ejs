@@ -124,36 +124,44 @@
         </div>
         
         <div class="bt-1 border-color-1 mt-30 mb-30"></div>
+<!-- Add to Cart Form -->
+<form id="addToCartForm">
+  <input type="hidden" name="productData_id" id="productData_id" value="<%= product._id %>">
 
-        <!-- Add to Cart Form -->
-     
-        <form id="addToCartForm">
-          <input type="hidden" name="productData_id" id="productData_id" value="<%= product._id %>">
-        
-          <div class="row g-2 align-items-center">
-            <!-- Quantity Input -->
-            <div class="col-auto">
-              <input type="number" name="qty" id="qty" class="form-control" value="<%=qty%>" min="1" max="<%=qty%>" style="width: 120px;">
-            </div>
-        
-            <!-- Add to Cart Button -->
-            <div class="col-auto">
-              <%if(qty&&qty>1){%>
-                <button type="submit" id="addToCartBtn" class="btn btn-success px-4">
-                  <span>Add To Cart</span>
-                </button>
+  <% if (error) { %>
+    <div class="alert alert-warning mt-3"><%= error %></div>
+    <a href="/eventDetails" class="btn btn-primary mt-2">Book an Event</a>
+  <% } else { %>
+    <div class="row g-2 align-items-center">
+      <!-- Quantity Input -->
+      <div class="col-auto">
+        <input
+          type="number"
+          name="qty"
+          id="qty"
+          class="form-control"
+          style="width: 120px;"
+          value="<%= guestCount %>"
+          min="<%= minOrderQty %>"
+          max="<%=guestCount%>"
+          required
+        >
+      </div>
 
-              <%}else{%>
-                <button class="btn btn-danger px-4">
-                  <a href="/eventDetails" class=" btn btn-danger px-4">Book an Event</a> 
-                </button>
+      <!-- Add to Cart Button -->
+      <div class="col-auto">
+        <button type="submit" id="addToCartBtn" class="btn btn-success px-4">
+          <span>Add To Cart</span>
+        </button>
+      </div>
+    </div>
 
-             <% }%>
-              
-            </div>
-          </div>
-      
-        </form>
+    <small class="text-muted d-block mt-2">
+      Minimum order for <strong><%= guestCount %></strong> guests is <strong><%= minOrderQty %></strong> items.
+    </small>
+  <% } %>
+</form>
+
         
         <!-- Add to Wishlist Button -->
         <div class="detail-extralink">
@@ -240,22 +248,18 @@
     background-color: #046963;
   }
 </style>
-
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Scripts -->
 <script>
-  // Wishlist AJAX 
+  // 💖 Wishlist AJAX
   function addToWishlist(productId) {
     fetch('/addToWishlist', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },  
       body: JSON.stringify({ productId })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
       Swal.fire({
         title: data.success ? "Success!" : "Error!",
@@ -263,38 +267,47 @@
         icon: data.success ? "success" : "error"
       });
     })
-    .catch(error => {
-      console.error('Wishlist Error:', error);
-      Swal.fire("Error!", "Something went wrong.", "error");
-    });
+    .catch(() => Swal.fire("Error!", "Something went wrong.", "error"));
   }
 
-  // Add to Cart AJAX
-  document.getElementById('addToCartForm').addEventListener('submit', function (e) {
+  // 🛒 Add to Cart AJAX + Validation
+  const minQty = <%= minOrderQty %>;
+  const guestCount = <%= guestCount %>;
+
+  document.getElementById('addToCartForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    const qty = document.getElementById('qty').value;
+    const qty = parseInt(document.getElementById('qty').value);
     const productId = document.getElementById('productData_id').value;
-    const addToCartBtn = document.getElementById('addToCartBtn');
 
-    fetch('/cart', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ productId,qty })
-    })
-    .then(response => response.json())
-    .then(data => {
+    // 🧠 Validation: Minimum Quantity Check
+    if (qty < minQty) {
       Swal.fire({
-        title: data.success ? "Success!" : "Error!",
-        text: data.success ? data.message : data.error || "Failed to add to wishlist.",
+        icon: 'warning',
+        title: 'Quantity Too Low',
+        text: `For ${guestCount} guests, minimum order is ${minQty} items.`,
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch('/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, qty })
+      });
+
+      const data = await res.json();
+
+      Swal.fire({
+        title: data.success ? "Added to Cart!" : "Error!",
+        text: data.success ? data.message : data.error || "Failed to add to cart.",
         icon: data.success ? "success" : "error"
       });
-    })
-    .catch(err => {
+
+    } catch (err) {
       console.error('Cart Error:', err);
-      alert('Something went wrong while adding to cart.');
-    });
+      Swal.fire("Error!", "Something went wrong while adding to cart.", "error");
+    }
   });
 </script>

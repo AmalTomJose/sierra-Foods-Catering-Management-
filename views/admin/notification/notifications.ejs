@@ -1,3 +1,76 @@
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    font-family: 'Poppins', sans-serif;
+  }
+  h2 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 20px;
+  }
+  .list-group {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 25px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    margin-top: 20px;
+  }
+  .list-group-item {
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+  .list-group-item:hover {
+    transform: translateX(8px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  }
+  .list-group-item-warning {
+    background: rgba(255, 193, 7, 0.15) !important;
+    border-left: 4px solid #ffc107;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .btn-outline-secondary {
+    border-color: #718096;
+    color: #718096;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  .btn-outline-secondary:hover {
+    background: rgba(108, 117, 125, 0.8);
+    border-color: transparent;
+    color: #fff;
+    transform: translateY(-2px);
+  }
+</style>
+
 <h2>Notifications</h2>
 
 <!-- Mark all as read button -->

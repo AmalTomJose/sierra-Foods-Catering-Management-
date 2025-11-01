@@ -80,29 +80,35 @@
       </nav>
     <% } %>
     <script>
-
-  function addToWishlist(productId) {
-    fetch('/addToWishlist', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ productId })
-    })
-    .then(response => response.json())
-    .then(data => {
-      Swal.fire({
-        title: data.success ? "Success!" : "Error!",
-        text: data.success ? data.message : data.error || "Failed to add to wishlist.",
-        icon: data.success ? "success" : "error"
-      });
-    })
-    .catch(error => {
-      console.error('Wishlist Error:', error);
-      Swal.fire("Error!", "Something went wrong.", "error");
-    });
-  }
-
-    </script>
-
-
+      function addToWishlist(productId) {
+        fetch('/addToWishlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Show SweetAlert feedback
+          Swal.fire({
+            title: data.success ? "Added to Wishlist!" : "Oops!",
+            text: data.success ? data.message : (data.error || "Unable to add item."),
+            icon: data.success ? "success" : "warning", // 🔥 Changed to warning (!) icon
+            confirmButtonColor: data.success ? "#28a745" : "#f39c12", // green or amber
+            timer: 2000,
+            showConfirmButton: false
+          });
+        })
+        .catch(error => {
+          console.error('Wishlist Error:', error);
+          Swal.fire({
+            title: "Something went wrong!",
+            text: "Please try again later.",
+            icon: "warning", // “!” style
+            confirmButtonColor: "#f39c12",
+            timer: 2000,
+            showConfirmButton: false
+          });
+        });
+      }
+      </script>
+      

@@ -1,95 +1,192 @@
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    font-family: 'Poppins', sans-serif;
+  }
+  .content-main {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 25px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    margin-top: 20px;
+  }
+  .card {
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  .card-header {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    padding: 15px 20px;
+    font-weight: 700;
+    color: #2d3748;
+  }
+  h4.mb-0 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .form-control {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 500;
+    color: #4a5568;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+  }
+  .form-control:hover {
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
+  }
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+  }
+  .form-label {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+  .btn-primary, button[type="submit"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    color: #fff;
+  }
+  .btn-primary:hover, button[type="submit"]:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+</style>
 
-
-<form action="/admin/addsubCategory" method="post" id="category-form"  onsubmit="return validationChecking()">
+<form action="/admin/addsubCategory" method="post" id="subcategory-form" onsubmit="return validationChecking()">
     <section class="content-main">
-        <div class="row">
-            <div class="col-9">
-                <div class="content-header">
-                    <h2 class="content-title">Add New SubCategory</h2>
+      <div class="row">
+        <div class="col-12 col-lg-8 mx-auto">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white text-white">
+              <h4 class="mb-0"><i class="bi bi-tags-fill me-2"></i>Add New Subcategory</h4>
+            </div>
+  
+            <div class="card-body p-4">
+              <input type="hidden" name="categoryid" value="<%= category %>">
+  
+              <div class="mb-4">
+                <label for="subcategory_name" class="form-label fw-semibold">Subcategory Name</label>
+                <input
+                  type="text"
+                  name="subcategoryname"
+                  id="subcategory_name"
+                  placeholder="Enter subcategory name"
+                  class="form-control form-control-lg"
+                />
+                <div id="category_name-error" class="text-danger mt-2 small fw-semibold"></div>
+              </div>
+  
+              <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger py-2">
+                  <i class="bi bi-exclamation-circle me-2"></i><%= error %>
                 </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4>Basic</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <input type="hidden" name ="categoryid" value="<%=category%>">
-                            <label for="subcategory_name" class="form-label">SubCategory name</label>
-                            <input type="text" name="subcategoryname"  placeholder="Type here" class="form-control" id="subcategory_name">
-                            <div class="error-message" style="color: red;" id="category_name-error"></div>
-                        </div>
-                      
-                    </div>
-                </div> <!-- card end// -->
-            </div>
-          
-                <div>
-                    <input type="submit" value="submit" class="btn btn-md rounded font-sm hover-up" >
+              <% } %>
+  
+              <% if (typeof message !== 'undefined' && message) { %>
+                <div class="alert alert-success py-2">
+                  <i class="bi bi-check-circle me-2"></i><%= message %>
                 </div>
-
-                <div id="invalid">
-                    <% if (typeof error !=='undefined' && error) { %>
-                        <p class="text-danger" id="message">
-                            <%= error %>
-                        </p>
-                        <% } %>
-                        
-                </div>
+              <% } %>
+  
+              <div class="text-end">
+                <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill fw-semibold shadow-sm hover-up">
+                  <i class="bi bi-plus-circle me-2"></i>Submit
+                </button>
+              </div>
             </div>
-            <div id="invalid">
-                <% if (typeof message !=='undefined' && message) { %>
-                    <p style="color: rgb(8, 96, 0);" id="message">
-                        <%= message %>
-                    </p>
-                    <% } %>
-                    
-            </div>
-            </div>
+          </div>
         </div>
-    </section> <!-- content-main end// -->
-</form>
-<script>
-
-
-document.addEventListener('DOMContentLoaded', function () {
-    const category_name = document.getElementById("subcategory_name");
-    const category_name_error = document.getElementById("category_name-error");
-    const description = document.getElementById("description");
-    const description_error = document.getElementById("description-error");
-
-    category_name.addEventListener('onsubmit', function () {
-        const inputValue = category_name.value.trim();
-        if (inputValue === "") {
-            category_name_error.innerHTML = "Please enter category name";
-        } else if (!isNaN(inputValue)) {
-            category_name_error.innerHTML = "Category name cannot be a number";
-        } else {
-            category_name_error.innerHTML = "";
-        }
+      </div>
+    </section>
+  </form>
+  
+  <!-- Validation Script -->
+  <script>
+    function validationChecking() {
+      const input = document.getElementById("subcategory_name");
+      const errorMsg = document.getElementById("category_name-error");
+      let value = input.value.trim();
+  
+      // Normalize multiple spaces
+      value = value.replace(/\s+/g, " ");
+      input.value = value;
+  
+      // Reset styles
+      input.classList.remove("is-invalid", "is-valid");
+      errorMsg.textContent = "";
+  
+      // Empty check
+      if (value === "") {
+        errorMsg.textContent = "⚠️ Please enter a subcategory name.";
+        input.classList.add("is-invalid");
+        return false;
+      }
+  
+      // Check if only letters and single spaces allowed
+      const nameRegex = /^[A-Za-z ]+$/;
+      if (!nameRegex.test(value)) {
+        errorMsg.textContent =
+          "⚠️ Only letters and spaces are allowed (no numbers or special characters).";
+        input.classList.add("is-invalid");
+        return false;
+      }
+  
+      // Check for leading/trailing spaces
+      if (/^\s|\s$/.test(input.value)) {
+        errorMsg.textContent = "⚠️ Subcategory name cannot start or end with a space.";
+        input.classList.add("is-invalid");
+        return false;
+      }
+  
+      // If valid
+      input.classList.add("is-valid");
+      return true;
+    }
+  
+    // Live input validation (optional)
+    document.getElementById("subcategory_name").addEventListener("input", function () {
+      const input = this;
+      input.classList.remove("is-invalid", "is-valid");
+      document.getElementById("category_name-error").textContent = "";
     });
-
-    description.addEventListener('onsubmit', function () {
-        description_error.innerHTML = description.value.trim() === "" ? "Please enter category description" : "";
-    });
-});
-function validationChecking(event) {
-    // event.preventDefault();
-            const category_name = document.getElementById("subcategory_name").value;
-            const category_name_error = document.getElementById("category_name-error");
-
-            category_name_error.innerHTML = category_name.trim() === "" ? "Please enter subcategory name" : "";
-
-            // Check if category name is a number
-            if (!isNaN(category_name)) {
-                category_name_error.innerHTML = "subCategory name cannot be a number";
-                    return false;// Prevent the form from submitting
-            }
-}
-
-            
-
-
-
-</script>
+  </script>
+  
+  <!-- Add this Bootstrap Icons CDN in <head> if not already present -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+  

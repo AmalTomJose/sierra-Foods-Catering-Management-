@@ -117,7 +117,7 @@ req.flash('success','Coupon added')
   
       // Fetch offers + total count
       const [offers, total] = await Promise.all([
-        Offer.find(searchFilter).skip(skip).limit(limit),
+        Offer.find(searchFilter).sort({createdAt:-1}).skip(skip).limit(limit),
         Offer.countDocuments(searchFilter),
       ]);
   
@@ -143,57 +143,148 @@ req.flash('success','Coupon added')
     }
   };
   
-
-const addOffer = async(req,res)=>{
-  try{
-    const categories = await Category.find();
-    const products = await Product.find({item_status:true});
-
-    res.render('admin/offer/addOffer',{categories,products})
-
-  }
-  catch(error){
-    console.log(error)
-  }
-}
-
-const saveOffer =async(req,res)=>{
-  console.log(req.body)
-
-    const { title, description, discountType, discountValue, applicableTo,products, category, startDate, endDate } = req.body;
-
+  const addOffer = async (req, res) => {
     try {
-      const newOffer = new Offer({
-        title,
-        description,
-        discountType,
-        discountValue,
-        applicableTo,
-        category: applicableTo === 'category' ? category : null,
-        products: applicableTo === 'product' ? products : [],
-        startDate,
-        endDate,
-        isActive: true
-      });
-      
+      const categories = await Category.find();
+      const products = await Product.find({ item_status: true });
   
-      await newOffer.save();
+      // ✅ Pass empty values so the template doesn't render undefined alerts
+      res.render('admin/offer/addOffer', {
+        categories,
+        products,
+        error: '',
+        success: ''
+      });
+  
+    } catch (error) {
+      console.error('Error loading Add Offer page:', error);
+      res.status(500).send('Server Error');
+    }
+  };
+  
+
+const saveOffer = async (req, res) => {
+  try {
+    let {
+      title,
+      description,
+      discountType,
+      discountValue,
+      applicableTo,
+      products,
+      category,
+      startDate,
+      endDate,
+    } = req.body;
+
+    // Normalize data
+    title = title?.trim();
+    const normalizedTitle = title?.toLowerCase();
+    discountValue = Number(discountValue);
+
+    // Re-fetch dropdown data for rerendering
+    const categories = await Category.find();
+    const productList = await Product.find();
+
+    // --- VALIDATION ---
+    if (!title || !description || !discountType || !discountValue || !startDate || !endDate) {
+      req.flash("error", "All fields are required");
+      return res.render("admin/offer/addOffer", {
+        error: "All fields are required",
+        categories,
+        products: productList,
+      });
+    }
+
+    // Duplicate check (case-insensitive)
+    const existingOffer = await Offer.findOne({
+      title: { $regex: new RegExp(`^${normalizedTitle}$`, "i") },
+    });
+
+    if (existingOffer) {
+      req.flash("error", "Offer title already exists");
+      return res.render("admin/offer/addOffer", {
+        error: "Offer title already exists",
+        categories,
+        products: productList,
+      });
+    }
+
+    // Validate discount range
+    if (discountType === "percentage" && (discountValue < 1 || discountValue > 100)) {
+      req.flash("error", "Percentage discount must be between 1 and 100");
+      return res.render("admin/offer/addOffer", {
+        error: "Percentage discount must be between 1 and 100",
+        categories,
+        products: productList,
+      });
+    }
+
+    if (discountType === "amount" && discountValue < 1) {
+      req.flash("error", "Discount amount must be greater than 0");
+      return res.render("admin/offer/addOffer", {
+        error: "Discount amount must be greater than 0",
+        categories,
+        products: productList,
+      });
+    }
+
+    // Validate date range
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start < today.setHours(0, 0, 0, 0)) {
+      req.flash("error", "Start date cannot be in the past");
+      return res.render("admin/offer/addOffer", {
+        error: "Start date cannot be in the past",
+        categories,
+        products: productList,
+      });
+    }
+
+    if (end < start) {
+      req.flash("error", "End date cannot be before start date");
+      return res.render("admin/offer/addOffer", {
+        error: "End date cannot be before start date",
+        categories,
+        products: productList,
+      });
+    }
+
+    // --- CREATE OFFER ---
+    const newOffer = new Offer({
+      title: normalizedTitle,
+      description,
+      discountType,
+      discountValue,
+      applicableTo,
+      category: applicableTo === "category" ? category : null,
+      products: applicableTo === "product" ? products : [],
+      startDate,
+      endDate,
+      isActive: true,
+    });
+
+    await newOffer.save();
+    req.flash("success", "Offer added successfully");
+    return res.redirect("/admin/offers");
+  } catch (err) {
+    console.error("Error saving offer:", err);
+    req.flash("error", "Unexpected error while saving the offer");
+    return res.redirect("/admin/addOffer");
+  }
+};
+
+  const deleteOffer = async(req,res)=>{
+    try {
+      console.log('hii')
+      await Offer.findByIdAndDelete(req.params.id);
       res.redirect('/admin/offers');
     } catch (err) {
       console.error(err);
-      res.redirect('/admin/addOffer');
     }
-}
-
-const deleteOffer = async(req,res)=>{
-  try {
-    console.log('hii')
-    await Offer.findByIdAndDelete(req.params.id);
-    res.redirect('/admin/offers');
-  } catch (err) {
-    console.error(err);
   }
-}
 
 
 

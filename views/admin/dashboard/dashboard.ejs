@@ -1,113 +1,504 @@
 
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-        <div class="container mt-4">
-            <h2>Admin Dashboard</h2>
-            <div class="row mt-4">
-                <div class="col-md-4">
-                    <div class="card text-white bg-primary mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Users</h5>
-                            <p class="card-text" id="totalUsers"><%=totalActiveUsers%></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-success mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Orders</h5>
-                            <p class="card-text" id="totalOrders"><%=totalActiveOrders%></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-warning mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Revenue</h5>
-                            <p class="card-text" id="totalRevenue"><%=totalRevenue%></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <h3 class="mb-3">Admin Dashboard</h3>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-    <select id="filter" class="form-select w-auto mb-3">
-    <option value="monthly">Monthly</option>
-    <option value="yearly">Yearly</option>
-    </select>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-attachment: fixed;
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 2rem;
+    }
 
-    <div class="card p-3 mb-4">
-    <canvas id="salesChart" height="100"></canvas>
+    h2, h3, h4, h5 {
+      font-weight: 700;
+      color: #2d3748;
+      letter-spacing: -0.5px;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+      margin-bottom: 30px;
+      padding: 20px 0;
+    }
+
+    .dashboard-header h2 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #filter {
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-weight: 600;
+      color: #4a5568;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    #filter:hover {
+      border-color: rgba(102, 126, 234, 0.5);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+      transform: translateY(-2px);
+    }
+
+    #filter:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      outline: none;
+    }
+
+    /* Enhanced Stats Cards */
+    .dashboard-card {
+      border: none;
+      border-radius: 20px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      backdrop-filter: blur(10px);
+    }
+
+    .dashboard-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .dashboard-card:hover::before {
+      opacity: 1;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .dashboard-card.bg-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .dashboard-card.bg-success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    }
+
+    .dashboard-card.bg-warning {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+    }
+
+    .dashboard-card .card-body {
+      text-align: center;
+      padding: 35px 25px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dashboard-card .card-title {
+      font-size: 1rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.95;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+
+    .dashboard-card .card-text {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin: 0;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      letter-spacing: -1px;
+    }
+
+    /* Chart Card Enhancement */
+    .chart-card {
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      overflow: hidden;
+    }
+
+    .chart-card h4 {
+      padding: 25px 25px 15px;
+      margin: 0;
+      color: #2d3748;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .chart-card canvas {
+      padding: 20px 25px 25px;
+    }
+
+    /* Top Lists Enhancement */
+    .row.mt-5 h5 {
+      color: #2d3748;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .row.mt-5 h5 i {
+      color: #667eea;
+      font-size: 1.5rem;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    ul li {
+      padding: 15px 18px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      margin-bottom: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      border-left: 4px solid transparent;
+      font-weight: 500;
+      color: #4a5568;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    ul li:hover {
+      transform: translateX(8px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      border-left-color: #667eea;
+      background: rgba(255, 255, 255, 1);
+    }
+
+    ul li .text-muted {
+      color: #718096 !important;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: rgba(102, 126, 234, 0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* Generate Report Section */
+    .text-center.mt-5 h4 {
+      color: #2d3748;
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 25px;
+    }
+
+    .generate-report-btn {
+      display: inline-flex;
+      align-items: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 15px;
+      font-weight: 600;
+      padding: 16px 35px;
+      font-size: 1.1rem;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .generate-report-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .generate-report-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .generate-report-btn:hover {
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+    }
+
+    .generate-report-btn:active {
+      transform: translateY(-2px) scale(1.02);
+    }
+
+    .generate-report-btn i {
+      margin-right: 12px;
+      font-size: 1.2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .generate-report-btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Container Improvements */
+    .container.mt-4 {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 25px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      margin-top: 20px !important;
+    }
+
+    /* Responsive Improvements */
+    @media (max-width: 768px) {
+      .dashboard-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+
+      .dashboard-header h2 {
+        font-size: 2rem;
+      }
+
+      .dashboard-card .card-text {
+        font-size: 1.8rem;
+      }
+    }
+
+    /* Animation for list items */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    ul li {
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    ul li:nth-child(1) { animation-delay: 0.1s; }
+    ul li:nth-child(2) { animation-delay: 0.2s; }
+    ul li:nth-child(3) { animation-delay: 0.3s; }
+    ul li:nth-child(4) { animation-delay: 0.4s; }
+    ul li:nth-child(5) { animation-delay: 0.5s; }
+    ul li:nth-child(6) { animation-delay: 0.6s; }
+    ul li:nth-child(7) { animation-delay: 0.7s; }
+    ul li:nth-child(8) { animation-delay: 0.8s; }
+    ul li:nth-child(9) { animation-delay: 0.9s; }
+    ul li:nth-child(10) { animation-delay: 1s; }
+  </style>
+</head>
+
+<body>
+  <div class="container mt-4">
+    <div class="dashboard-header">
+      <h2>📊 Admin Dashboard</h2>
+      <select id="filter" class="form-select w-auto shadow-sm">
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
     </div>
 
-    <div class="row">
-    <div class="col-md-4">
-        <h5>Top 10 Products</h5>
+    <!-- Stats Row -->
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card text-white bg-primary dashboard-card">
+          <div class="card-body">
+            <h5 class="card-title">Total Users</h5>
+            <p class="card-text" id="totalUsers"><%= totalActiveUsers %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card text-white bg-success dashboard-card">
+          <div class="card-body">
+            <h5 class="card-title">Total Orders</h5>
+            <p class="card-text" id="totalOrders"><%= totalActiveOrders %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card text-white bg-warning dashboard-card">
+          <div class="card-body">
+            <h5 class="card-title">Total Revenue</h5>
+            <p class="card-text" id="totalRevenue">₹<%= totalRevenue.toLocaleString() %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Chart -->
+    <div class="card p-4 mt-5 chart-card">
+      <h4 class="mb-3">📈 Sales Overview</h4>
+      <canvas id="salesChart" height="120"></canvas>
+    </div>
+
+    <!-- Top Lists -->
+    <div class="row mt-5">
+      <div class="col-md-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-box-seam"></i> Top 10 Products</h5>
         <ul id="productList"></ul>
-    </div>
-    <div class="col-md-4">
-        <h5>Top 10 Categories</h5>
+      </div>
+      <div class="col-md-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-grid-1x2-fill"></i> Top 10 Categories</h5>
         <ul id="categoryList"></ul>
-    </div>
-    <div class="col-md-4">
-        <h5>Top 10 Brands</h5>
+      </div>
+      <div class="col-md-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-tags-fill"></i> Top 10 Subcategories</h5>
         <ul id="brandList"></ul>
+      </div>
     </div>
+
+    <!-- Generate Report -->
+    <div class="text-center mt-5 mb-5">
+      <h4 class="mb-3 fw-bold">📄 Generate Sales Report</h4>
+      <button 
+        type="button" 
+        onclick="window.location.href='/admin/salesReport'" 
+        class="generate-report-btn shadow">
+        <i class="bi bi-file-earmark-bar-graph"></i> <span>Generate Report</span>
+      </button>
     </div>
+  </div>
 
-
-
-    <h1>Genrate Sales Report</h1>
-    
-    <button type="button" onclick="window.location.href='/admin/salesReport'">Generate Report</button>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
     let salesChartInstance;
-    
+
     async function loadDashboard(filter = 'monthly') {
       const res = await fetch(`/admin/dashboard-data?filter=${filter}`);
       const data = await res.json();
-    
-      // ----- SALES CHART -----
-      const labels = data.salesData.map(item => {
-        if (filter === 'yearly') return item._id.year;
-        return `${item._id.month}-${item._id.year}`;
-      });
+
+      // Chart Labels & Values
+      const labels = data.salesData.map(item => 
+        filter === 'yearly' ? item._id.year : `${item._id.month}-${item._id.year}`
+      );
       const values = data.salesData.map(item => item.totalSales);
-    
-      if (salesChartInstance) {
-        salesChartInstance.destroy(); // avoid stacking charts
-      }
-    
+
+      if (salesChartInstance) salesChartInstance.destroy();
+
       salesChartInstance = new Chart(document.getElementById('salesChart'), {
         type: 'bar',
         data: {
           labels,
           datasets: [{
-            label: 'Sales Amount',
+            label: 'Sales Amount (₹)',
             data: values,
-            backgroundColor: '#007bff'
+            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+            borderColor: 'rgba(102, 126, 234, 1)',
+            borderWidth: 2,
+            borderRadius: 12,
+            borderSkipped: false,
           }]
         },
-        options: { responsive: true }
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { 
+            legend: { 
+              display: true,
+              labels: {
+                font: {
+                  family: "'Poppins', sans-serif",
+                  size: 14,
+                  weight: '600'
+                },
+                padding: 15
+              }
+            } 
+          },
+          scales: { 
+            y: { 
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)',
+                lineWidth: 1
+              },
+              ticks: {
+                font: {
+                  family: "'Poppins', sans-serif",
+                  size: 12,
+                  weight: '500'
+                },
+                padding: 10
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                font: {
+                  family: "'Poppins', sans-serif",
+                  size: 12,
+                  weight: '500'
+                },
+                padding: 10
+              }
+            }
+          }
+        }
       });
-    
-      // ----- TOP PRODUCTS -----
+
+      // Lists
       document.getElementById('productList').innerHTML =
-        data.bestSellingProducts.map(p => `<li>${p.name} (${p.totalSold})</li>`).join('');
-    
-      // ----- TOP CATEGORIES -----
+        data.bestSellingProducts.map(p => `<li>${p.name} <span class='text-muted'>(${p.totalSold})</span></li>`).join('');
       document.getElementById('categoryList').innerHTML =
-        data.bestSellingCategories.map(c => `<li>${c.categoryName || 'Uncategorized'} (${c.totalSold})</li>`).join('');
-    
-      // ----- TOP SUBCATEGORIES -----
+        data.bestSellingCategories.map(c => `<li>${c.categoryName || 'Uncategorized'} <span class='text-muted'>(${c.totalSold})</span></li>`).join('');
       document.getElementById('brandList').innerHTML =
-        data.bestSellingSubcategories.map(s => `<li>${s.subcategoryName || 'Uncategorized'} (${s.totalSold})</li>`).join('');
+        data.bestSellingSubcategories.map(s => `<li>${s.subcategoryName || 'Uncategorized'} <span class='text-muted'>(${s.totalSold})</span></li>`).join('');
     }
-    
+
     document.getElementById('filter').addEventListener('change', (e) => {
       loadDashboard(e.target.value);
     });
-    
+
     loadDashboard();
-    </script>
-    
+  </script>
+</body>
+

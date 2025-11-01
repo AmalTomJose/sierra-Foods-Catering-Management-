@@ -79,18 +79,32 @@ const verifyLogin = async (req, res) => {
 
 
 
-      
-
-const loadUserpage=async (req,res)=>{
-  try{
-    console.log('hii')
+const loadUserpage = async (req, res) => {
+  try {
     const adminData = await User.findById(req.session.admin_id);
-    const userData = await User.find({isAdmin:0})
-    console.log(adminData);
-    console.log(userData);
-    res.render('admin/dashboard/userDashboard',{users:userData,admin:adminData})
-  }catch(error){
-    console.error(error.message);
+
+    // get the 'status' query param (from dropdown)
+    const { status } = req.query;
+    let filter = { isAdmin: 0 }; // only normal users
+
+    // apply filter based on status
+    if (status === "listed") {
+      // show blocked users
+      filter.isBlocked = 1;
+    } else if (status === "unlisted") {
+      // show active users
+      filter.isBlocked = 0;
+    }
+
+    // fetch filtered users
+    const userData = await User.find(filter).sort({ firstname: 1 });
+
+    res.render("admin/dashboard/userDashboard", {
+      users: userData,
+      admin: adminData,
+    });
+  } catch (error) {
+    console.error("Error loading user dashboard:", error.message);
     res.status(500).send("Internal Server Error: " + error.message);
   }
 };

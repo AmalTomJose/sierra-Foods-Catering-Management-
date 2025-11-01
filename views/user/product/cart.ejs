@@ -4,11 +4,13 @@
       <div class="row">
         <div class="col-12">
 
-          <% if (error) { %>
-            <div class="alert text-center" style="color: red;">
-              <%= error %>
+          <% if (error && error.length>0) { %>
+            <div class="alert alert-danger text-center fw-semibold mx-auto" 
+                 style="max-width: 500px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <i class="bi bi-exclamation-circle-fill me-2"></i><%= error %>
             </div>
           <% } %>
+          
           <div class="table-responsive">
 
             <% if (cart.length > 0) { %>
@@ -51,13 +53,14 @@
                         <form onsubmit="event.preventDefault(); updateCart('<%= cartData.product._id %>', this.elements['quantity'].value)">
                           <div class="input-group" style="max-width: 150px; margin: auto;">
                             <input 
-                              type="number" 
-                              name="quantity" 
-                              min="1" 
-                              max="<%= qty %>" 
-                              value="<%= cartData.quantity %>" 
-                              class="form-control text-center"
-                            >
+                            type="number" 
+                            name="quantity" 
+                            min="<%= minQty %>" 
+                            max="<%= maxQty %>" 
+                            value="<%= cartData.quantity %>" 
+                            class="form-control text-center"
+                          >
+                          
                             <button type="submit" class="btn btn-sm btn-primary">Update</button>
                           </div>
                         </form>

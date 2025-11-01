@@ -108,6 +108,7 @@ const loadHomepage = async(req,res)=>{
 
 }
 
+
 const loadProductDetail = async (req, res) => {
   try {
     const userId = req.session.user_id;
@@ -118,6 +119,10 @@ const loadProductDetail = async (req, res) => {
     const product = await Product.findById(id)
       .populate('category')
       .populate('subcategory');
+
+    if (!product) {
+      return res.redirect('/shop');
+    }
 
     // 🧾 Fetch user's active booking (for guest count)
     const booking = await Booking.findOne({ user: userId, status: 'active' })
@@ -175,8 +180,9 @@ const loadProductDetail = async (req, res) => {
       product.offerPrice = product.item_price;
     }
 
-    // 👥 Get guest count from booking (or 1 by default)
-    const qty = booking?.guestCount || 1;
+    // 👥 Get guest count and minimum order quantity
+    const guestCount = booking?.guestCount || 0;
+    const minOrderQty = guestCount > 0 ? Math.floor(guestCount / 2) : 0;
 
     // 🧩 Fetch similar products (same category, exclude current one)
     const similarProducts = await Product.find({
@@ -189,13 +195,14 @@ const loadProductDetail = async (req, res) => {
     return res.render('user/product/singleProduct', {
       user: userData,
       product,
-      qty,
-      error: booking ? null : 'Please Book an Event',
+      guestCount,
+      minOrderQty,
+      error: booking ? null : 'Please Book an Event first to order items.',
       similarProducts
     });
 
   } catch (error) {
-    console.error(error.message);
+    console.error('❌ loadProductDetail error:', error.message);
     res.status(500).send('Internal Server Error');
   }
 };

@@ -1,99 +1,209 @@
-
-
-<form action="/admin/editSubcategory" method="post">
-
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    font-family: 'Poppins', sans-serif;
+  }
+  .content-main {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 25px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    margin-top: 20px;
+  }
+  h2.content-title {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2.content-title i {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2rem;
+  }
+  .text-muted { color: rgba(255, 255, 255, 0.8) !important; font-weight: 500; }
+  .card {
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  .card-header {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    padding: 15px 20px;
+    font-weight: 700;
+    color: #2d3748;
+  }
+  .form-control {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 500;
+    color: #4a5568;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+  }
+  .form-control:hover {
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
+  }
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+  }
+  .form-label {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+  .btn-primary, button[type="submit"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    color: #fff;
+  }
+  .btn-primary:hover, button[type="submit"]:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .btn-secondary {
+    background: rgba(108, 117, 125, 0.8);
+    border: none;
+    color: #fff;
+  }
+  .btn-secondary:hover {
+    background: rgba(108, 117, 125, 1);
+    transform: translateY(-2px);
+  }
+</style>
+<form action="/admin/editSubcategory" method="POST" class="needs-validation" novalidate>
     <section class="content-main">
-        <div class="row">
-            <div class="col-9">
-                <div class="content-header">
-                    <h2 class="content-title">Edit Category</h2>
-
-
-
-                </div>
-            </div>
-            <div class="col-lg-6">
-
-                <div class="card mb-4">
-
-                    <div class="card-header">
-                        <h4>Basic</h4>
-                    </div>
-                    <input type="hidden" name="category_id" value="<%= subcategory._id %>">
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <label for="category_name" class="form-label">Category name</label>
-                            <input type="text" name="subcategoryname" placeholder="Type here" value="<%= subcategory.name %>"
-                                class="form-control" id="category_name">
-                            <div class="error-message" style="color: red;" id="category_name-error"></div>
-                        </div>
-                      
-
-
-
-                    </div>
-                </div> <!-- card end// -->
-
-            </div>
-            <div class="col-lg-3">
-       
-
-                <div>
-
-                    <input type="submit" value="submit" class="btn btn-md rounded font-sm hover-up">
-                </div>
-
-                <div id="invalid">
-                    <% if (typeof error !=='undefined' && error) { %>
-                        <p class="text-danger" id="message">
-                            <%= error %>
-                        </p>
-                        <% } %>
-                        
-                </div>
-            </div>
-            <div id="invalid">
-                <% if (typeof message !=='undefined' && message) { %>
-                    <p style="color: rgb(8, 96, 0);" id="message">
-                        <%= message %>
-                    </p>
-                    <% } %>
-                    
-            </div>
-
-        </div>
-        </div>
-
-
-
-    </section> 
-</form>
-<script>
-
-
-
-
-
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const category_name = document.getElementById("category_name");
-            const category_name_error = document.getElementById("category_name-error");
-            const description = document.getElementById("description");
-            const description_error = document.getElementById("description-error");
+      <div class="content-header mb-4">
+        <h2 class="content-title fw-bold text-primary">
+          <i class="bi bi-pencil-square me-2"></i>Edit Subcategory
+        </h2>
+        <p class="text-muted">Update the subcategory name below</p>
+      </div>
   
-
-            category_name.addEventListener('input', function () {
-                category_name_error.innerHTML = category_name.value.trim() === "" ? "Please enter category name" : "";
-            });
-
-            description.addEventListener('input', function () {
-                description_error.innerHTML = description.value.trim() === "" ? "Please enter category description" : "";
-            });
-
-       
-        });
-
-
-</script>
-
-
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-light">
+              <h5 class="mb-0 text-secondary fw-semibold">Subcategory Details</h5>
+            </div>
+  
+            <div class="card-body">
+              <input type="hidden" name="subcategory_id" value="<%= subcategory._id %>">
+  
+              <!-- Current Category Display -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Category</label>
+                <input
+                  type="text"
+                  value="<%= subcategory.category ? subcategory.category.cat_name : 'N/A' %>"
+                  class="form-control bg-light"
+                  readonly
+                >
+              </div>
+  
+              <!-- Subcategory Name -->
+              <div class="mb-3">
+                <label for="subcategory_name" class="form-label fw-semibold">Subcategory Name</label>
+                <input 
+                  type="text" 
+                  id="subcategory_name" 
+                  name="subcategoryname"
+                  value="<%= subcategory.subcat_name %>"
+                  placeholder="Enter subcategory name"
+                  class="form-control border border-2 border-light rounded-3 shadow-sm"
+                  required
+                >
+                <div class="invalid-feedback">Please enter a valid subcategory name.</div>
+                <div class="text-danger mt-1" id="subcategory_name-error"></div>
+              </div>
+  
+              <!-- Error Message -->
+              <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger py-2 mt-3" id="message">
+                  <i class="bi bi-exclamation-circle me-2"></i><%= error %>
+                </div>
+              <% } %>
+  
+              <!-- Success Message -->
+              <% if (typeof message !== 'undefined' && message) { %>
+                <div class="alert alert-success py-2 mt-3" id="message">
+                  <i class="bi bi-check-circle me-2"></i><%= message %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+  
+        <div class="col-lg-3 d-flex align-items-start">
+          <div class="mt-4 w-100">
+            <button type="submit" class="btn btn-primary w-100 shadow-sm hover-up fw-semibold">
+              <i class="bi bi-save2 me-2"></i>Save Changes
+            </button>
+           
+          </div>
+        </div>
+      </div>
+    </section>
+  </form>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const nameInput = document.getElementById("subcategory_name");
+      const errorMsg = document.getElementById("subcategory_name-error");
+      const form = document.querySelector("form");
+  
+      // Frontend validation
+      nameInput.addEventListener("input", () => {
+        const value = nameInput.value.trim();
+  
+        if (value === "") {
+          errorMsg.textContent = "Subcategory name cannot be empty.";
+        } else if (!/^[A-Za-z ]+$/.test(value)) {
+          errorMsg.textContent = "Only letters and spaces are allowed.";
+        } else if (/ {2,}/.test(value)) {
+          errorMsg.textContent = "Avoid multiple consecutive spaces.";
+        } else {
+          errorMsg.textContent = "";
+        }
+      });
+  
+      form.addEventListener("submit", (e) => {
+        const value = nameInput.value.trim();
+        if (value === "" || !/^[A-Za-z ]+$/.test(value) || / {2,}/.test(value)) {
+          e.preventDefault();
+          errorMsg.textContent = "Please correct the errors before submitting.";
+        }
+      });
+    });
+  </script>
+  

@@ -3,7 +3,11 @@ const User = require('../models/userSchema');
 const Product = require('../models/itemModel');
 const Booking = require('../models/bookingModel')
 const Offer = require('../models/offerModel');
-const Wishlist = require('../models/wishlistModel')
+const Wishlist = require('../models/wishlistModel');
+const { min } = require('moment');
+
+
+
 const loadCart = async (req, res) => {
   try {
     const user = req.session.user_id;
@@ -24,15 +28,20 @@ const loadCart = async (req, res) => {
 
     const cart = userCart.items;
 
-    // 🧾 Get most recent booking for qty (guest count)
+    // 🧾 Get most recent booking (guest count)
     const booking = await Booking.findOne({ user })
       .sort({ createdAt: -1 })
       .select("guestCount");
 
-    if (!booking) return res.redirect('/eventDetails');
-    const qty = booking.guestCount;
+    if (!booking) return res.redirect("/eventDetails");
 
-    // 🎯 Fetch active offers (product / category / all)
+    const guestCount = booking.guestCount;
+    const minQty = Math.floor(guestCount / 2);
+    const maxQty = guestCount;
+
+    console.log('minQty  is:',minQty);
+
+    // 🎯 Fetch active offers
     const activeOffers = await Offer.find({
       startDate: { $lte: new Date() },
       endDate: { $gte: new Date() },
@@ -47,24 +56,23 @@ const loadCart = async (req, res) => {
       const product = item.product;
       const quantity = item.quantity;
 
-      // 🔎 Find all possible offers for this product
+      // 🔎 Match offers
       const productOffer = activeOffers.find(o =>
-        o.applicableTo === 'product' &&
+        o.applicableTo === "product" &&
         Array.isArray(o.products) &&
         o.products.some(pid => pid.toString() === product._id.toString())
       );
 
       const categoryOffer = activeOffers.find(
-        o => o.applicableTo === 'category' &&
+        o => o.applicableTo === "category" &&
         o.category?.toString() === product.category?._id?.toString()
       );
 
-      const globalOffer = activeOffers.find(o => o.applicableTo === 'all');
+      const globalOffer = activeOffers.find(o => o.applicableTo === "all");
 
-      // ⚙️ Determine best offer
+      // ⚙️ Choose best offer
       let bestOffer = null;
       let bestDiscount = 0;
-
       const offers = [productOffer, categoryOffer, globalOffer];
       for (const offer of offers) {
         if (!offer) continue;
@@ -90,21 +98,37 @@ const loadCart = async (req, res) => {
       };
     });
 
-    const shipping = 0; // Add shipping logic if needed
+    const shipping = 0;
     const subtotalWithShipping = subtotal + shipping;
 
-    // 🚫 Validate quantity limit (guest count)
+    // 🚫 Validate cart item quantity range (min–max)
     for (let item of cart) {
-      if (item.quantity > qty) {
+      if (item.quantity < minQty) {
         return res.render("user/product/cart", {
           user,
           cart: cartItemsWithDiscount,
           productTotal,
           subtotalWithShipping: 0,
-          qty,
+          minQty,
+          maxQty,
+          qty: guestCount,
           offerDiscount,
           totalAfterOffer: 0,
-          error: `The quantity for ${item.product.item_name} exceeds available Guest Count (${qty})!`,
+          error: `Minimum quantity for ${item.product.item_name} is ${minQty} (based on ${guestCount} guests).`,
+        });
+      }
+      if (item.quantity > maxQty) {
+        return res.render("user/product/cart", {
+          user,
+          cart: cartItemsWithDiscount,
+          productTotal,
+          subtotalWithShipping: 0,
+          minQty,
+          maxQty,
+          qty: guestCount,
+          offerDiscount,
+          totalAfterOffer: 0,
+          error: `Quantity for ${item.product.item_name} cannot exceed ${maxQty} (guest count).`,
         });
       }
     }
@@ -115,9 +139,13 @@ const loadCart = async (req, res) => {
       cart: cartItemsWithDiscount,
       productTotal,
       subtotalWithShipping,
-      qty,
+      minQty,
+          maxQty,
+      qty: guestCount,
       offerDiscount,
       totalAfterOffer: subtotalWithShipping,
+      minQty,
+      maxQty
     });
 
   } catch (error) {
@@ -134,6 +162,7 @@ function calculateOffer(offer, price) {
   }
   return offer.discountValue;
 }
+
 
 
 

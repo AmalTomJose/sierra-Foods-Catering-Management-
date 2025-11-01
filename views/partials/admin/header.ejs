@@ -1,6 +1,408 @@
 <!-- Screen overlay for mobile -->
 <div class="screen-overlay"></div>
 
+<style>
+  /* Enhanced Sidebar Styling */
+  .navbar-aside {
+    background: linear-gradient(180deg, #1a1f3a 0%, #2d3561 100%) !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .aside-top {
+    padding: 25px 20px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .brand-wrap {
+    text-decoration: none !important;
+    transition: all 0.3s ease !important;
+    padding: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .brand-wrap:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateX(5px) !important;
+  }
+
+  .brand-wrap h3 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-weight: 800 !important;
+    font-size: 1.8rem !important;
+    letter-spacing: 1px !important;
+    margin: 0 !important;
+  }
+
+  .brand-wrap img {
+    filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.3)) !important;
+    transition: transform 0.3s ease !important;
+  }
+
+  .brand-wrap:hover img {
+    transform: scale(1.1) rotate(5deg) !important;
+  }
+
+  .btn-aside-minimize {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 10px !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    transition: all 0.3s ease !important;
+    padding: 8px !important;
+  }
+
+  .btn-aside-minimize:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: rotate(180deg) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* Enhanced Menu Items */
+  .menu-aside {
+    padding: 15px 0 !important;
+  }
+
+  .menu-item {
+    margin: 5px 12px !important;
+  }
+
+  .menu-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    padding: 14px 18px !important;
+    border-radius: 12px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-decoration: none !important;
+  }
+
+  .menu-link::before {
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100% !important;
+    width: 4px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    transform: scaleY(0) !important;
+    transition: transform 0.3s ease !important;
+    border-radius: 0 4px 4px 0 !important;
+  }
+
+  .menu-link:hover::before,
+  .menu-link.active::before {
+    transform: scaleY(1) !important;
+  }
+
+  .menu-link:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    transform: translateX(8px) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+  }
+
+  .menu-link .icon {
+    font-size: 22px !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 0.3s ease !important;
+  }
+
+  .menu-link:hover .icon {
+    transform: scale(1.2) !important;
+    color: #667eea !important;
+  }
+
+  /* Submenu Styling */
+  .submenu {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 10px !important;
+    margin: 8px 12px !important;
+    padding: 8px 0 !important;
+    border-left: 2px solid rgba(102, 126, 234, 0.3) !important;
+  }
+
+  .submenu a {
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 10px 20px 10px 35px !important;
+    display: block !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    font-size: 0.9rem !important;
+    border-radius: 6px !important;
+    margin: 2px 8px !important;
+    position: relative !important;
+  }
+
+  .submenu a::before {
+    content: '▸' !important;
+    position: absolute !important;
+    left: 15px !important;
+    opacity: 0.5 !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .submenu a:hover {
+    background: rgba(102, 126, 234, 0.2) !important;
+    color: #fff !important;
+    transform: translateX(5px) !important;
+    padding-left: 40px !important;
+  }
+
+  .submenu a:hover::before {
+    opacity: 1 !important;
+    color: #667eea !important;
+  }
+
+  /* Enhanced Top Navbar */
+  .main-header {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+    padding: 12px 25px !important;
+  }
+
+  .btn-mobile {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 10px 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  }
+
+  .btn-mobile:hover {
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+  }
+
+  /* Navbar Icons */
+  .nav-link.btn-icon {
+    color: #4a5568 !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .nav-link.btn-icon:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%) !important;
+    color: #667eea !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+  }
+
+  /* Notification Bell Enhanced */
+  #notifBell {
+    position: relative !important;
+  }
+
+  #notifCount {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%) !important;
+    border: 2px solid #fff !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    padding: 4px 7px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4) !important;
+    animation: pulse 2s infinite !important;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  }
+
+  /* User Dropdown Enhanced */
+  .dropdown-toggle {
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    padding: 2px !important;
+  }
+
+  .dropdown-toggle:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+  }
+
+  .img-xs {
+    border: 3px solid #667eea !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .dropdown-toggle:hover .img-xs {
+    border-color: #764ba2 !important;
+  }
+
+  .dropdown-menu {
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    margin-top: 10px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .dropdown-item {
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-weight: 500 !important;
+    color: #4a5568 !important;
+  }
+
+  .dropdown-item:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%) !important;
+    transform: translateX(5px) !important;
+    color: #667eea !important;
+  }
+
+  .dropdown-item.text-danger {
+    color: #f5576c !important;
+  }
+
+  .dropdown-item.text-danger:hover {
+    background: linear-gradient(135deg, rgba(245, 87, 108, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%) !important;
+    color: #f5576c !important;
+  }
+
+  .dropdown-item i {
+    font-size: 20px !important;
+  }
+
+  /* Screen Overlay */
+  .screen-overlay {
+    background: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(5px) !important;
+  }
+
+  /* Logout Button Enhanced Styling */
+  .nav-link.btn-icon[href="/admin/logout"] {
+    background: rgba(245, 87, 108, 0.1) !important;
+    color: #f5576c !important;
+    border: 1px solid rgba(245, 87, 108, 0.2) !important;
+    position: relative !important;
+    width: auto !important;
+    min-width: 110px !important;
+    height: 42px !important;
+    padding: 10px 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    white-space: nowrap !important;
+    border-radius: 12px !important;
+  }
+
+  .nav-link.btn-icon[href="/admin/logout"]:hover {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%) !important;
+    color: #fff !important;
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4) !important;
+    border-color: transparent !important;
+  }
+
+  .nav-link.btn-icon[href="/admin/logout"]::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.3) !important;
+    transform: translate(-50%, -50%) !important;
+    transition: width 0.4s ease, height 0.4s ease !important;
+  }
+
+  .nav-link.btn-icon[href="/admin/logout"]:hover::before {
+    width: 120px !important;
+    height: 60px !important;
+  }
+
+  .nav-link.btn-icon[href="/admin/logout"] i {
+    position: relative !important;
+    z-index: 1 !important;
+    transition: transform 0.3s ease !important;
+    font-size: 20px !important;
+    margin: 0 !important;
+  }
+
+  .nav-link.btn-icon[href="/admin/logout"]:hover i {
+    transform: rotate(-15deg) scale(1.1) !important;
+  }
+
+  /* Logout text styling */
+  .nav-link.btn-icon[href="/admin/logout"] span,
+  .nav-link.btn-icon[href="/admin/logout"] .text {
+    position: relative !important;
+    z-index: 1 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    color: inherit !important;
+    font-size: 0.95rem !important;
+    line-height: 1.2 !important;
+    display: inline-block !important;
+  }
+
+  /* Override color-black if needed for readability */
+  .nav-link.btn-icon.color-black {
+    color: #f5576c !important;
+  }
+
+  .nav-link.btn-icon.color-black span {
+    color: #f5576c !important;
+  }
+
+  .nav-link.btn-icon.color-black:hover {
+    color: #fff !important;
+  }
+
+  .nav-link.btn-icon.color-black:hover span {
+    color: #fff !important;
+  }
+
+  /* Logout button specific margin */
+  .nav-item.ms-3 {
+    margin-left: 0.75rem !important;
+  }
+</style>
+
 <!-- Sidebar -->
 <aside class="navbar-aside" id="offcanvas_aside">
   <div class="aside-top">
@@ -60,13 +462,7 @@
         </div>
       </li>
 
-      <li class="menu-item has-submenu">
-        <a class="menu-link" href="#"><i class="icon material-icons md-stars"></i><span class="text">Banners</span></a>
-        <div class="submenu">
-          <a href="/admin/bannerList">Banner List</a>
-          <a href="/admin/bannerAdd">Add Banner</a>
-        </div>
-      </li>
+      
     </ul>
   </nav>
 </aside>
@@ -98,23 +494,17 @@
           <a class="nav-link btn-icon darkmode" href="#"><i class="material-icons md-nights_stay"></i></a>
         </li>
 
-        <!-- Fullscreen -->
-        <li class="nav-item">
-          <a href="#" class="requestfullscreen nav-link btn-icon"><i class="material-icons md-cast"></i></a>
-        </li>
+        <!-- Logout Button -->
+<li class="nav-item ms-3">
+  <a href="/admin/logout" class="nav-link btn-icon color-black" title="Logout">
+    <i class="material-icons md-logout"></i><span>Logout</span>
+  </a>
+</li>
+
+       
 
         <!-- User Dropdown -->
-        <li class="dropdown nav-item">
-          <a class="dropdown-toggle nav-link" data-bs-toggle="dropdown" href="#" id="dropdownAccount">
-            <img class="img-xs rounded-circle" src="/admin-assets/imgs/theme/user.png" alt="User" />
-          </a>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownAccount">
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item text-danger" href="/admin/logout">
-              <i class="material-icons md-exit_to_app"></i> Logout
-            </a>
-          </div>
-        </li>
+      
       </ul>
     </div>
   </header>
