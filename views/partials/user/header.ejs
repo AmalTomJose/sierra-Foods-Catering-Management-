@@ -1,197 +1,157 @@
+<!-- ===================== FULL WORKING NAVBAR ===================== -->
+<!-- Navbar Start -->
+<div class="container-fluid fixed-top bg-white" data-wow-delay="0.1s">
+  <nav class="navbar navbar-expand-lg navbar-light py-lg-0 px-lg-5 wow fadeIn" data-wow-delay="0.1s">
+    <!-- Brand -->
+    <a href="/" class="navbar-brand ms-4 ms-lg-0">
+      <h1 class="fw-bold m-0">Si<span class="text-danger">er</span>ra</h1>
+    </a>
 
+    <!-- Toggler -->
+    <button class="navbar-toggler me-4" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+            aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-  <!-- Navbar Start -->
-  <div class="container-fluid fixed-top bg-white" data-wow-delay="0.1s">
-   
+    <!-- Collapse -->
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <!-- Left links -->
+      <div class="navbar-nav ms-auto p-4 p-lg-0">
+        <a href="/" class="nav-item nav-link">Home</a>
+        <a href="/shop" class="nav-item nav-link">Shop</a>
+        <a href="/contact" class="nav-item nav-link">Contact Us</a>
+      </div>
 
-    <nav class="navbar navbar-expand-lg navbar-light py-lg-0 px-lg-5 wow fadeIn" data-wow-delay="0.1s">
-      <a href="/" class="navbar-brand ms-4 ms-lg-0">
-        <h1 class="fw-bold m-0">Si<span class="text-danger">er</span>ra</h1>
-      </a>
-      <button
-        class="navbar-toggler me-4"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarCollapse"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <!-- Right items -->
+      <div class="d-flex align-items-center ms-lg-3">
+        <% if (isAuthenticated) { %>
+          <% if (hasBooked) { %>
+            <a onclick="cancelBooking('<%= booking._id %>')" class="btn btn-outline-danger me-2">Cancel Event</a>
+          <% } else { %>
+            <a href="/eventDetails" class="btn btn-danger text-white me-2">Book an Event</a>
+          <% } %>
+        <% } else { %>
+          <a href="/login" class="btn btn-primary me-2">Login to Book</a>
+        <% } %>
 
-      <div class="collapse navbar-collapse" id="navbarCollapse">
-        <div class="navbar-nav ms-auto p-4 p-lg-0">
-          <a href="/" class="nav-item nav-link">Home</a>
-          <a href="about.html" class="nav-item nav-link">About Us</a>
-          <a href="/shop" class="nav-item nav-link">Shop</a>
-    
-          
+        <% if (user) { %>
+          <a href="/wishlist" class="btn-sm-square bg-white rounded-circle nav-link me-2" title="Wishlist">
+            <i class="bi bi-heart-fill text-success"></i>
+          </a>
+        <% } %>
 
-          <div class="nav-item dropdown">
-            <a
-              href="#"
-              class="nav-link dropdown-toggle"
-              data-bs-toggle="dropdown"
-            >Pages</a>
-            <div class="dropdown-menu m-0">
-              <a href="blog.html" class="dropdown-item">Blog Grid</a>
-              <a href="feature.html" class="dropdown-item">Our Features</a>
-              <a href="testimonial.html" class="dropdown-item">Testimonial</a>
+        <% if (user) { %>
+          <div class="nav-item dropdown me-2">
+            <a href="#" class="btn-sm-square bg-white rounded-circle nav-link dropdown-toggle"
+               id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa fa-user text-body"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end m-0" aria-labelledby="userDropdown">
+              <a href="/userprofile" class="dropdown-item">User Profile</a>
+              <hr class="dropdown-divider">
+              <a href="/logout" class="dropdown-item">Logout</a>
             </div>
           </div>
-
-          <a href="contact.html" class="nav-item nav-link">Contact Us</a>
-        </div>
-
-        <div class="d-none d-lg-flex ms-2 align-items-center">
-          <% if (isAuthenticated) { %>
-            <% if (hasBooked) { %>
-              <a onclick="cancelBooking('<%= booking._id %>') " class="btn btn-outline-danger me-2">
-                Cancel Event
-              </a>
-            <% } else { %>
-              <a href="/eventDetails" class="btn btn-danger text-white">
-                Book an Event
-              </a>
-            <% } %>
-          <% } else { %>
-            <a href="/login" class="btn btn-primary">
-              Login to Book
-            </a>
-          <% } %>
-          
-          
-          <% if(user) { %>
-
-            <!-- Wishlist Icon with Filled Green Heart -->
-<a href="/wishlist" class="btn-sm-square bg-white rounded-circle nav-link ms-3" title="Wishlist">
-  <i class="bi bi-heart-fill text-success"></i>
-</a>
-
-            
-            <!-- Profile Dropdown -->
-            <div class="nav-item dropdown">
-              <a
-                href="#"
-                class="btn-sm-square bg-white rounded-circle nav-link dropdown-toggle ms-3"
-                id="userDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <i class="fa fa-user text-body"></i>
-              </a>
-              <div class="dropdown-menu dropdown-menu-end m-0" aria-labelledby="userDropdown">
-                <a href="/userprofile" class="dropdown-item">User Profile</a>
-                <hr class="dropdown-divider">
-                <a href="/logout" class="dropdown-item">Logout</a>
-              </div>
-            </div>
-            
-
-            
-  <% } else { %>
-    <a
-      href="/login"
-      class="btn-sm-square bg-white rounded-circle nav-link ms-3"
-      role="button"
-    >
-      <i class="fa fa-user text-body"></i>
-    </a>
-  <% } %>
-
-    
-          <!-- Cart Icon -->
-          <a class="btn-sm-square bg-white rounded-circle ms-3" href="/cart">
-            <small class="fa fa-shopping-bag text-body"></small>
+        <% } else { %>
+          <a href="/login" class="btn-sm-square bg-white rounded-circle nav-link me-2">
+            <i class="fa fa-user text-body"></i>
           </a>
-        </div> <!-- d-none d-lg-flex ms-2 align-items-center -->
+        <% } %>
 
-      </div> <!-- collapse navbar-collapse -->
-    </nav>  <!-- navbar -->
-  </div>    <!-- container-fluid fixed-top -->
-  <style>
-    /* ✅ Fixed Header - clean and stable */
-    .navbar {
-      position: fixed !important;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background: #ffffff !important; /* solid white background */
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      z-index: 9999;
-      transition: none !important;
-    }
-    
-    /* Adjust content below header */
-    body {
-      padding-top: 90px; /* equal to navbar height */
-    }
-    
-    /* Navbar link colors */
-    .navbar .nav-link {
-      color: #000 !important;
-      font-weight: 500;
-    }
-    
-    .navbar .nav-link:hover {
-      color: #dc3545 !important; /* red hover */
-    }
-    
-    /* Brand style */
-    .navbar .navbar-brand h1 {
-      color: #000 !important;
-    }
-    </style>
-    
+        <a href="/cart" class="btn-sm-square bg-white rounded-circle">
+          <small class="fa fa-shopping-bag text-body"></small>
+        </a>
+      </div>
+    </div>
+  </nav>
+</div>
+<!-- Navbar End -->
 
-  
+<!-- Styling (keep or move to CSS file) -->
+<style>
+  .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); background:#fff !important; z-index:9999; }
+  body { padding-top: 90px; } /* adjust to your navbar height */
+  .nav-link { color:#000 !important; font-weight:500; }
+  .nav-link:hover { color:#dc3545 !important; }
+  @media (max-width:991px) {
+    .navbar-collapse .d-flex { flex-direction: column; align-items:flex-start; gap:10px; padding:10px 0; }
+  }
+</style>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <script>
-    function cancelBooking(bookingId) {
-      Swal.fire({
-        title: 'Cancel Booking?',
-        input: 'textarea',
-        inputLabel: 'Reason for cancellation',
-        inputPlaceholder: 'Type your reason here...',
-        inputAttributes: {
-          'aria-label': 'Type your reason here'
-        },
-        showCancelButton: true,
-        confirmButtonText: 'Submit',
-        cancelButtonText: 'Close',
-        inputValidator: (value) => {
-          if (!value) {
-            return 'You must enter a reason to cancel!';
-          }
-        }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          const reason = result.value;
-  
-          fetch(`/cancel/${bookingId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ reason })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              Swal.fire('Cancelled!', 'Your booking has been cancelled.', 'success').then(() => {
-                location.reload();
-              });
-            } else {
-              Swal.fire('Error', data.error || 'Cancellation failed.', 'error');
-            }
-          })
-          .catch(() => {
-            Swal.fire('Oops...', 'Something went wrong!', 'error');
-          });
-        }
+<!-- SweetAlert (for cancelBooking) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  function cancelBooking(bookingId) {
+    Swal.fire({
+      title: 'Cancel Booking?',
+      input: 'textarea',
+      inputLabel: 'Reason for cancellation',
+      inputPlaceholder: 'Type your reason...',
+      showCancelButton: true,
+      confirmButtonText: 'Submit',
+      cancelButtonText: 'Close',
+      inputValidator: (val) => !val && 'Please enter a reason'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      fetch(`/cancel/${bookingId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: result.value })
+      })
+      .then(r=>r.json())
+      .then(data=>{
+        if (data.success) Swal.fire('Cancelled','Your booking has been cancelled.','success').then(()=>location.reload());
+        else Swal.fire('Error', data.error||'Cancellation failed','error');
+      }).catch(()=>Swal.fire('Error','Something went wrong','error'));
+    });
+  }
+</script>
+
+<!-- Auto-close collapse on mobile: robust event delegation -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const navbarCollapse = document.getElementById('navbarCollapse');
+
+    // nothing to do if collapse not present
+    if (!navbarCollapse) return;
+
+    // helper: collapse the navbar (only on small screens)
+    function hideCollapseIfNeeded() {
+      if (window.innerWidth >= 992) return; // keep open on desktop
+      const instance = bootstrap.Collapse.getInstance(navbarCollapse) || new bootstrap.Collapse(navbarCollapse, { toggle: false });
+      instance.hide();
+    }
+
+    // Click delegation inside collapse
+    navbarCollapse.addEventListener('click', function (ev) {
+      // find nearest clickable ancestor inside collapse (a or button)
+      const clickable = ev.target.closest('a, button');
+      if (!clickable) return;
+
+      // If clickable is the dropdown toggle (opens profile dropdown), do NOT collapse
+      if (clickable.matches('[data-bs-toggle="dropdown"], .dropdown-toggle')) {
+        return;
+      }
+
+      // If the click is on an anchor with href starting with "javascript:" or "#", still collapse (unless it's dropdown toggle)
+      // If anchor has attribute data-bs-toggle (other handlers), skip only if it's dropdown (already handled)
+      hideCollapseIfNeeded();
+    });
+
+    // Also collapse when selecting an item inside a dropdown menu (user clicked profile menu item)
+    const dropdownMenus = navbarCollapse.querySelectorAll('.dropdown-menu .dropdown-item');
+    dropdownMenus.forEach(item => {
+      item.addEventListener('click', function () {
+        hideCollapseIfNeeded();
       });
-    }
-  </script>
-  
+    });
 
+    // Optional: also collapse when any form submit button inside collapse is clicked
+    const forms = navbarCollapse.querySelectorAll('form');
+    forms.forEach(f => {
+      f.addEventListener('submit', () => hideCollapseIfNeeded());
+    });
+  });
+</script>
+<!-- ===================== END NAVBAR ===================== -->
