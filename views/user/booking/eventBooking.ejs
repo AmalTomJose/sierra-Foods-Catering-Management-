@@ -1,10 +1,6 @@
-<head>
-  <meta charset="UTF-8">
-  <title>Book Your Event</title>
-  <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
+ <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
   <style>
     body {
@@ -74,8 +70,7 @@
 
     .btn {
       width: 100%;
-      background-color: #2563eb;
-      color: white;
+      color: red;
       border: none;
       padding: 12px;
       border-radius: 10px;
@@ -86,43 +81,62 @@
     }
 
     .btn:hover {
-      background-color: #1e40af;
+      background-color: green;
     }
 
     #calendar {
       border-radius: 14px;
       overflow: hidden;
       margin-top: 10px;
-      background-color: white;
-      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
     }
 
-    /* ✅ Calendar Custom Styles */
+    /* ✅ FullCalendar Date Visibility Enhancements */
+    #calendar .fc-daygrid-day {
+      height: 90px !important;
+      border: 1px solid #e5e7eb !important;
+      vertical-align: top;
+    }
+
+    #calendar .fc-daygrid-day-number {
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 6px;
+      color: #1f2937;
+    }
+
+    .fc-daygrid-day:hover {
+      background-color: #e0f2fe !important;
+      cursor: pointer;
+    }
+
+    /* ✅ Highlight Selected Date */
+    .selected-date {
+      border: 2px solid orange !important;
+    }
+
+    /* ✅ Today's Date */
     .fc .fc-daygrid-day.fc-day-today {
       background-color: #dbeafe !important;
-      border: 1px solid #2563eb !important;
+      border: 2px solid #2563eb !important;
     }
 
     .fc .fc-toolbar-title {
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 1.4rem;
       color: #1e3a8a;
-    }
-
-    .fc-daygrid-day-number {
-      font-weight: 500;
     }
 
     .fc-button-primary {
       background: #2563eb !important;
       border: none !important;
       border-radius: 8px !important;
-      transition: all 0.3s ease;
     }
 
     .fc-button-primary:hover {
       background: #1e40af !important;
     }
 
+    /* ✅ Legend */
     .legend {
       display: flex;
       justify-content: center;
@@ -145,10 +159,8 @@
       border: 1px solid #d1d5db;
     }
   </style>
-</head>
 
-<body>
-  <div class="main-wrapper">
+  <div class="main-wrapper mt-5">
     <!-- ✅ Booking Form -->
     <div class="form-card">
       <h2>Book Your Event</h2>
@@ -227,9 +239,13 @@
       </div>
     </div>
   </div>
-
   <script>
-    // ✅ Modern Time Picker
+    // ✅ Format date in YYYY-MM-DD (Local Time, not UTC)
+    const formatDate = (date) => {
+      return date.toLocaleDateString('en-CA');
+    };
+  
+    // ✅ Time Picker Setup
     flatpickr("#venueTime", {
       enableTime: true,
       noCalendar: true,
@@ -239,67 +255,61 @@
       defaultHour: 18,
       defaultMinute: 0,
     });
-
-    // ✅ Form validation
-    document.getElementById('bookingForm').addEventListener('submit', e => {
-      if (!document.getElementById('venueTime').value.trim()) {
-        e.preventDefault();
-        Swal.fire({
-          icon: 'warning',
-          title: 'Please select a time!',
-          text: 'Event time is required.',
-          confirmButtonColor: '#2563eb'
-        });
-      }
-    });
-
-    // ✅ Calendar Setup
+  
+    // ✅ Calendar & Date Logic
     document.addEventListener('DOMContentLoaded', async () => {
       const calendarEl = document.getElementById('calendar');
       const venueDateInput = document.getElementById('venueDate');
       const today = new Date();
       const blockedDates = [];
-
-      // Example: next 7 days blocked
+  
+      // Example blocked next 7 days (in local date format)
       for (let i = 0; i <= 7; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
-        blockedDates.push(date.toISOString().split('T')[0]);
+        blockedDates.push(formatDate(date)); // ✅ Fixed
       }
-
+  
+      // ✅ Fetch daily booking count
       const res = await fetch('/bookings/daily-count');
       const data = await res.json();
-
+  
       const redDays = data.filter(d => d.count >= 2000).map(d => d.date);
       const yellowDays = data.filter(d => d.count >= 1600 && d.count < 2000).map(d => d.date);
-
+  
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         height: 'auto',
         selectable: true,
-        validRange: { start: today.toISOString().split('T')[0] },
+        validRange: { start: formatDate(today) }, // ✅ Fixed
+  
         dayCellDidMount(info) {
-          const formattedDay = info.date.toISOString().split('T')[0];
-          const cell = info.el;
-
-          if (blockedDates.includes(formattedDay)) {
-            cell.style.backgroundColor = '#9ca3af'; // gray
-            cell.style.color = 'white';
-            cell.style.cursor = 'not-allowed';
-            cell.style.pointerEvents = 'none';
-          } else if (redDays.includes(formattedDay)) {
-            cell.style.backgroundColor = '#ef4444'; // red
-            cell.style.color = 'white';
-          } else if (yellowDays.includes(formattedDay)) {
-            cell.style.backgroundColor = '#facc15'; // yellow
-            cell.style.color = '#111827';
+          const date = formatDate(info.date); // ✅ Use local date
+  
+          if (blockedDates.includes(date)) {
+            info.el.style.backgroundColor = '#9ca3af';
+            info.el.style.color = 'white';
+            info.el.style.cursor = 'not-allowed';
+            info.el.style.pointerEvents = 'none';
+          } else if (redDays.includes(date)) {
+            info.el.style.backgroundColor = '#ef4444';
+            info.el.style.color = 'white';
+          } else if (yellowDays.includes(date)) {
+            info.el.style.backgroundColor = '#facc15';
+            info.el.style.color = '#111827';
           } else {
-            cell.style.backgroundColor = '#22c55e1a'; // light green tint for available
+            info.el.style.backgroundColor = '#22c55e1a';
           }
         },
+  
         dateClick(info) {
           const selected = info.dateStr;
-
+  
+          document.querySelectorAll('.fc-daygrid-day').forEach(day => {
+            day.classList.remove('selected-date');
+          });
+          info.dayEl.classList.add('selected-date');
+  
           if (blockedDates.includes(selected)) {
             Swal.fire('Date Blocked', 'This date is not available for booking.', 'error');
             return;
@@ -311,12 +321,12 @@
           if (yellowDays.includes(selected)) {
             Swal.fire('Limited Slots', 'Few slots left. Hurry up!', 'info');
           }
-
+  
           venueDateInput.value = selected;
         }
       });
-
+  
       calendar.render();
     });
   </script>
-</body>
+  

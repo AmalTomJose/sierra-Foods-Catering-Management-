@@ -221,16 +221,28 @@ const addProduct = async (req, res) => {
   }
 };
 
+
+
 const storeEditProduct = async (req, res) => {
   try {
-    const { product_id, name, price, discountprice, description, categoryid, subcategoryid } = req.body;
+    const {
+      product_id,
+      name,
+      price,
+      discountprice,
+      description,
+      categoryid,
+      subcategoryid
+    } = req.body;
+
     const productName = name.trim();
     const product = await Product.findById(product_id);
     const categories = await Category.find();
     const subcategories = await SubCategory.find({ category: categoryid });
+
     let images = Array.isArray(product.item_image) ? product.item_image : [];
 
-    // ✅ Name validation
+    // ✅ Product name validation
     const validNameRegex = /^[A-Za-z\s]+$/;
     if (!validNameRegex.test(productName)) {
       return res.render("admin/product/editProduct", {
@@ -253,7 +265,7 @@ const storeEditProduct = async (req, res) => {
       });
     }
 
-    // ✅ Discount validation
+    // ✅ Discount price validation
     if (discountprice < 0) {
       return res.render("admin/product/editProduct", {
         error: "Discount price cannot be negative.",
@@ -264,45 +276,32 @@ const storeEditProduct = async (req, res) => {
       });
     }
 
-    // ✅ Validate image types
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        if (!allowedTypes.includes(file.mimetype)) {
-          return res.render("admin/product/editProduct", {
-            error: "Only PNG, JPEG, and JPG image formats are allowed.",
-            oldData: req.body,
-            product,
-            categories,
-            subcategories
-          });
-        }
-      }
-    }
+    // ✅ Handle deleted images first
+    let deleteImages = req.body.deleteImages;
+    if (deleteImages) {
+      if (!Array.isArray(deleteImages)) deleteImages = [deleteImages];
 
-    // ✅ Handle deleted images
-    if (req.body.deleteImages) {
-      const deleteImages = Array.isArray(req.body.deleteImages)
-        ? req.body.deleteImages
-        : [req.body.deleteImages];
-
-      for (const filename of deleteImages) {
-        const filePath = path.join("public", "admin-assets", "imgs", "productIMG", filename);
-
-        try {
-          await fs.promises.access(filePath); // check if exists
-          await fs.promises.unlink(filePath); // delete
-          console.log(`🗑️ Deleted: ${filePath}`);
-        } catch (err) {
-          console.log(`⚠️ File not found or already deleted: ${filePath}`);
-        }
-
+      deleteImages.forEach((filename) => {
         images = images.filter((img) => img !== filename);
-      }
+      });
     }
 
-    // ✅ Resize & add new images
-    if (req.files && req.files.length > 0) {
+    // ✅ Validate at least 3 total images after deletion + new uploads
+    const existingImagesCount = images.length;
+    const newImagesCount = req.files && req.files.length > 0 ? req.files.length : 0;
+
+    if (existingImagesCount + newImagesCount < 3) {
+      return res.render("admin/product/editProduct", {
+        error: "A product must have at least 3 images. Please upload more images.",
+        oldData: req.body,
+        product,
+        categories,
+        subcategories
+      });
+    }
+
+    // ✅ Process and add new images
+    if (newImagesCount > 0) {
       for (const file of req.files) {
         const randomInteger = Math.floor(Math.random() * 20000001);
         const imgFileName = `cropped${randomInteger}.jpg`;
@@ -316,7 +315,7 @@ const storeEditProduct = async (req, res) => {
       }
     }
 
-    // ✅ Update product
+    // ✅ Final update to DB
     await Product.findByIdAndUpdate(product_id, {
       $set: {
         item_name: productName,
@@ -330,12 +329,14 @@ const storeEditProduct = async (req, res) => {
     });
 
     req.flash("success", "Product updated successfully!");
-    res.redirect("/admin/products");
+    return res.redirect("/admin/products");
+
   } catch (error) {
     console.error("❌ Error in storeEditProduct:", error);
     res.status(500).send("Error while updating product");
   }
 };
+
 
 // const   storeEditProduct = async (req, res) => {
 //   try {

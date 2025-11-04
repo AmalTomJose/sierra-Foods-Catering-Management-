@@ -4,23 +4,20 @@ const Subcategory = require('../models/subcategoryModel');
 const loadSubcategory = async (req, res) => {
   try {
     const categoryid = req.query.id;
-    const { status, search } = req.query;
+    const { status, search, ajax } = req.query;
 
     let filter = { category: categoryid };
 
-    // Status-based filtering
-    if (status === 'block') {
-      filter.subcat_status = false;
-    } else if (status === 'active') {
-      filter.subcat_status = true;
-    }
+    if (status === 'block') filter.subcat_status = false;
+    if (status === 'active') filter.subcat_status = true;
+    if (search?.trim()) filter.subcat_name = { $regex: new RegExp(search.trim(), "i") };
 
-    // Search filtering (case-insensitive)
-    if (search && search.trim() !== "") {
-      filter.subcat_name = { $regex: new RegExp(search.trim(), "i") };
-    }
+    const subcategoryData = await Subcategory.find(filter).lean();
 
-    const subcategoryData = await Subcategory.find(filter);
+    // ✅ If AJAX request, return JSON instead of rendering page
+    if (ajax) {
+      return res.json({ subcategories: subcategoryData });
+    }
 
     res.render("admin/subcategory/subcategory", {
       subcategories: subcategoryData,
@@ -35,49 +32,37 @@ const loadSubcategory = async (req, res) => {
 };
 
 
-const unlistsubCategory = async(req,res)=>{
-    try{
 
-        const id = req.query.id;
-        console.log(id)
-        console.log('test inside')
-        const subcategoryvalue = await Subcategory.findById(id);
-        console.log(subcategoryvalue)
-        if(subcategoryvalue.subcat_status)
-        {
-          const subcategoryData = await Subcategory.updateOne({
-            _id:id
-    
-            },
-            {
-              $set:{
-                subcat_status:false
-              }
-            }
-          )
-        }
-        else{
-          const subcategoryData = await Subcategory.updateOne({
-            _id:id
-          },{
-            $set:{
-              subcat_status : true,
-            }
-          })
-          
-        }
-        console.log('inportant')
-         
-        res.redirect('/admin/category')
-        
+const unlistsubCategory = async (req, res) => {
+  try {
+    const id = req.query.id;
+    console.log(id, ' <- Subcategory ID');
 
+    const subcategory = await Subcategory.findById(id);
 
+    if (!subcategory) {
+      return res.json({ success: false, message: "Subcategory not found" });
     }
-    catch(error)
-    {
-        console.log(error.message)
-    }
-}
+
+    // ✅ Toggle status
+    subcategory.subcat_status = !subcategory.subcat_status;
+    await subcategory.save();
+
+    console.log("Status Updated:", subcategory.subcat_status);
+
+    // ✅ ✅ IMPORTANT: Return JSON instead of redirect
+    return res.json({
+      success: true,
+      newStatus: subcategory.subcat_status,
+      message: "Subcategory status updated successfully"
+    });
+
+  } catch (error) {
+    console.log(error.message);
+    return res.json({ success: false, message: "Server error" });
+  }
+};
+
 // Load Edit Subcategory Page
 const loadeditsubCategory = async (req, res) => {
   try {

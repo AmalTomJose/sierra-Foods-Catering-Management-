@@ -1,49 +1,45 @@
 const Category = require('../models/categoryModels');
 
 
-
-const deleteCategory =async(req,res)=>{
-  try{
-    console.log('hi deletecategory')
-    const  categoryId = req.query.id;
-    console.log(categoryId)
-    await Category.deleteOne({_id:categoryId});
-    req.flash('success','category deleted')
-    res.redirect('/admin/category')
-
-
-  }
-  catch(error){
-    console.log(error)
+const deleteCategory = async (req, res) => {
+  try {
+    const categoryId = req.query.id;
+    await Category.deleteOne({ _id: categoryId });
+    res.json({ success: true, message: 'Category deleted' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: 'Error deleting category' });
   }
 }
 
-const loadCategory = async (req,res)=>{
-    try{
-      const {status} = req.query;
-      console.log(status)
-      let categorydata=''
-      
-
-    if(status=='block'){
-categorydata = await Category.find({cat_status:false});
 
 
+const loadCategory = async (req, res) => {
+  try {
+    const { search, status } = req.query;
+    let query = {};
 
+    if (status === "block") query.cat_status = false;
+    if (status === "active") query.cat_status = true;
+
+    if (search && search.trim() !== "") {
+      query.cat_name = { $regex: search.trim(), $options: "i" };
     }
-    else{
-       categorydata=await Category.find({});}
 
-        res.render('admin/category/category',{
-            categorydata
-        })
-     
+    const categorydata = await Category.find(query);
 
+    // ✅ If AJAX request → send JSON (don't render full page)
+    if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+      return res.json({ categorydata });
     }
-    catch(error){
-        console.log(error.message);
-    }
-}
+
+    // ✅ Normal page load
+    res.render("admin/category/category", { categorydata });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
 
 const unlistCategory = async(req,res)=>{
     try{
@@ -157,8 +153,12 @@ const unlistCategory = async(req,res)=>{
   }
   const addCategory = async (req, res) => {
     try {
-      let category_name = req.body.categoryname.trim().toLowerCase();
-  
+      function toTitleCase(str) {
+        return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+      }
+      
+      let category_name = toTitleCase(req.body.categoryname.trim());
+        
       // ✅ Validation: Allow only alphabets and spaces
       const validNameRegex = /^[A-Za-z\s]+$/;
   
