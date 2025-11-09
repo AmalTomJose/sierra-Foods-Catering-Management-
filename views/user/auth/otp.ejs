@@ -10,9 +10,13 @@
                 <div class="text-center">
                   <h3 class="mb-4">OTP VERIFICATION</h3>
                 </div>  
-                <%if(message){%>
-                    <p><%=message%></p>
-                <%}%>
+                <% if (message) { %>
+                  <div class="otp-error-alert color-red">
+                      <i class="bi bi-exclamation-circle-fill"></i>
+                      <%= message %>
+                  </div>
+                <% } %>
+                
                 <form action="/otp" method="POST" id="otpForm">
                   <div id="otp" class="inputs d-flex justify-content-center mt-2">
                     <input

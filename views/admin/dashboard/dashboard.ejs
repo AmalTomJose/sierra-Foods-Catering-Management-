@@ -18,6 +18,7 @@
       h2, h3, h4, h5 {
         font-weight: 700;
         color: #2d3748;
+        
         letter-spacing: -0.5px;
       }
 
@@ -334,6 +335,37 @@
         </div>
       </div>
 
+
+
+
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card text-white bg-primary dashboard-card">
+            <div class="card-body">
+              <h5 class="card-title">Orders For Tomorrow</h5>
+              <p class="card-text" id="totalUsers"><%= tomorrowOrder %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card text-white bg-success dashboard-card">
+            <div class="card-body">
+              <h5 class="card-title">Orders For This Week</h5>
+              <p class="card-text" id="totalOrders"><%= weekOrder %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card text-white bg-warning dashboard-card">
+            <div class="card-body">
+              <h5 class="card-title">Orders For This Month</h5>
+              <p class="card-text" id="totalRevenue"><%= monthOrder %></p>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Sales Chart -->
       <div class="card p-4 mt-5 chart-card">
         <h4 class="mb-3">📈 Sales Overview</h4>

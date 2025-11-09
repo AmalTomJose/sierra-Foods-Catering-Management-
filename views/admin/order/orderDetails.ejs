@@ -170,6 +170,9 @@
                 Delivery: Fargo Express<br>
                 Pay method: <%=order.paymentMethod %><br>
                 Status: <%=order.status %>
+                <%if(order.paymentMethod==='cashondelivery'  ){ %>
+                  <br>Advance Paid: ₹<%=order.advanceAmount %> 
+                <% } %>
               </p>
               <a href="#">Download info</a>
             </div>

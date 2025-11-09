@@ -111,28 +111,73 @@ const loadUserpage = async (req, res) => {
 
 
 
-
 const loadHome = async (req, res) => {
   try {
     const totalActiveUsers = await User.countDocuments({ isBlocked: false });
     const totalActiveOrders = await Order.countDocuments({ status: 'confirmed' });
 
+    // ✅ Total Revenue (Paid Orders Only)
     const totalRevenueData = await Order.aggregate([
       { $match: { paymentStatus: 'paid' } },
       { $group: { _id: null, total: { $sum: "$finalAmount" } } }
     ]);
     const totalRevenue = totalRevenueData[0]?.total || 0;
 
-    res.render('admin/dashboard/dashboard', {
+    // 📅 Today Start & End
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // 📅 Tomorrow Start & End
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const tomorrowEnd = new Date(todayEnd);
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+
+    // 📅 This Week (Next 7 Days from Today)
+    const weekEnd = new Date(todayEnd);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+
+    // 📅 This Month (Next 1 Month from Today)
+    const monthEnd = new Date(todayEnd);
+    monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+    // ✅ Check Orders Tomorrow
+    const tomorrowOrder = await Order.countDocuments({
+      status: 'completed',
+      eventDate: { $gte: tomorrowStart, $lte: tomorrowEnd }
+    });
+
+    // ✅ Orders This Week (from Today to 7 Days Ahead)
+    const weekOrder = await Order.countDocuments({
+      status: 'completed',
+      eventDate: { $gte: todayStart, $lte: weekEnd }
+    });
+
+    // ✅ Orders This Month (from Today to 1 Month Ahead)
+    const monthOrder = await Order.countDocuments({
+      status: 'completed',
+      eventDate: { $gte: todayStart, $lte: monthEnd }
+    });
+
+    res.render("admin/dashboard/dashboard", {
       totalActiveUsers,
       totalActiveOrders,
-      totalRevenue
+      totalRevenue,
+      tomorrowOrder,
+      weekOrder,
+      monthOrder
     });
+
   } catch (error) {
-    console.error("Dashboard Render Error:", error);
-    res.status(500).send("Error loading dashboard");
+    console.log(error.message);
+    res.status(500).send("Server Error");
   }
 };
+
 
 const getDashboardData = async (req, res) => {
   try {
