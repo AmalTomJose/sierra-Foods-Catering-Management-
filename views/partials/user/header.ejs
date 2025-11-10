@@ -1,49 +1,49 @@
-<!-- ===================== FULL WORKING NAVBAR ===================== -->
-<!-- Navbar Start -->
-<div class="container-fluid fixed-top bg-white" data-wow-delay="0.1s">
-  <nav class="navbar navbar-expand-lg navbar-light py-lg-0 px-lg-5 wow fadeIn" data-wow-delay="0.1s">
+<!-- ===================== IMPROVED NAVBAR ===================== -->
+<div class="container-fluid fixed-top bg-white shadow-sm">
+  <nav class="navbar navbar-expand-lg navbar-light py-lg-0 px-lg-5 shadow-sm">
     <!-- Brand -->
     <a href="/" class="navbar-brand ms-4 ms-lg-0">
       <h1 class="fw-bold m-0">Si<span class="text-danger">er</span>ra</h1>
     </a>
-
+  
     <!-- Toggler -->
-    <button class="navbar-toggler me-4" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
-            aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler me-4 border-0" type="button" data-bs-toggle="collapse"
+      data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false"
+      aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-
+  
     <!-- Collapse -->
     <div class="collapse navbar-collapse" id="navbarCollapse">
-      <!-- Left links -->
-      <div class="navbar-nav ms-auto p-4 p-lg-0">
+      <!-- Left Nav Links -->
+      <div class="navbar-nav ms-auto p-4 p-lg-0 align-items-lg-center">
         <a href="/" class="nav-item nav-link">Home</a>
         <a href="/shop" class="nav-item nav-link">Shop</a>
         <a href="/contact" class="nav-item nav-link">Contact Us</a>
       </div>
-
-      <!-- Right items -->
-      <div class="d-flex align-items-center ms-lg-3">
+  
+      <!-- Right Side Buttons -->
+      <div class="d-flex align-items-center ms-lg-3 flex-column flex-lg-row gap-2 mt-3 mt-lg-0">
         <% if (isAuthenticated) { %>
           <% if (hasBooked) { %>
-            <a onclick="cancelBooking('<%= booking._id %>')" class="btn btn-outline-danger me-2">Cancel Event</a>
+            <a onclick="cancelBooking('<%= booking._id %>')" class="btn btn-outline-danger mb-2 mb-lg-0 px-3">Cancel Event</a>
           <% } else { %>
-            <a href="/eventDetails" class="btn btn-danger text-white me-2">Book an Event</a>
+            <a href="/eventDetails" class="btn btn-danger text-white mb-2 mb-lg-0 px-3">Book an Event</a>
           <% } %>
         <% } else { %>
-          <a href="/login" class="btn btn-primary me-2">Login to Book</a>
+          <a href="/login" class="btn btn-primary mb-2 mb-lg-0 px-3">Login to Book</a>
         <% } %>
-
+  
         <% if (user) { %>
-          <a href="/wishlist" class="btn-sm-square bg-white rounded-circle nav-link me-2" title="Wishlist">
-            <i class="bi bi-heart-fill text-success"></i>
+          <a href="/wishlist" class="icon-btn" title="Wishlist">
+            <i class="bi bi-heart-fill text-danger"></i>
           </a>
         <% } %>
-
+  
         <% if (user) { %>
-          <div class="nav-item dropdown me-2">
-            <a href="#" class="btn-sm-square bg-white rounded-circle nav-link dropdown-toggle"
-               id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <div class="nav-item dropdown">
+            <a href="#" class="icon-btn dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
               <i class="fa fa-user text-body"></i>
             </a>
             <div class="dropdown-menu dropdown-menu-end m-0" aria-labelledby="userDropdown">
@@ -53,30 +53,61 @@
             </div>
           </div>
         <% } else { %>
-          <a href="/login" class="btn-sm-square bg-white rounded-circle nav-link me-2">
+          <a href="/login" class="icon-btn" title="Login">
             <i class="fa fa-user text-body"></i>
           </a>
         <% } %>
-
-        <a href="/cart" class="btn-sm-square bg-white rounded-circle">
-          <small class="fa fa-shopping-bag text-body"></small>
+  
+        <a href="/cart" class="icon-btn position-relative" title="Cart">
+          <i class="fa fa-shopping-bag text-body fs-5"></i>
+          
         </a>
       </div>
     </div>
   </nav>
+  
 </div>
-<!-- Navbar End -->
 
-<!-- Styling (keep or move to CSS file) -->
+<!-- ===================== CSS ===================== -->
 <style>
-  .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); background:#fff !important; z-index:9999; }
-  body { padding-top: 90px; } /* adjust to your navbar height */
-  .nav-link { color:#000 !important; font-weight:500; }
-  .nav-link:hover { color:#dc3545 !important; }
-  @media (max-width:991px) {
-    .navbar-collapse .d-flex { flex-direction: column; align-items:flex-start; gap:10px; padding:10px 0; }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: 0.3s;
+  }
+
+  .icon-btn:hover {
+    transform: scale(1.05);
+    background-color: #f8f9fa;
+  }
+
+  .badge {
+    font-size: 0.65rem;
+  }
+
+  @media (max-width: 991px) {
+    .navbar-collapse {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .navbar-nav {
+      width: 100%;
+      text-align: left;
+    }
+    .icon-btn {
+      margin: 5px 0;
+    }
   }
 </style>
+
 
 
 <!-- SweetAlert (for cancelBooking) -->
@@ -109,49 +140,39 @@
 </script>
 
 <!-- Auto-close collapse on mobile: robust event delegation -->
+<!-- Auto-close collapse on mobile -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const navbarCollapse = document.getElementById('navbarCollapse');
+  document.addEventListener("DOMContentLoaded", () => {
+    const navbarCollapse = document.getElementById("navbarCollapse");
+    const toggler = document.querySelector(".navbar-toggler");
 
-    // nothing to do if collapse not present
-    if (!navbarCollapse) return;
+    if (!navbarCollapse || !toggler) return;
 
-    // helper: collapse the navbar (only on small screens)
-    function hideCollapseIfNeeded() {
-      if (window.innerWidth >= 992) return; // keep open on desktop
-      const instance = bootstrap.Collapse.getInstance(navbarCollapse) || new bootstrap.Collapse(navbarCollapse, { toggle: false });
-      instance.hide();
-    }
+    // Close collapse when any link or button (except dropdown) is clicked
+    navbarCollapse.addEventListener("click", (e) => {
+      const target = e.target.closest("a, button");
 
-    // Click delegation inside collapse
-    navbarCollapse.addEventListener('click', function (ev) {
-      // find nearest clickable ancestor inside collapse (a or button)
-      const clickable = ev.target.closest('a, button');
-      if (!clickable) return;
+      // Ignore if it's a dropdown toggle or inside a dropdown
+      if (!target || target.classList.contains("dropdown-toggle")) return;
 
-      // If clickable is the dropdown toggle (opens profile dropdown), do NOT collapse
-      if (clickable.matches('[data-bs-toggle="dropdown"], .dropdown-toggle')) {
-        return;
+      // Only collapse on small screens
+      if (window.innerWidth < 992) {
+        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
+        bsCollapse.hide();
       }
-
-      // If the click is on an anchor with href starting with "javascript:" or "#", still collapse (unless it's dropdown toggle)
-      // If anchor has attribute data-bs-toggle (other handlers), skip only if it's dropdown (already handled)
-      hideCollapseIfNeeded();
     });
 
-    // Also collapse when selecting an item inside a dropdown menu (user clicked profile menu item)
-    const dropdownMenus = navbarCollapse.querySelectorAll('.dropdown-menu .dropdown-item');
-    dropdownMenus.forEach(item => {
-      item.addEventListener('click', function () {
-        hideCollapseIfNeeded();
+    // Also close collapse if dropdown item clicked
+    document.querySelectorAll(".dropdown-menu .dropdown-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        if (window.innerWidth < 992) {
+          const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
+          bsCollapse.hide();
+        }
       });
-    });
-
-    // Optional: also collapse when any form submit button inside collapse is clicked
-    const forms = navbarCollapse.querySelectorAll('form');
-    forms.forEach(f => {
-      f.addEventListener('submit', () => hideCollapseIfNeeded());
     });
   });
 </script>
+
+
 <!-- ===================== END NAVBAR ===================== -->

@@ -1,332 +1,341 @@
- <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f3f4f6;
-      margin: 0;
-      padding: 30px;
-    }
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f3f4f6;
+    margin: 0;
+    padding: 30px;
+  }
 
+  .main-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .form-card,
+  .calendar-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    flex: 1 1 420px;
+    max-width: 500px;
+    transition: all 0.3s ease;
+  }
+
+  .form-card:hover,
+  .calendar-card:hover {
+    transform: translateY(-5px);
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+    color: #374151;
+  }
+
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+  }
+
+  input[type="text"]:focus,
+  select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    outline: none;
+    background-color: #fff;
+  }
+
+  .btn {
+    width: 100%;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn:hover {
+    background-color: #1e40af;
+  }
+
+  #calendar {
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  #calendar .fc-daygrid-day {
+    height: 90px !important;
+    border: 1px solid #e5e7eb !important;
+    vertical-align: top;
+  }
+
+  #calendar .fc-daygrid-day-number {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 6px;
+    color: #1f2937;
+  }
+
+  .fc-daygrid-day:hover {
+    background-color: #e0f2fe !important;
+    cursor: pointer;
+  }
+
+  .selected-date {
+    border: 2px solid orange !important;
+  }
+
+  .fc .fc-daygrid-day.fc-day-today {
+    background-color: #dbeafe !important;
+    border: 2px solid #2563eb !important;
+  }
+
+  .fc .fc-toolbar-title {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #1e3a8a;
+  }
+
+  .fc-button-primary {
+    background: #2563eb !important;
+    border: none !important;
+    border-radius: 8px !important;
+  }
+
+  .fc-button-primary:hover {
+    background: #1e40af !important;
+  }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #374151;
+  }
+
+  .legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+  }
+
+  /* ✅ Responsive - Calendar first on mobile */
+  @media (max-width: 768px) {
     .main-wrapper {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 40px;
+      flex-direction: column-reverse; /* ✅ Show calendar first */
     }
 
     .form-card,
     .calendar-card {
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-      flex: 1 1 420px;
-      max-width: 500px;
-      transition: all 0.3s ease;
-    }
-
-    .form-card:hover,
-    .calendar-card:hover {
-      transform: translateY(-5px);
-    }
-
-    h2 {
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #2563eb;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 8px;
-      color: #374151;
-    }
-
-    input[type="text"],
-    select {
       width: 100%;
-      padding: 12px 15px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      background-color: #f9fafb;
-      transition: all 0.3s ease;
-      font-size: 0.95rem;
+      max-width: none;
     }
+  }
+</style>
 
-    input[type="text"]:focus,
-    select:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-      outline: none;
-      background-color: #fff;
-    }
-
-    .btn {
-      width: 100%;
-      color: red;
-      border: none;
-      padding: 12px;
-      border-radius: 10px;
-      font-weight: 600;
-      margin-top: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn:hover {
-      background-color: green;
-    }
-
-    #calendar {
-      border-radius: 14px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-    /* ✅ FullCalendar Date Visibility Enhancements */
-    #calendar .fc-daygrid-day {
-      height: 90px !important;
-      border: 1px solid #e5e7eb !important;
-      vertical-align: top;
-    }
-
-    #calendar .fc-daygrid-day-number {
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 6px;
-      color: #1f2937;
-    }
-
-    .fc-daygrid-day:hover {
-      background-color: #e0f2fe !important;
-      cursor: pointer;
-    }
-
-    /* ✅ Highlight Selected Date */
-    .selected-date {
-      border: 2px solid orange !important;
-    }
-
-    /* ✅ Today's Date */
-    .fc .fc-daygrid-day.fc-day-today {
-      background-color: #dbeafe !important;
-      border: 2px solid #2563eb !important;
-    }
-
-    .fc .fc-toolbar-title {
-      font-weight: 700;
-      font-size: 1.4rem;
-      color: #1e3a8a;
-    }
-
-    .fc-button-primary {
-      background: #2563eb !important;
-      border: none !important;
-      border-radius: 8px !important;
-    }
-
-    .fc-button-primary:hover {
-      background: #1e40af !important;
-    }
-
-    /* ✅ Legend */
-    .legend {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 15px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.9rem;
-      color: #374151;
-    }
-
-    .legend-color {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
-      border: 1px solid #d1d5db;
-    }
-  </style>
-
-  <div class="main-wrapper mt-5">
-    <!-- ✅ Booking Form -->
-    <div class="form-card">
-      <h2>Book Your Event</h2>
-      <form id="bookingForm" action="/bookings" method="POST">
-        <div>
-          <label for="venueDate">Venue Date</label>
-          <input type="text" id="venueDate" name="date" placeholder="Select from calendar" readonly required />
-        </div>
-
-        <div>
-          <label for="eventType">Event Type</label>
-          <select id="eventType" name="event" required>
-            <option value="" disabled selected>Select event type</option>
-            <option value="Wedding">Wedding</option>
-            <option value="Birthday">Birthday</option>
-            <option value="Corporate">Corporate</option>
-            <option value="Party">Party</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="guestCount">Number of Guests</label>
-          <select id="guestCount" name="guest" required>
-            <option value="" disabled selected>Select guest range</option>
-            <option value="200">Under 200</option>
-            <option value="400">Under 400</option>
-            <option value="600">Under 600</option>
-            <option value="800">Under 800</option>
-            <option value="1000">Under 1000</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="venuePlace">Venue Place</label>
-          <input type="text" id="venuePlace" name="place" placeholder="Enter venue place" required />
-        </div>
-
-        <div>
-          <label for="venueTime">Venue Time</label>
-          <input type="text" id="venueTime" name="time" placeholder="Select event time" required />
-        </div>
-
-        <div>
-          <label for="venueDistrict">Venue District</label>
-          <input type="text" id="venueDistrict" name="district" value="Ernakulam" readonly />
-        </div>
-
-        <div>
-          <label for="venuePincode">Venue Pincode</label>
-          <select id="venuePincode" name="pincode" required>
-            <option value="" disabled selected>Select pincode</option>
-            <option value="682001">682001</option>
-            <option value="682002">682002</option>
-            <option value="682003">682003</option>
-            <option value="682005">682005</option>
-            <option value="682015">682015</option>
-            <option value="682017">682017</option>
-          </select>
-        </div>
-
-        <button type="submit" class="btn">Book Now</button>
-      </form>
-    </div>
-
-    <!-- ✅ Calendar -->
-    <div class="calendar-card">
-      <h2>Availability Calendar</h2>
-      <div id="calendar"></div>
-
-      <!-- ✅ Legend -->
-      <div class="legend">
-        <div class="legend-item"><span class="legend-color" style="background-color:#22c55e;"></span> Available</div>
-        <div class="legend-item"><span class="legend-color" style="background-color:#facc15;"></span> Limited Slots</div>
-        <div class="legend-item"><span class="legend-color" style="background-color:#ef4444;"></span> Fully Booked</div>
-        <div class="legend-item"><span class="legend-color" style="background-color:#9ca3af;"></span> Blocked</div>
+<div class="main-wrapper mt-5">
+  <!-- ✅ Booking Form -->
+  <div class="form-card" id="bookingFormCard">
+    <h2>Book Your Event</h2>
+    <form id="bookingForm" action="/bookings" method="POST">
+      <div>
+        <label for="venueDate">Venue Date</label>
+        <input type="text" id="venueDate" name="date" placeholder="Select from calendar" readonly required />
       </div>
+
+      <div>
+        <label for="eventType">Event Type</label>
+        <select id="eventType" name="event" required>
+          <option value="" disabled selected>Select event type</option>
+          <option value="Wedding">Wedding</option>
+          <option value="Birthday">Birthday</option>
+          <option value="Corporate">Corporate</option>
+          <option value="Party">Party</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="guestCount">Number of Guests</label>
+        <select id="guestCount" name="guest" required>
+          <option value="" disabled selected>Select guest range</option>
+          <option value="200">Under 200</option>
+          <option value="400">Under 400</option>
+          <option value="600">Under 600</option>
+          <option value="800">Under 800</option>
+          <option value="1000">Under 1000</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="venuePlace">Venue Place</label>
+        <input type="text" id="venuePlace" name="place" placeholder="Enter venue place" required />
+      </div>
+
+      <div>
+        <label for="venueTime">Venue Time</label>
+        <input type="text" id="venueTime" name="time" placeholder="Select event time" required />
+      </div>
+
+      <div>
+        <label for="venueDistrict">Venue District</label>
+        <input type="text" id="venueDistrict" name="district" value="Ernakulam" readonly />
+      </div>
+
+      <div>
+        <label for="venuePincode">Venue Pincode</label>
+        <select id="venuePincode" name="pincode" required>
+          <option value="" disabled selected>Select pincode</option>
+          <option value="682001">682001</option>
+          <option value="682002">682002</option>
+          <option value="682003">682003</option>
+          <option value="682005">682005</option>
+          <option value="682015">682015</option>
+          <option value="682017">682017</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn">Book Now</button>
+    </form>
+  </div>
+
+  <!-- ✅ Calendar -->
+  <div class="calendar-card">
+    <h2>Availability Calendar</h2>
+    <div id="calendar"></div>
+
+    <!-- ✅ Legend -->
+    <div class="legend">
+      <div class="legend-item"><span class="legend-color" style="background-color:#22c55e;"></span> Available</div>
+      <div class="legend-item"><span class="legend-color" style="background-color:#facc15;"></span> Limited Slots</div>
+      <div class="legend-item"><span class="legend-color" style="background-color:#ef4444;"></span> Fully Booked</div>
+      <div class="legend-item"><span class="legend-color" style="background-color:#9ca3af;"></span> Blocked</div>
     </div>
   </div>
-  <script>
-    // ✅ Format date in YYYY-MM-DD (Local Time, not UTC)
-    const formatDate = (date) => {
-      return date.toLocaleDateString('en-CA');
-    };
-  
-    // ✅ Time Picker Setup
-    flatpickr("#venueTime", {
-      enableTime: true,
-      noCalendar: true,
-      dateFormat: "h:i K",
-      minTime: "06:00",
-      maxTime: "23:00",
-      defaultHour: 18,
-      defaultMinute: 0,
-    });
-  
-    // ✅ Calendar & Date Logic
-    document.addEventListener('DOMContentLoaded', async () => {
-      const calendarEl = document.getElementById('calendar');
-      const venueDateInput = document.getElementById('venueDate');
-      const today = new Date();
-      const blockedDates = [];
-  
-      // Example blocked next 7 days (in local date format)
-      for (let i = 0; i <= 7; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        blockedDates.push(formatDate(date)); // ✅ Fixed
-      }
-  
-      // ✅ Fetch daily booking count
-      const res = await fetch('/bookings/daily-count');
-      const data = await res.json();
-  
-      const redDays = data.filter(d => d.count >= 2000).map(d => d.date);
-      const yellowDays = data.filter(d => d.count >= 1600 && d.count < 2000).map(d => d.date);
-  
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        height: 'auto',
-        selectable: true,
-        validRange: { start: formatDate(today) }, // ✅ Fixed
-  
-        dayCellDidMount(info) {
-          const date = formatDate(info.date); // ✅ Use local date
-  
-          if (blockedDates.includes(date)) {
-            info.el.style.backgroundColor = '#9ca3af';
-            info.el.style.color = 'white';
-            info.el.style.cursor = 'not-allowed';
-            info.el.style.pointerEvents = 'none';
-          } else if (redDays.includes(date)) {
-            info.el.style.backgroundColor = '#ef4444';
-            info.el.style.color = 'white';
-          } else if (yellowDays.includes(date)) {
-            info.el.style.backgroundColor = '#facc15';
-            info.el.style.color = '#111827';
-          } else {
-            info.el.style.backgroundColor = '#22c55e1a';
-          }
-        },
-  
-        dateClick(info) {
-          const selected = info.dateStr;
-  
-          document.querySelectorAll('.fc-daygrid-day').forEach(day => {
-            day.classList.remove('selected-date');
-          });
-          info.dayEl.classList.add('selected-date');
-  
-          if (blockedDates.includes(selected)) {
-            Swal.fire('Date Blocked', 'This date is not available for booking.', 'error');
-            return;
-          }
-          if (redDays.includes(selected)) {
-            Swal.fire('Fully Booked', 'All slots are filled on this date.', 'error');
-            return;
-          }
-          if (yellowDays.includes(selected)) {
-            Swal.fire('Limited Slots', 'Few slots left. Hurry up!', 'info');
-          }
-  
-          venueDateInput.value = selected;
+</div>
+
+<script>
+  const formatDate = (date) => date.toLocaleDateString('en-CA');
+
+  flatpickr("#venueTime", {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "h:i K",
+    minTime: "06:00",
+    maxTime: "23:00",
+  });
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const calendarEl = document.getElementById('calendar');
+    const venueDateInput = document.getElementById('venueDate');
+    const formCard = document.getElementById('bookingFormCard');
+    const today = new Date();
+    const blockedDates = [];
+
+    // Example: Block next 7 days
+    for (let i = 0; i <= 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      blockedDates.push(formatDate(date));
+    }
+
+    const res = await fetch('/bookings/daily-count');
+    const data = await res.json();
+
+    const redDays = data.filter(d => d.count >= 2000).map(d => d.date);
+    const yellowDays = data.filter(d => d.count >= 1600 && d.count < 2000).map(d => d.date);
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      height: 'auto',
+      selectable: true,
+      validRange: { start: formatDate(today) },
+
+      dayCellDidMount(info) {
+        const date = formatDate(info.date);
+        if (blockedDates.includes(date)) {
+          info.el.style.backgroundColor = '#9ca3af';
+          info.el.style.color = 'white';
+          info.el.style.cursor = 'not-allowed';
+          info.el.style.pointerEvents = 'none';
+        } else if (redDays.includes(date)) {
+          info.el.style.backgroundColor = '#ef4444';
+          info.el.style.color = 'white';
+        } else if (yellowDays.includes(date)) {
+          info.el.style.backgroundColor = '#facc15';
+          info.el.style.color = '#111827';
+        } else {
+          info.el.style.backgroundColor = '#22c55e1a';
         }
-      });
-  
-      calendar.render();
+      },
+
+      dateClick(info) {
+        const selected = info.dateStr;
+
+        document.querySelectorAll('.fc-daygrid-day').forEach(day => {
+          day.classList.remove('selected-date');
+        });
+        info.dayEl.classList.add('selected-date');
+
+        if (blockedDates.includes(selected)) {
+          Swal.fire('Date Blocked', 'This date is not available for booking.', 'error');
+          return;
+        }
+        if (redDays.includes(selected)) {
+          Swal.fire('Fully Booked', 'All slots are filled on this date.', 'error');
+          return;
+        }
+        if (yellowDays.includes(selected)) {
+          Swal.fire('Limited Slots', 'Few slots left. Hurry up!', 'info');
+        }
+
+        venueDateInput.value = selected;
+
+        // ✅ On mobile: Scroll to form when date selected
+        if (window.innerWidth <= 768) {
+          formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
     });
-  </script>
-  
+
+    calendar.render();
+  });
+</script>
