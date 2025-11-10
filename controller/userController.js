@@ -354,6 +354,7 @@ const loginPage = async(req,res)=>{
   try { 
     const { email, password } = req.body;
   
+    
     const existingUser = await User.findOne({ email });
   
     if (!existingUser) {

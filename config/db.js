@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
  {
      try{
         await mongoose.connect(process.env.MONGODB_URI);
-        console.log('db successfully connected');
+        console.log('atlas connected');
 
      }
      catch(error)
