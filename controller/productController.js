@@ -142,7 +142,7 @@ const addProduct = async (req, res) => {
     const productName = name.trim();
     const validNameRegex = /^[A-Za-z\s]+$/;
     if (!validNameRegex.test(productName)) {
-      return res.render("admin/product/addProduct", {
+      return res.render("admin/product/addproduct", {
         error: "Product name can only contain letters and spaces.",
         oldData,
       });
@@ -153,7 +153,7 @@ const addProduct = async (req, res) => {
       item_name: { $regex: new RegExp(`^${productName}$`, "i") },
     });
     if (existingProduct) {
-      return res.render("admin/product/addProduct", {
+      return res.render("admin/product/addproduct", {
         error: "Product with this name already exists.",
         oldData,
       });
@@ -161,7 +161,7 @@ const addProduct = async (req, res) => {
 
     // ✅ Validate price
     if (price <= 0) {
-      return res.render("admin/product/addProduct", {
+      return res.render("admin/product/addproduct", {
         error: "Price must be greater than zero.",
         oldData,
       });
@@ -169,7 +169,7 @@ const addProduct = async (req, res) => {
 
     // ✅ Validate discount
     if (discountprice < 0) {
-      return res.render("admin/product/addProduct", {
+      return res.render("admin/product/addproduct", {
         error: "Discount price cannot be negative.",
         oldData,
       });
@@ -179,7 +179,7 @@ const addProduct = async (req, res) => {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
     for (const file of req.files) {
       if (!allowedTypes.includes(file.mimetype)) {
-        return res.render("admin/product/addProduct", {
+        return res.render("admin/product/addproduct", {
           error: "Only PNG, JPEG, and JPG image formats are allowed.",
           oldData,
         });

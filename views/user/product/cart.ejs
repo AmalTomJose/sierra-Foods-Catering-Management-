@@ -141,57 +141,93 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-function confirmRemoveCartItem(productId) {
-  Swal.fire({
-    title: "Are you sure?",
-    text: "This item will be removed from your cart.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, remove it!",
-    cancelButtonText: "Cancel"
-  }).then((result) => {
-    if (result.isConfirmed) removeCartItem(productId);
-  });
-}
-
-function removeCartItem(productId) {
-  fetch(`/remove-cart-item?productId=${productId}`, { method: 'DELETE' })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) location.reload();
-      else console.error(data.error);
+  function confirmRemoveCartItem(productId) {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "This item will be removed from your cart.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, remove it!",
+      cancelButtonText: "Cancel"
+    }).then((result) => {
+      if (result.isConfirmed) removeCartItem(productId);
     });
+  }
+  
+  function removeCartItem(productId) {
+    fetch(`/remove-cart-item?productId=${productId}`, { method: 'DELETE' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) location.reload();
+        else console.error(data.error);
+      });
+  }
+  async function updateCart(productId, newQuantity, row) {
+  try {
+    const res = await fetch(`/updateCart?productId=${productId}&quantity=${newQuantity}`, { method: 'PUT' });
+    const data = await res.json();
+
+    if (!data.success) {
+      Swal.fire({ icon: 'error', title: 'Update Failed', text: data.error || 'Failed to update cart.' });
+      return;
+    }
+
+    // ✅ Find the current product's updated total
+    const updatedItem = data.updatedItems.find(i => i.productId === productId);
+    if (updatedItem) {
+      const subtotalCell = row.querySelector('[data-label="Subtotal"]');
+      subtotalCell.textContent = `₹${updatedItem.total.toFixed(2)}`;
+    }
+
+    // ✅ Update totals dynamically
+    const subtotalElement = document.querySelector('.cart-totals table tr:first-child td');
+    const discountElement = document.querySelector('.cart-totals table tr:nth-child(2) td');
+    const totalElement = document.querySelector('.cart-totals table tr:last-child td strong');
+
+    if (subtotalElement) subtotalElement.textContent = `₹${(data.subtotal + data.offerDiscount).toFixed(2)}`;
+    if (discountElement) discountElement.textContent = `- ₹${data.offerDiscount.toFixed(2)}`;
+    if (totalElement) totalElement.textContent = `₹${data.subtotal.toFixed(2)}`;
+
+  } catch (error) {
+    console.error(error);
+    Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong. Please try again.' });
+  }
 }
 
-function updateCart(productId, newQuantity) {
-  fetch(`/updateCart?productId=${productId}&quantity=${newQuantity}`, { method: 'PUT' })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Updated!',
-          text: 'Cart quantity updated successfully.',
-          timer: 1500,
-          showConfirmButton: false
-        }).then(() => location.reload());
-      } else {
-        Swal.fire({ icon: 'error', title: 'Update Failed', text: data.error || 'Failed to update cart.' });
-      }
-    })
-    .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong. Please try again.' }));
-}
-
-function changeQuantity(button, change) {
-  const input = button.parentElement.querySelector('input[name="quantity"]');
-  let value = parseInt(input.value);
-  const min = parseInt(input.min);
-  const max = parseInt(input.max);
-  const newVal = Math.min(max, Math.max(min, value + change));
-  input.value = newVal;
-}
-</script>
-
+  
+  function changeQuantity(button, change) {
+    const input = button.parentElement.querySelector('input[name="quantity"]');
+    let value = parseInt(input.value);
+    const min = parseInt(input.min);
+    const max = parseInt(input.max);
+    const newVal = Math.min(max, Math.max(min, value + change));
+    input.value = newVal;
+  
+    // Find the table row of this item
+    const row = button.closest('tr');
+    const productId = row.querySelector('form').getAttribute('onsubmit').match(/'([^']+)'/)[1];
+  
+    // ✅ Immediately update backend and subtotal dynamically
+    updateCart(productId, newVal, row);
+  }
+  
+  // ✅ Function to recalculate total
+  function updateCartTotal() {
+    let total = 0;
+    document.querySelectorAll('td[data-label="Subtotal"]').forEach(cell => {
+      total += parseFloat(cell.textContent.replace('₹', '')) || 0;
+    });
+  
+    const offerDiscount = parseFloat('<%= offerDiscount %>') || 0;
+    const totalCell = document.querySelector('td strong');
+    const totalElement = document.querySelector('.cart-totals table tr:last-child td strong');
+    const subtotalElement = document.querySelector('.cart-totals table tr:first-child td');
+  
+    if (subtotalElement) subtotalElement.textContent = `₹${(total + offerDiscount).toFixed(2)}`;
+    if (totalElement) totalElement.textContent = `₹${total.toFixed(2)}`;
+  }
+  </script>
+  
 <style>
 /* Quantity Buttons */
 .quantity-group input {

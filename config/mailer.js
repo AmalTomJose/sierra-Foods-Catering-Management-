@@ -19,7 +19,7 @@ const sendVerifyMail = async(req,email,name,user_id)=>{
           from: process.env.EMAIL_USER,
           to: email,
           subject: 'For verification purpose',
-          html: `Hello ${name}, your OTP for verification is: ${otp}`,
+          html: `Hello ${email}, your OTP for verification is: ${otp}`,
         };
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {

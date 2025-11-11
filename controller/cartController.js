@@ -233,7 +233,8 @@ const removeCart = async(req,res)=>{
         res.status(500).json({ success: false });
       }
     }
-const updateCart = async (req, res) => {
+
+    const updateCart = async (req, res) => {
       try {
         const userId = req.session.user_id;
         const { productId, quantity } = req.query;
@@ -243,22 +244,48 @@ const updateCart = async (req, res) => {
           return res.status(400).json({ success: false, error: "Invalid input." });
         }
     
-        // Update cart item quantity
-        const cartItem = await Cart.findOneAndUpdate(
+        // ✅ Update quantity of a specific item
+        const cart = await Cart.findOneAndUpdate(
           { user: userId, "items.product": productId },
-          {
-            $set: {
-              "items.$.quantity": newQuantity,
-            },
-          }
-        );
-        console.log('The  cart item for checking is :',cartItem)
+          { $set: { "items.$.quantity": newQuantity } },
+          { new: true }
+        ).populate("items.product");
     
-        if (!cartItem) {
+        if (!cart) {
           return res.status(404).json({ success: false, error: "Cart item not found." });
         }
     
-        res.json({ success: true, message: "Cart updated successfully." });
+        // ✅ Recalculate totals dynamically
+        let subtotal = 0;
+        let offerDiscount = 0;
+    
+        const updatedCartItems = cart.items.map(item => {
+          const product = item.product;
+          const price = product.item_price;
+          const discount = item.offerApplied || 0;
+          const discountedPrice = price - discount;
+          const total = discountedPrice * item.quantity;
+    
+          subtotal += total;
+          offerDiscount += discount * item.quantity;
+    
+          return {
+            productId: product._id,
+            name: product.item_name,
+            price,
+            quantity: item.quantity,
+            discountedPrice,
+            total
+          };
+        });
+    
+        res.json({
+          success: true,
+          message: "Cart updated successfully.",
+          updatedItems: updatedCartItems,
+          subtotal,
+          offerDiscount
+        });
     
       } catch (err) {
         console.error("Error updating cart quantity:", err);
@@ -266,7 +293,6 @@ const updateCart = async (req, res) => {
       }
     };
     
-
 
 module.exports = {
     loadCart,

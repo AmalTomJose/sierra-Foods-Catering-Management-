@@ -335,17 +335,23 @@ const loadProductDetail = async (req, res) => {
 
 
 
-//login page (GET)
-const loadLogin = async(req,res)=>{
-    try{
-        res.render('user/auth/login',{msg:null,layout:'./layouts/mainLayout',title:'login'})
+// Login Page (GET)
+const loadLogin = async (req, res) => {
+  try {
+    res.render('user/auth/login', {
+      msg: null,
+      layout: './layouts/mainLayout',
+      title: 'login',
 
-    } 
-    catch(error)
-    {
-        res.status(500).send("Server Error");
-    }
-}
+      // ✅ Pass flash messages
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server Error");
+  }
+};
 
 //login page(POST)
 
@@ -574,25 +580,43 @@ const loadOtp = async (req, res) => {
   
 
 
-
   const resendOTP = async (req, res) => {
     try {
-      // Retrieve user data from session storage
-      const userData = req.session.resetUser;
+      // ✅ Retrieve email from session (stored in forgotPasswordOTP)
+      const email = req.session.email;
   
-      if (!userData) {
-        res.status(400).json({ message: "Invalid or expired session" });
-      } else {
-        delete req.session.otp;
-        const data = await message.sendVerifyMail(req, userData.email);
+      if (!email) {
+        return res.render("user/auth/otp", {
+          layout: 'layouts/user',
+          user: '',
+          title: 'otp',
+          message: "Session expired. Please try again.",
+        });
       }
   
-      // Generate and send new OTP using Twilio
+      // ✅ Remove old OTP and generate new one via sendVerifyMail()
+      delete req.session.otp;
+      await message.sendVerifyMail(req, email);
   
-      res.render("user/auth/otp", { layout:'layouts/mainLayout',title:'otp',message: "OTP resent successfully" });
+      console.log("Resent OTP to:", email);
+      console.log("New OTP:", req.session.otp);
+  
+      // ✅ Show OTP page again with a success message
+      res.render("user/auth/otp", {
+        layout: 'layouts/user',
+        user: '',
+        title: 'otp',
+        message: "OTP resent successfully",
+      });
+  
     } catch (error) {
-      console.error("Error: ", error);
-      res.render("user/auth/otp", { layout:'layouts/mainLayout',title:'otp',message: "Failed to send otp" });
+      console.error("Error while resending OTP:", error);
+      res.render("user/auth/otp", {
+        layout: 'layouts/user',
+        user: '',
+        title: 'otp',
+        message: "Failed to resend OTP. Please try again.",
+      });
     }
   };
   
@@ -657,7 +681,6 @@ const userlogout = async (req, res) => {
 //     console.log("Error:", error.message);
 //   }
 // };
-
 const forgotPasswordOTP = async (req, res) => {
   try {
     const email = req.body.email;
@@ -665,20 +688,22 @@ const forgotPasswordOTP = async (req, res) => {
 
     if (!user) {
       return res.render("user/auth/forget", {
-        user:'',
+        user: '',
         layout: 'layouts/user',
         msg: "Email not found",
-        title:'forget password  '
+        title: 'forget password'
       });
     }
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    req.session.otp = otp;
-    
-    req.session.resetUser = user._id; // Store only the _id for security
+    // Store user info for reset
+    req.session.resetUser = user._id;
+    req.session.email = email;
 
-    // Send OTP via email here
-    console.log("OTP for reset:", otp);
+    // ✅ Only this call will generate & send OTP
+    await message.sendVerifyMail(req, email);
+
+    console.log("OTP sent to:", email);
+    console.log("Stored OTP:", req.session.otp);
 
     res.redirect("/otp"); // Reuse same OTP page
   } catch (err) {
@@ -727,35 +752,33 @@ const loadResetPassword = async (req, res) => {
 //   }
 // };
 
-
 const resetPassword  = async (req, res) => {
   try {
     const { password, confirmPassword } = req.body;
 
     if (password !== confirmPassword) {
       return res.render("user/auth/resetPassword", {
-        layout: 'layouts/mainLayout',
+        layout: 'layouts/user',  // ✅ use same layout as other user pages
         message: "Passwords do not match",
-        title:'forget password'
+        title:'Forget Password'
       });
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    await User.findByIdAndUpdate(req.session.resetUser, {
-      password: hashed,
-    });
+    await User.findByIdAndUpdate(req.session.resetUser, { password: hashed });
 
     // Cleanup session
     req.session.resetUser = null;
     req.session.otp = null;
 
-req.flash('success','successfully changed!')
-    res.render('user/auth/login',{msg:'',title:'login',user:''  })
+    req.flash('success', 'Password changed successfully!');
+
+  res.redirect('/login');
+    
   } catch (err) {
     console.log(err.message);
   }
 };
-
 
 
 

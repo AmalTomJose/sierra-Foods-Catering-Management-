@@ -38,7 +38,7 @@ const loadCheckout = async (req, res) => {
 
     const cart = await Cart.findOne({ user: userId }).populate({
       path: "items.product",
-      model: "Item",
+      model: "Item",            
       populate: {
         path: "category",
         model: "Category",

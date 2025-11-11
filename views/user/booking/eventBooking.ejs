@@ -251,7 +251,6 @@
     </div>
   </div>
 </div>
-
 <script>
   const formatDate = (date) => date.toLocaleDateString('en-CA');
 
@@ -267,6 +266,7 @@
     const calendarEl = document.getElementById('calendar');
     const venueDateInput = document.getElementById('venueDate');
     const formCard = document.getElementById('bookingFormCard');
+    const guestSelect = document.getElementById('guestCount');
     const today = new Date();
     const blockedDates = [];
 
@@ -277,8 +277,13 @@
       blockedDates.push(formatDate(date));
     }
 
+    // ✅ Fetch dynamic booking counts from database
     const res = await fetch('/bookings/daily-count');
     const data = await res.json();
+
+    // Convert to map for easy lookup
+    const bookingMap = {};
+    data.forEach(d => bookingMap[d.date] = d.count);
 
     const redDays = data.filter(d => d.count >= 2000).map(d => d.date);
     const yellowDays = data.filter(d => d.count >= 1600 && d.count < 2000).map(d => d.date);
@@ -307,7 +312,7 @@
         }
       },
 
-      dateClick(info) {
+      async dateClick(info) {
         const selected = info.dateStr;
 
         document.querySelectorAll('.fc-daygrid-day').forEach(day => {
@@ -319,17 +324,18 @@
           Swal.fire('Date Blocked', 'This date is not available for booking.', 'error');
           return;
         }
-        if (redDays.includes(selected)) {
-          Swal.fire('Fully Booked', 'All slots are filled on this date.', 'error');
+
+        const bookedCount = bookingMap[selected] || 0;
+        updateGuestOptions(bookedCount);
+
+        if (bookedCount >= 2000) {
+          Swal.fire('Fully Booked', 'All slots are filled for this date.', 'error');
+          resetGuestOptions();
           return;
-        }
-        if (yellowDays.includes(selected)) {
-          Swal.fire('Limited Slots', 'Few slots left. Hurry up!', 'info');
         }
 
         venueDateInput.value = selected;
 
-        // ✅ On mobile: Scroll to form when date selected
         if (window.innerWidth <= 768) {
           formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -337,5 +343,43 @@
     });
 
     calendar.render();
+
+    // ✅ Reset all guest options
+    function resetGuestOptions() {
+      guestSelect.innerHTML = `
+        <option value="" disabled selected>Select guest range</option>
+        <option value="200">Under 200</option>
+        <option value="400">Under 400</option>
+        <option value="600">Under 600</option>
+        <option value="800">Under 800</option>
+        <option value="1000">Under 1000</option>
+      `;
+    }
+
+    // ✅ Dynamically limit based on bookedCount from database
+    function updateGuestOptions(bookedCount) {
+      resetGuestOptions();
+
+      let allowedMax = 1000;
+      if (bookedCount >= 2000) allowedMax = 0;
+      else if (bookedCount >= 1800) allowedMax = 200;
+      else if (bookedCount >= 1600) allowedMax = 400;
+      else if (bookedCount >= 1400) allowedMax = 600;
+      else if (bookedCount >= 1200) allowedMax = 800;
+
+      const allOptions = [200, 400, 600, 800, 1000];
+      guestSelect.innerHTML = `<option value="" disabled selected>Select guest range</option>`;
+
+      allOptions.forEach(opt => {
+        if (opt <= allowedMax && allowedMax > 0) {
+          guestSelect.innerHTML += `<option value="${opt}">Under ${opt}</option>`;
+        }
+      });
+
+      if (allowedMax === 0) {
+        Swal.fire('Fully Booked', 'This date is completely booked. Please choose another date.', 'error');
+        guestSelect.innerHTML = `<option value="" disabled selected>No options available</option>`;
+      }
+    }
   });
 </script>
