@@ -38,7 +38,6 @@ const dailyCount = async(req,res)=>{
 
 const bookingdetails = async (req, res) => {
     try {
-        console.log("Form Submission:", req.body);
 
         const userId = req.session.user_id;
         const { date, event, guest, place, time, district, pincode } = req.body;
@@ -55,24 +54,7 @@ const bookingdetails = async (req, res) => {
         });
 
         await venueDetails.save();
-        console.log('Successfully saved booking');
-
-    //     const eventday = new Date(date).toISOString().split('T')[0];
-    //     await DailyCount.findOneAndUpdate({
-    //         date:new Date(eventday)
-    //     },
-    // {
-    //      $inc:{
-    //         totalBookings:1,
-    //         totalGuests:parseInt(guest)
-
-    //      }
-
-    // },{
-    //     upsert:true,
-    //     new:true
-    // });
-    // console.log('Booking saved and guest count updated');
+ 
     req.flash('success','Your  Booking was successfull!')
 
         res.redirect('/shop');

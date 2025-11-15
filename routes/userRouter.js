@@ -104,7 +104,7 @@ router.post('/updateBooking',islogin,orderController.updateBooking)
 
 router.post('/checkout/create-razorpay-order',islogin,orderController.createRazorpayOrder)
 router.post('/checkout/verify-razorpay',islogin,orderController.verifyPayment)
-
+router.post('/checkout/pay-cod-wallet',islogin,orderController.codWalletPayment)
 
 router.get('/order/:id/failure', orderController.failurePage);
 router.get('/orderFailed', orderController.failurePage);

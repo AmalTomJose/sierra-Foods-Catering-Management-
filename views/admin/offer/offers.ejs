@@ -182,7 +182,6 @@
                 <th>Type</th>
                 <th>Value</th>
                 <th>Applies To</th>
-                <th>Category</th>
                 <th>Start</th>
                 <th>End</th>
                 <th class="text-center">Actions</th>
@@ -197,14 +196,13 @@
                       <%= offer.discountType %>
                     </span>
                   </td>
-                  <td>₹<%= offer.discountValue %></td>
+                  <td><%= offer.discountValue %></td>
                   <td>
                     <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
                       <%= offer.applicableTo %>
                     </span>
                   </td>
-                  <td><%= offer.category ? offer.category.cat_name : '-' %></td>
-                  <td><%= new Date(offer.startDate).toLocaleDateString() %></td>
+                    <td><%= new Date(offer.startDate).toLocaleDateString() %></td>
                   <td><%= new Date(offer.endDate).toLocaleDateString() %></td>
                   <td class="text-center">
                     <button
@@ -290,7 +288,6 @@
               <td><span class="badge bg-info bg-opacity-10 text-info px-3 py-2">${offer.discountType}</span></td>
               <td>₹${offer.discountValue}</td>
               <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2">${offer.applicableTo}</span></td>
-              <td>${offer.category ? offer.category.cat_name : '-'}</td>
               <td>${new Date(offer.startDate).toLocaleDateString()}</td>
               <td>${new Date(offer.endDate).toLocaleDateString()}</td>
               <td class="text-center">

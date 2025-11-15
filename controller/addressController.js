@@ -66,7 +66,6 @@ const loadAddress = async(req,res)=>{
     try{
         const userId = req.session.user_id;
         const userData = await User.findById(userId);
-console.log(userData)
         if(userData){
             const addressData = await Address.find({user:userId});
             res.render('user/profile/userAddress',{user:userData,addressData});

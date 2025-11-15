@@ -136,6 +136,7 @@
               <option value="none" <%= order.refundStatus === 'none' ? 'selected' : '' %>>None</option>
               <option value="requested" <%= order.refundStatus === 'requested' ? 'selected' : '' %>>Requested</option>
               <option value="approved" <%= order.refundStatus === 'approved' ? 'selected' : '' %>>Approved</option>
+              <option value="rejected" <%= order.refundStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
             </select>
             <button class="btn btn-success" onclick="saveRefundStatus('<%= order._id %>')">Update Refund</button>
           <% } %>
@@ -186,7 +187,7 @@
             <div class="text">
               <h6 class="mb-1">Deliver to</h6>
               <p class="mb-1">
-                Event Date: <%= order.booking.eventDate %><br>
+                Event Date: <%= new Date(order.booking.eventDate).toLocaleDateString('en-GB') %><br>
                 Event Type: <%= order.booking.eventType %><br>
                 Guest Count: <%= order.booking.guestCount %><br>
                 Event Place: <%= order.booking.eventPlace %><br>
@@ -240,6 +241,8 @@
                   <option value="none" <%= item.refundStatus === 'none' ? 'selected' : '' %>>None</option>
                   <option value="requested" <%= item.refundStatus === 'requested' ? 'selected' : '' %>>Requested</option>
                   <option value="approved" <%= item.refundStatus === 'approved' ? 'selected' : '' %>>Approved</option>
+                  <option value="rejected" <%= item.refundStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
+
                 </select>
                 <button class="btn btn-outline-success btn-sm mt-1" onclick="updateItemRefundStatus('<%= order._id %>', '<%= item._id %>')">Save</button>
               </td>

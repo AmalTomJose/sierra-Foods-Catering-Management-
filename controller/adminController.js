@@ -47,7 +47,6 @@ const verifyLogin = async (req, res) => {
     const password = req.body.password;
 
     const userData = await User.findOne({ email: email });
-    console.log(userData);
 
     if (userData) {
       const passwordMatch = await bcrypt.compare(password, userData.password);

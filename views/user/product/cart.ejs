@@ -12,7 +12,6 @@
           <% } %>
 
           <div class="table-responsive">
-
             <% if (cart.length > 0) { %>
               <table class="table shopping-summery text-center clean">
                 <thead class="thead-dark">
@@ -51,15 +50,11 @@
                       </td>
 
                       <td data-label="Quantity">
-                        <form
-                          onsubmit="event.preventDefault(); updateCart('<%= cartData.product._id %>', this.elements['quantity'].value)">
+                        <form onsubmit="event.preventDefault(); updateCart('<%= cartData.product._id %>', this.elements['quantity'].value)">
                           <div class="input-group quantity-group mx-auto" style="max-width: 130px;">
-                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                              onclick="changeQuantity(this, -1)">−</button>
                             <input type="number" name="quantity" min="<%= minQty %>" max="<%= maxQty %>"
                               value="<%= cartData.quantity %>" class="form-control text-center form-control-sm">
-                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                              onclick="changeQuantity(this, 1)">+</button>
+                            <button type="submit" class="btn btn-outline-success btn-sm">Update</button>
                           </div>
                         </form>
                       </td>
@@ -130,7 +125,6 @@
               </div>
             </div>
           <% } %>
-
         </div>
       </div>
     </div>
@@ -153,7 +147,7 @@
       if (result.isConfirmed) removeCartItem(productId);
     });
   }
-  
+
   function removeCartItem(productId) {
     fetch(`/remove-cart-item?productId=${productId}`, { method: 'DELETE' })
       .then(res => res.json())
@@ -162,153 +156,91 @@
         else console.error(data.error);
       });
   }
-  async function updateCart(productId, newQuantity, row) {
-  try {
-    const res = await fetch(`/updateCart?productId=${productId}&quantity=${newQuantity}`, { method: 'PUT' });
-    const data = await res.json();
 
-    if (!data.success) {
-      Swal.fire({ icon: 'error', title: 'Update Failed', text: data.error || 'Failed to update cart.' });
-      return;
+  async function updateCart(productId, newQuantity) {
+    try {
+      const res = await fetch(`/updateCart`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: newQuantity }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: data.error || 'Something went wrong.',
+        });
+        return;
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Cart Updated',
+        showConfirmButton: false,
+        timer: 1000,
+      }).then(() => location.reload());
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong while updating.',
+      });
     }
-
-    // ✅ Find the current product's updated total
-    const updatedItem = data.updatedItems.find(i => i.productId === productId);
-    if (updatedItem) {
-      const subtotalCell = row.querySelector('[data-label="Subtotal"]');
-      subtotalCell.textContent = `₹${updatedItem.total.toFixed(2)}`;
-    }
-
-    // ✅ Update totals dynamically
-    const subtotalElement = document.querySelector('.cart-totals table tr:first-child td');
-    const discountElement = document.querySelector('.cart-totals table tr:nth-child(2) td');
-    const totalElement = document.querySelector('.cart-totals table tr:last-child td strong');
-
-    if (subtotalElement) subtotalElement.textContent = `₹${(data.subtotal + data.offerDiscount).toFixed(2)}`;
-    if (discountElement) discountElement.textContent = `- ₹${data.offerDiscount.toFixed(2)}`;
-    if (totalElement) totalElement.textContent = `₹${data.subtotal.toFixed(2)}`;
-
-  } catch (error) {
-    console.error(error);
-    Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong. Please try again.' });
   }
-}
+</script>
 
-  
-  function changeQuantity(button, change) {
-    const input = button.parentElement.querySelector('input[name="quantity"]');
-    let value = parseInt(input.value);
-    const min = parseInt(input.min);
-    const max = parseInt(input.max);
-    const newVal = Math.min(max, Math.max(min, value + change));
-    input.value = newVal;
-  
-    // Find the table row of this item
-    const row = button.closest('tr');
-    const productId = row.querySelector('form').getAttribute('onsubmit').match(/'([^']+)'/)[1];
-  
-    // ✅ Immediately update backend and subtotal dynamically
-    updateCart(productId, newVal, row);
-  }
-  
-  // ✅ Function to recalculate total
-  function updateCartTotal() {
-    let total = 0;
-    document.querySelectorAll('td[data-label="Subtotal"]').forEach(cell => {
-      total += parseFloat(cell.textContent.replace('₹', '')) || 0;
-    });
-  
-    const offerDiscount = parseFloat('<%= offerDiscount %>') || 0;
-    const totalCell = document.querySelector('td strong');
-    const totalElement = document.querySelector('.cart-totals table tr:last-child td strong');
-    const subtotalElement = document.querySelector('.cart-totals table tr:first-child td');
-  
-    if (subtotalElement) subtotalElement.textContent = `₹${(total + offerDiscount).toFixed(2)}`;
-    if (totalElement) totalElement.textContent = `₹${total.toFixed(2)}`;
-  }
-  </script>
-  
 <style>
-/* Quantity Buttons */
-.quantity-group input {
-  width: 50px;
-}
-.quantity-group .btn-sm {
-  padding: 2px 8px;
-  font-size: 14px;
-}
+  .quantity-group input { width: 50px; }
+  .quantity-group .btn-sm { padding: 2px 8px; font-size: 14px; }
+  .table th, .table td { padding: 15px; vertical-align: middle; text-align: center; }
+  .table th { background-color: #f8f9fa; color: #495057; }
+  .table td { background-color: #ffffff; border-bottom: 1px solid #e9ecef; }
+  .cart-totals { background-color: #f8f9fa; }
 
-/* Table Styling */
-.table th, .table td {
-  padding: 15px;
-  vertical-align: middle;
-  text-align: center;
-}
-.table th {
-  background-color: #f8f9fa;
-  color: #495057;
-}
-.table td {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e9ecef;
-}
-.cart-totals {
-  background-color: #f8f9fa;
-}
-
-/* ===================== CART RESPONSIVE STYLES ===================== */
-@media (max-width: 768px) {
-  .table thead {
-    display: none;
+  @media (max-width: 768px) {
+    .table thead { display: none; }
+    .table tbody tr {
+      display: block;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      padding: 15px;
+    }
+    .table tbody td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: none !important;
+      padding: 8px 0;
+      text-align: left;
+    }
+    .table tbody td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: #555;
+      flex-basis: 40%;
+    }
+    .table tbody td.image img { max-width: 80px; height: 80px; border-radius: 8px; }
+    .quantity-group { max-width: 100px; }
+    .cart-totals {
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .cart-totals .btn { width: 100%; font-size: 16px; }
   }
-  .table tbody tr {
-    display: block;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    padding: 15px;
-  }
-  .table tbody td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: none !important;
-    padding: 8px 0;
-    text-align: left;
-  }
-  .table tbody td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #555;
-    flex-basis: 40%;
-  }
-  .table tbody td.image img {
-    max-width: 80px;
-    height: 80px;
-    border-radius: 8px;
-  }
-  .quantity-group {
-    max-width: 100px;
-  }
-  .cart-totals {
-    margin-top: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  .cart-totals .btn {
-    width: 100%;
-    font-size: 16px;
-  }
-}
 </style>
 
 <% if (success && success.length > 0) { %>
-<script>
-Swal.fire({
-  icon: 'success',
-  title: 'Success!',
-  text: '<%= success[0] %>',
-  confirmButtonColor: '#3085d6'
-});
-</script>
+  <script>
+  Swal.fire({
+    icon: 'success',
+    title: 'Success!',
+    text: '<%= success[0] %>',
+    confirmButtonColor: '#3085d6'
+  });
+  </script>
 <% } %>

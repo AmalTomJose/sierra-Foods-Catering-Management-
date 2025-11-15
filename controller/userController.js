@@ -24,20 +24,18 @@ const createWalletForUser = async (userId) => {
 
       const newWallet = new Wallet({ user: userId });
       await newWallet.save();
-      console.log("✅ Wallet created for user:", userId);
       return newWallet;
   } catch (err) {
       console.error("❌ Error creating wallet:", err);
   }
 };
 
-
 const loadWallet = async (req, res) => {
   try {
     const userId = req.session.user_id;
-    let wallet = await Wallet.findOne({ user: userId });
+    let wallet = await Wallet.findOne({ user: userId }).populate('transactions.orderId');
 
-    // If wallet doesn't exist, create a new one with zero balance
+    // If wallet doesn't exist, create one
     if (!wallet) {
       wallet = await Wallet.create({ user: userId, balance: 0 });
     }
@@ -48,6 +46,7 @@ const loadWallet = async (req, res) => {
     res.status(500).render('error', { message: 'Failed to load wallet' });
   }
 };
+
 
 
 
@@ -208,132 +207,6 @@ const loadProductDetail = async (req, res) => {
 };
 
 
-// const loadProductDetail = async (req, res) => {
-//   try {
-//     const userId = req.session.user_id;
-//     const userData = await User.findById(userId);
-//     const id = req.params.id;
-
-//     const product = await Product.findById(id)
-//       .populate('category')
-//       .populate('subcategory');
-
-//     const booking = await Booking.findOne({ user: userId, status: 'active' })
-//       .sort({ createdAt: -1 })
-//       .select('guestCount');
-
-//     const today = new Date();
-
-//     const activeOffers = await Offer.find({
-//       isActive: true,
-//       startDate: { $lte: today },
-//       endDate: { $gte: today },
-//     });
-
-//     const productOffer = activeOffers.find(o =>
-//       o.applicableTo === 'product' &&
-//       Array.isArray(o.products) &&
-//       o.products.some(pid => pid.toString() === product._id.toString())
-//     );
-
-//     const categoryOffer = activeOffers.find(o =>
-//       o.applicableTo === 'category' &&
-//       o.category?.toString() === product.category?._id?.toString()
-//     );
-
-//     let bestOffer = null;
-//     let bestDiscount = 0;
-
-//     if (productOffer) {
-//       const discount = productOffer.discountType === 'percentage'
-//         ? (product.item_price * productOffer.discountValue) / 100
-//         : productOffer.discountValue;
-
-//       if (discount > bestDiscount) {
-//         bestDiscount = discount;
-//         bestOffer = productOffer;
-//       }
-//     }
-
-//     if (categoryOffer) {
-//       const discount = categoryOffer.discountType === 'percentage'
-//         ? (product.item_price * categoryOffer.discountValue) / 100
-//         : categoryOffer.discountValue;
-
-//       if (discount > bestDiscount) {
-//         bestDiscount = discount;
-//         bestOffer = categoryOffer;
-//       }
-//     }
-
-//     if (bestOffer) {
-//       product.offerPrice = Math.max(product.item_price - bestDiscount, 0);
-//       product.appliedOffer = bestOffer;
-//     }
-
-//     const qty = booking?.guestCount || 1;
-
-//     return res.render('user/product/singleProduct', {
-//       user: userData,
-//       product,
-//       qty,
-//       error: booking ? null : 'Please Book an Event',
-//     });
-
-//   } catch (error) {
-//     console.log(error.message);
-//     res.status(500).send('Internal Server Error');
-//   }
-// };
-
-
-// const loadProductDetail = async(req,res)=>{
-//   try{
-//     const userId = req.session.user_id;
-//     const userData = await User.findById(userId);
-//     const id = req.params.id;
-//     const productDetail = await Product.findById(id).populate('category').populate('subcategory');
-
-
-
-
-
-
-
-//     const booking= await Booking.findOne({ user: userId,status:'active' })
-//     .sort({ createdAt: -1 }) // Sort by most recent
-//     .select("guestCount"); 
-//     if(!booking){
-//       const qty = 1;
-//       return res.render('user/product/singleProduct',{
-//         user:userData,
-//         product:productDetail,
-//         qty,
-//         error:'Please Book an Event'
-//       })
-  
-//     }
-//     else{
-
-//     const qty = booking.guestCount     
-//     console.log('The quantity entered by the user while selecting the booking is:',qty)
-//       console.log(productDetail)
-//     res.render('user/product/singleProduct',{
-//       user:userData,
-//       product:productDetail,
-//       qty
-//     })
-
-//     }
-
-//   }
-//   catch(error)
-//   {
-//     console.log(error.message)
-//   }
-// }
-
-
 
 // Login Page (GET)
 const loadLogin = async (req, res) => {
@@ -383,7 +256,6 @@ const loginPage = async(req,res)=>{
   
     // Login success
     req.session.user_id = existingUser._id;
-    console.log("User logged in:", req.session.user_id);
     return res.redirect("/");
   
   } 
@@ -460,64 +332,9 @@ const loadOtp = async (req, res) => {
       res.render("user/auth/otp",{layout:'layouts/user',user:'',title:'otp',message:null});
     } catch (error) {
       console.log(error.message)
-      console.log(error.message);
     }
   };
 
-
-  // //POST OTP
-  // const verifyOtp = async (req, res) => {
-  //   try {
-    
-  //     const userData = req.session.user_id;
-      
-  //     const fullOTP = req.body.otp;
-  //      console.log(userData);
-  //      console.log(fullOTP);
-    
-  //     if (!req.session.user_id) {
-        
-  //       if (fullOTP == req.session.otp) {
-
-  //           const hashedPassword = await bcrypt.hash(userData.password,10);
-            
-  //           const user = new User({
-  //               firstname : userData.firstname,
-  //           lastname: userData.lastname,
-  //           email: userData.email,
-  //           phoneno: userData.phoneno,
-  //           password: hashedPassword,
-  //           isAdmin: 0,
-  //           isBlocked: 0,
-  //           googleId:undefined
-  //         });
-  
-  //         const userDataSave = await user.save();
-  //         if (userDataSave && userDataSave.isAdmin === 0) {
-        
-  //           req.session.user_id = userDataSave._id;
-  
-  //           res.redirect('/');
-  //         } else {
-  //           res.render("user/otp", {layout:'layouts/mainLayout',title:'otp' , message: "Registration Failed" });
-          
-  //         }
-  //       } else {
-  //         res.render("user/otp", {layout:'layouts/mainLayout',title:'otp' ,message: "invailid otp" });
-          
-  //       }
-  //     } else {
-  //       if (fullOTP.trim() == req.session.otp.trim()) {
-  //         res.redirect("/resetPassword");
-  //       } else {
-  //         res.render("user/otp", { layout:'layouts/mainLayout',title:'otp',message: "Incorrect OTP. Please try again." });
-  //       }
-  //     }
-  //   } 
-  //   catch (error) {
-  //     console.log(error.message);
-  //   }
-  // };
   
   
 
@@ -525,9 +342,7 @@ const loadOtp = async (req, res) => {
   const verifyOtp = async (req, res) => {
     try {
       const fullOTP = req.body.otp;
-      console.log(req.session)
 
-      console.log(fullOTP)
       // FLOW 1: REGISTRATION (no user_id set)
       if (req.session.userData&&req.session.register==1) {
   
@@ -598,9 +413,6 @@ const loadOtp = async (req, res) => {
       delete req.session.otp;
       await message.sendVerifyMail(req, email);
   
-      console.log("Resent OTP to:", email);
-      console.log("New OTP:", req.session.otp);
-  
       // ✅ Show OTP page again with a success message
       res.render("user/auth/otp", {
         layout: 'layouts/user',
@@ -630,7 +442,6 @@ const userlogout = async (req, res) => {
           req.session.passport.user = null;
       }
           req.session.user_id = null;
-          console.log('hiii');
           return res.redirect('/login');
 
   } catch (error) {
@@ -651,36 +462,6 @@ const userlogout = async (req, res) => {
   }
  }
 
-//  const forgotPasswordOTP = async (req, res) => {
-//   try {
-//     const emaildata = req.body.email;
-//     console.log("Email received:", emaildata);
-
-//     const userExist = await User.findOne({ email: emaildata });
- 
-//     if (userExist) {
-//       req.session.userData = userExist;
-//       req.session.user_id = userExist._id;
-//       console.log(userExist._id);
-    
-//       // Assuming you have a message-sending utility
-//       const data = await message.sendVerifyMail(req, userExist.email);
-     
-    
-//       res.render("user/otp",{layout:'layouts/mainLayout',title:'otp' ,message:null});
-//     }
-//      else {
-//       res.render("user/forget", {
-//         layout:'layouts/mainLayout',title:'otp' ,
-//         error: "Attempt Failed",
-//         User: null,
-        
-//       });
-//     }
-//   } catch (error) {
-//     console.log("Error:", error.message);
-//   }
-// };
 const forgotPasswordOTP = async (req, res) => {
   try {
     const email = req.body.email;
@@ -702,8 +483,6 @@ const forgotPasswordOTP = async (req, res) => {
     // ✅ Only this call will generate & send OTP
     await message.sendVerifyMail(req, email);
 
-    console.log("OTP sent to:", email);
-    console.log("Stored OTP:", req.session.otp);
 
     res.redirect("/otp"); // Reuse same OTP page
   } catch (err) {
@@ -712,45 +491,11 @@ const forgotPasswordOTP = async (req, res) => {
 };
 
 
-// const loadResetPassword = async(req,res) => {
-//   try{
-//     if(req.session.user_id){
-//       const userId = req.session.user_id
-//       const user = await User.findById(userId)
-//       res.render("user/resetPassword",{User: user})
-//     }else {
-//       res.redirect("user/forget")
-//     }
-//   }catch(error){
-//     console.log(error.message);
-//   }
-// }
 const loadResetPassword = async (req, res) => {
   if (!req.session.resetUser) return res.redirect("/login");
   res.render("user/auth/resetPassword", { user:'', layout: 'layouts/user',title:'forget password' });
 };
 
-
-
-// const resetPassword = async (req, res) => {
-//   try {
-//     const user_id = req.session.user_id;
-//     const password = req.body.password;
-//     const secure_password = await securePassword(password);
-
-//     const updatedData = await User.findOneAndUpdate(
-//       { _id: user_id },
-//       { $set: { password: secure_password } },
-//       { new: true } // to return the updated document
-//     );
-
-//     if (updatedData) {
-//       res.redirect("/login");
-//     }
-//   } catch (error) {
-//     console.log(error.message);
-//   }
-// };
 
 const resetPassword  = async (req, res) => {
   try {
@@ -780,72 +525,6 @@ const resetPassword  = async (req, res) => {
   }
 };
 
-
-
-
-// const loadShop = async (req, res) => {
-//   try {
-//     const userId = req.session.user_id;
-//     const userData = await User.findById(userId);
-
-//     let { search, category, sort, page } = req.query;
-//     page = parseInt(page) || 1;
-
-//     const perPage = 8;
-
-//     let query = { item_status: true };
-
-//     if (search) {
-//       query.item_name = { $regex: new RegExp(search, 'i') };
-//     }
-
-//     if (category) {
-//       query.category = new mongoose.Types.ObjectId(category);
-//     }
-
-//     let sortOption = { item_price: 1 };
-//     if (sort === 'desc') {
-//       sortOption = { item_price: -1 };
-//     }
-
-//     const productData = await Product.aggregate([
-//       { $match: query },
-//       { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
-//       { $unwind: '$category' },
-//       { $match: { 'category.cat_status': true }},
-//       { $sort: sortOption },
-//       { $skip: (page - 1) * perPage },
-//       { $limit: perPage }
-//     ]);
-
-//     const totalCountResult = await Product.aggregate([
-//       { $match: query },
-//       { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' }},
-//       { $unwind: '$category' },
-//       { $match: { 'category.cat_status': true }},
-//       { $count: 'total' }
-//     ]);
-
-//     const totalProducts = totalCountResult[0]?.total || 0;
-//     const totalPages = Math.ceil(totalProducts / perPage);
-
-//     const categories = await Category.find({ cat_status: true });
-
-//     res.render('user/product/shop', {
-//       products: productData,
-//       user:userData,
-//       categories,
-//       currentPage: page,
-//       totalPages,
-//       sort,
-//       query: req.query
-//     });
-
-//   } catch (error) {
-//     console.log(error.message);
-//     res.status(500).send('Internal Server Error');
-//   }
-// };
 
 
 
@@ -970,9 +649,7 @@ const loadShop = async (req, res) => {
     const totalProducts = totalCountResult[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / perPage);
     const categories = await Category.find({ cat_status: true });
-    console.log("********************");
-    console.log("updatedProducts:",updatedProducts)
-
+ 
     // 🧭 Render shop page
     res.render('user/product/shop', {
       products: updatedProducts,
@@ -992,13 +669,9 @@ const loadShop = async (req, res) => {
 
 
 
-
 const loadProduct = async (req, res) => {
   try {
     const { search, category, sort, page } = req.query;
-      console.log(req.query)
-    console.log('hello')
-
     const perPage = 8;
     const currentPage = parseInt(page) || 1;
 
@@ -1018,7 +691,79 @@ const loadProduct = async (req, res) => {
     } else if (sort === 'desc') {
       sortOption = { item_price: -1 };
     }
-console.log(query )
+
+    const today = new Date();
+
+    // ✅ Fetch active offers
+    const activeOffers = await Offer.find({
+      isActive: true,
+      startDate: { $lte: today },
+      endDate: { $gte: today }
+    });
+
+    // ✅ Get paginated products with category info
+    const productData = await Product.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      { $unwind: '$category' },
+      { $match: { 'category.cat_status': true } },
+      { $sort: sortOption },
+      { $skip: (currentPage - 1) * perPage },
+      { $limit: perPage }
+    ]);
+
+    // ✅ Apply best offer (product / category / global)
+    const updatedProducts = productData.map(product => {
+      const productOffer = activeOffers.find(o =>
+        o.applicableTo === 'product' &&
+        Array.isArray(o.products) &&
+        o.products.some(pid => pid.toString() === product._id.toString())
+      );
+
+      const categoryOffer = activeOffers.find(o =>
+        o.applicableTo === 'category' &&
+        o.category?.toString() === product.category._id.toString()
+      );
+
+      const globalOffer = activeOffers.find(o => o.applicableTo === 'all');
+
+      let bestOffer = null;
+      let bestDiscount = 0;
+
+      const calculateDiscount = (offer) => {
+        if (!offer) return 0;
+        return offer.discountType === 'percentage'
+          ? (product.item_price * offer.discountValue) / 100
+          : offer.discountValue;
+      };
+
+      const offers = [productOffer, categoryOffer, globalOffer];
+      for (const offer of offers) {
+        const discount = calculateDiscount(offer);
+        if (discount > bestDiscount) {
+          bestDiscount = discount;
+          bestOffer = offer;
+        }
+      }
+
+      if (bestOffer) {
+        product.offerPrice = Math.max(product.item_price - bestDiscount, 0);
+        product.appliedOffer = bestOffer;
+      } else {
+        product.offerPrice = product.item_price;
+      }
+
+      return product;
+    });
+
+    // ✅ Pagination count
     const totalCountResult = await Product.aggregate([
       { $match: query },
       {
@@ -1034,116 +779,15 @@ console.log(query )
       { $count: 'total' }
     ]);
 
-
-    console.log(totalCountResult);
-    
     const totalProducts = totalCountResult[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / perPage);
 
-    
-
-    console.log(query)
-
-
-
-    const today = new Date();
-
-    // ✅ Fetch active offers
-    const activeOffers = await Offer.find({
-      isActive: true,
-      startDate: { $lte: today },
-      endDate: { $gte: today }
-    });
-
-
-    const productData = await Product.aggregate([
-      // Match initial product filters
-      { $match: query },
-    
-      // Lookup and join category data
-      {
-        $lookup: {
-          from: 'categories', // collection name in MongoDB (check the actual name if pluralized)
-          localField: 'category',
-          foreignField: '_id',
-          as: 'category'
-        }
-      },
-      // Unwind the category array
-      { $unwind: '$category' },
-    
-      // Filter only products whose category.cat_status is true
-      { $match: { 'category.cat_status': true } },
-    
-      // Sort
-      { $sort: sortOption },
-    
-      // Pagination
-      { $skip: (currentPage - 1) * perPage },
-      { $limit: perPage }
-    ]);
-
-
-
-
-
-    // ✅ Apply best offer to each product
-    const updatedProducts = productData.map(product => {
-      // Product Offer Match
-      const productOffer = activeOffers.find(o =>
-        o.applicableTo === 'product' &&
-        Array.isArray(o.products) &&
-        o.products.some(pid => pid.toString() === product._id.toString())
-      );
-    
-      console.log('the sample for product offer is :',productOffer)
-      
-      let categoryOffer = activeOffers.find(
-        o => o.applicableTo === 'category' && o.category?.toString() === product.category._id.toString()
-      );
-console.log(categoryOffer)
-      let bestOffer = null;
-      let bestDiscount = 0;
-
-      // Calculate product offer discount
-      if (productOffer) {
-        const discount = productOffer.discountType === 'percentage'
-          ? (product.item_price * productOffer.discountValue) / 100
-          : productOffer.discountValue;
-
-        if (discount > bestDiscount) {
-          bestDiscount = discount;
-          bestOffer = productOffer;
-        }
-      }
-
-      // Calculate category offer discount
-      if (categoryOffer) {
-        const discount = categoryOffer.discountType === 'percentage'
-          ? (product.item_price * categoryOffer.discountValue) / 100
-          : categoryOffer.discountValue;
-
-        if (discount > bestDiscount) {
-          bestDiscount = discount;
-          bestOffer = categoryOffer;
-        }
-      }
-
-      if (bestOffer) {
-        product.offerPrice = Math.max(product.item_price - bestDiscount, 0); // Ensure non-negative
-        product.appliedOffer = bestOffer;
-      }
-      console.log('the final product befoe passing is :',product)
-
-      return product;
-    });
-
-
+    // ✅ Render partial view
     res.render('partials/user/shopCategory', {
-      products:updatedProducts,
+      products: updatedProducts,
       currentPage,
       totalPages,
-      layout: false,  // Ensure only the partial view is rendered
+      layout: false,
     });
   } catch (error) {
     console.log(error.message);
@@ -1154,13 +798,10 @@ console.log(categoryOffer)
 
   const loadProfile = async(req,res)=>{
     try{
-      console.log('loadprofile')
       const userId = req.session.user_id;
       const userData = await User.findById(userId);
-      console.log(userData)
       if(userData)
       {
-        console.log('test')
         res.render('user/profile/userProfile',{user:userData,message:null});
       }
       else{
@@ -1172,30 +813,6 @@ console.log(categoryOffer)
     console.log(error.message)
   }
 };
-
-// const loadProfile = async (req, res) => {
-//   try {
-//     console.log('test');
-//     const userId = req.session.user_id;
-
-//     if (!userId) {
-//       return res.redirect('/login');
-//     }
-
-//     const userData = await User.findById(userId);
-
-//     if (userData) {
-//       console.log('User found:', userData.name); // Optional: confirm it's the right user
-//       res.render('user/userProfile', { userData });
-//     } else {
-//       res.redirect('/login');
-//     }
-//   } catch (error) {
-//     console.error('Error loading profile:', error);
-//     res.status(500).send('Something went wrong while loading your profile.');
-//   }
-// };
-
 
 const userEdit = async (req, res) => {
   try {
@@ -1258,6 +875,7 @@ module.exports = {
     loadProduct,
     loadProfile,
     userEdit,
-    loadWallet
+    loadWallet,
+    
 
 }

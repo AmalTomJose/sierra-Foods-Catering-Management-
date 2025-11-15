@@ -237,61 +237,99 @@ const removeCart = async(req,res)=>{
     const updateCart = async (req, res) => {
       try {
         const userId = req.session.user_id;
-        const { productId, quantity } = req.query;
+        const { productId, quantity } = req.body;
         const newQuantity = parseInt(quantity);
     
         if (!userId || !productId || isNaN(newQuantity)) {
-          return res.status(400).json({ success: false, error: "Invalid input." });
+          return res.json({ success: false, error: "Invalid input." });
         }
     
-        // ✅ Update quantity of a specific item
+        // ✅ Get user's latest booking to calculate limits
+        const booking = await Booking.findOne({ user: userId })
+          .sort({ createdAt: -1 })
+          .select("guestCount");
+    
+        if (!booking) {
+          return res.json({ success: false, error: "Please enter event details before updating cart." });
+        }
+    
+        const guestCount = booking.guestCount;
+        const minQty = Math.floor(guestCount / 2);
+        const maxQty = guestCount;
+    
+        // ✅ Validate limits
+        if (newQuantity < minQty) {
+          return res.json({
+            success: false,
+            error: `Minimum quantity is ${minQty} based on ${guestCount} guests.`,
+          });
+        }
+        if (newQuantity > maxQty) {
+          return res.json({
+            success: false,
+            error: `Quantity cannot exceed ${maxQty} (guest count).`,
+          });
+        }
+    
+        // ✅ Find and update quantity
         const cart = await Cart.findOneAndUpdate(
           { user: userId, "items.product": productId },
           { $set: { "items.$.quantity": newQuantity } },
           { new: true }
         ).populate("items.product");
     
-        if (!cart) {
-          return res.status(404).json({ success: false, error: "Cart item not found." });
-        }
+        if (!cart) return res.json({ success: false, error: "Cart not found." });
     
-        // ✅ Recalculate totals dynamically
+        // ✅ Recalculate offers and totals
+        const activeOffers = await Offer.find({
+          startDate: { $lte: new Date() },
+          endDate: { $gte: new Date() },
+          isActive: true,
+        });
+    
         let subtotal = 0;
         let offerDiscount = 0;
     
-        const updatedCartItems = cart.items.map(item => {
+        for (const item of cart.items) {
           const product = item.product;
-          const price = product.item_price;
-          const discount = item.offerApplied || 0;
-          const discountedPrice = price - discount;
-          const total = discountedPrice * item.quantity;
     
-          subtotal += total;
-          offerDiscount += discount * item.quantity;
+          // Apply offers
+          const offers = activeOffers.filter(o => {
+            if (o.applicableTo === "product" && o.products.some(p => p.toString() === product._id.toString())) return true;
+            if (o.applicableTo === "category" && o.category?.toString() === product.category?._id?.toString()) return true;
+            if (o.applicableTo === "all") return true;
+            return false;
+          });
     
-          return {
-            productId: product._id,
-            name: product.item_name,
-            price,
-            quantity: item.quantity,
-            discountedPrice,
-            total
-          };
-        });
+          // Choose best offer
+          let bestDiscount = 0;
+          for (const offer of offers) {
+            const discount = offer.discountType === "percentage"
+              ? Math.round((product.item_price * offer.discountValue) / 100)
+              : offer.discountValue;
+            if (discount > bestDiscount) bestDiscount = discount;
+          }
     
-        res.json({
+          const discountedPrice = Math.max(product.item_price - bestDiscount, 0);
+          subtotal += discountedPrice * item.quantity;
+          offerDiscount += bestDiscount * item.quantity;
+        }
+    
+        await cart.save();
+    
+        return res.json({
           success: true,
           message: "Cart updated successfully.",
-          updatedItems: updatedCartItems,
           subtotal,
-          offerDiscount
+          offerDiscount,
         });
     
       } catch (err) {
-        console.error("Error updating cart quantity:", err);
-        res.status(500).json({ success: false, error: "Server error." });
-      }
+        console.error("Error updating cart:", err);
+        res.json({ success: false, error: "Server error." });
+      }       
     };
+    
     
 
 module.exports = {

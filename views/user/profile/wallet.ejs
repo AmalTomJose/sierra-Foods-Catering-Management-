@@ -20,4 +20,33 @@
       </div>
     </div>
   </div>
+  <h5 class="fw-bold mt-5 mb-3 text-center">Transaction History</h5>
+
+<table class="table table-bordered text-center align-middle">
+  <thead class="table-success">
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Amount</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (wallet.transactions && wallet.transactions.length > 0) { %>
+      <% wallet.transactions.slice().reverse().forEach(txn => { %>
+        <tr>
+          <td><%= txn.date.toLocaleDateString() %></td>
+          <td class="<%= txn.type === 'credit' ? 'text-success' : 'text-danger' %>">
+            <%= txn.type.charAt(0).toUpperCase() + txn.type.slice(1) %>
+          </td>
+          <td>₹ <%= txn.amount.toFixed(2) %></td>
+          <td><%= txn.description || (txn.orderId ? `Order ID: ${txn.orderId._id}` : '-') %></td>
+        </tr>
+      <% }) %>
+    <% } else { %>
+      <tr><td colspan="4" class="text-muted">No transactions found</td></tr>
+    <% } %>
+  </tbody>
+</table>
+
 </main>

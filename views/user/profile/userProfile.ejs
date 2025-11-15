@@ -187,13 +187,7 @@
     errorName.innerHTML = user_name.value.trim() === "" ? "Please enter user name" : /^[a-zA-Z ]+$/.test(user_name.value) == false ? "Please enter alphabets only" : "";
     errorMobile.innerHTML = user_phone.value.trim() === "" ? "Please enter user phone number" : /^\d{10}$/.test(user_phone.value) == false ? "Please enter valid phone number" : "";
 
-    const uploadedFile = fileUpload.files[0];
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"];
-
-    if (uploadedFile && !allowedTypes.includes(uploadedFile.type)) {
-      errorfileUpload.innerHTML = "Please upload a valid image file (JPEG, PNG, GIF)";
-      return false;
-    }
+   
 
     if (errorName.innerHTML || errorMobile.innerHTML) return false;
     return true;

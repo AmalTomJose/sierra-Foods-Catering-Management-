@@ -25,7 +25,7 @@
       <div class="d-flex align-items-center ms-lg-3 flex-column flex-lg-row gap-2 mt-3 mt-lg-0">
         <% if (isAuthenticated) { %>
           <% if (hasBooked) { %>
-            <a onclick="cancelBooking('<%= booking._id %>')" class="btn btn-outline-danger mb-2 mb-lg-0 px-3">Cancel Event</a>
+            <a href="/updateBooking?id=<%= booking._id %>" class="btn btn-outline-danger mb-2 mb-lg-0 px-3">Update Event</a>
           <% } else { %>
             <a href="/eventDetails" class="btn btn-danger text-white mb-2 mb-lg-0 px-3">Book an Event</a>
           <% } %>

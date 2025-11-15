@@ -38,7 +38,7 @@
   h2 {
     font-size: 1.6rem;
     font-weight: 600;
-    color: #2563eb;
+    color: #25eb64;
     margin-bottom: 20px;
     text-align: center;
   }
@@ -70,9 +70,7 @@
   }
 
   .btn {
-    width: 100%;
-    background-color: #2563eb;
-    color: white;
+  
     border: none;
     padding: 12px;
     border-radius: 10px;
@@ -83,7 +81,7 @@
   }
 
   .btn:hover {
-    background-color: #1e40af;
+    background-color: green;
   }
 
   #calendar {
@@ -106,8 +104,9 @@
   }
 
   .fc-daygrid-day:hover {
-    background-color: #e0f2fe !important;
+    background-color: #1dcd58 ;
     cursor: pointer;
+
   }
 
   .selected-date {
@@ -122,11 +121,11 @@
   .fc .fc-toolbar-title {
     font-weight: 700;
     font-size: 1.4rem;
-    color: #1e3a8a;
+    color: #24d633;
   }
 
   .fc-button-primary {
-    background: #2563eb !important;
+    background: #32e052 !important;
     border: none !important;
     border-radius: 8px !important;
   }
@@ -271,7 +270,7 @@
     const blockedDates = [];
 
     // Example: Block next 7 days
-    for (let i = 0; i <= 7; i++) {
+    for (let i = 0; i <= 3; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       blockedDates.push(formatDate(date));
@@ -308,7 +307,7 @@
           info.el.style.backgroundColor = '#facc15';
           info.el.style.color = '#111827';
         } else {
-          info.el.style.backgroundColor = '#22c55e1a';
+          info.el.style.backgroundColor = ' rgb(89, 195, 56);';
         }
       },
 

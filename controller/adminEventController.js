@@ -19,8 +19,6 @@ const listEvents = async (req, res) => {
        .sort({ createdAt: -1 })
        .skip(skip)
        .limit(limit);
-       console.log('this is the bookking tab')
-       console.log(bookings)
  
      res.render('admin/events/events', {
        bookings,
@@ -54,7 +52,6 @@ const listEvents = async (req, res) => {
           model: 'Item'
         });
     }
-      console.log('The order Details are:',order)
 
     res.render('admin/events/bookingDetails', { booking, order });
   } catch (err) {

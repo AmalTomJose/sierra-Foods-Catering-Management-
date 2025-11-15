@@ -57,7 +57,6 @@ const applyCoupon = async (req, res) => {
 
 const getAvailableCoupons = async (req, res) => {
   try {
-    console.log('Requested for coupons');
     const today = new Date();
 
     // Find valid coupons

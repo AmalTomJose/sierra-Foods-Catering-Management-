@@ -36,7 +36,6 @@ const loadSubcategory = async (req, res) => {
 const unlistsubCategory = async (req, res) => {
   try {
     const id = req.query.id;
-    console.log(id, ' <- Subcategory ID');
 
     const subcategory = await Subcategory.findById(id);
 
@@ -48,7 +47,6 @@ const unlistsubCategory = async (req, res) => {
     subcategory.subcat_status = !subcategory.subcat_status;
     await subcategory.save();
 
-    console.log("Status Updated:", subcategory.subcat_status);
 
     // ✅ ✅ IMPORTANT: Return JSON instead of redirect
     return res.json({
@@ -195,7 +193,6 @@ const addSubcategory = async (req, res) => {
     });
 
     await newSubcategory.save();
-    console.log('Subcategory added:', newSubcategory);
 
     return res.redirect('/admin/category');
   } catch (error) {

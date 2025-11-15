@@ -38,9 +38,7 @@ const addToWishlist = async(req,res)=>{
         const userId = req.session.user_id;
         const productId = req.body.productId;
 
-        console.log('userId:',userId);
-        console.log('productId:',productId);
-
+        
         if(!userId||!productId){
             return res.status(400).json({success:false,error:'Invalid userId or productId'});
 
@@ -57,7 +55,6 @@ const addToWishlist = async(req,res)=>{
             const existingWishlistItem = userWishlist.items.find(
                 (item)=>item.product &&item.product.toString()===productId
             );
-            console.log(existingWishlistItem)
 
             if(existingWishlistItem){
                 return res.json({success:false,error:'product already in wishlist'})

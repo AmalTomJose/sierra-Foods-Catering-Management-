@@ -71,7 +71,7 @@
           <div class="col-md-4">
             <h6>Deliver To</h6>
             <p>
-              Event Date : <%= order.booking.eventDate %><br>
+              Event Date: <%= new Date(order.booking.eventDate).toLocaleDateString('en-GB') %><br>
               Event Type : <%= order.booking.eventType %><br>
               Guest Count : <%= order.booking.guestCount %><br>
               Event Place : <%= order.booking.eventPlace %><br>
@@ -115,12 +115,17 @@
                   <td><%= item.quantity %></td>
                   <td>
                     <% if (item.status !== 'cancelled') { %>
-                      <button class="btn btn-danger" onclick="cancelItem('<%= order._id %>', '<%= item._id %>')">Cancel Item</button>
-                    <% } else if (item.status === 'cancelled' && item.refundStatus === 'requested') { %>
-                      <span class="text-danger">Requested</span>
-                    <% } else { %>
-                      <span class="text-danger">Cancelled</span>
-                    <% } %>
+  <button class="btn btn-danger" onclick="cancelItem('<%= order._id %>', '<%= item._id %>')">
+    Cancel Item
+  </button>
+<% } else if (item.status === 'cancelled' && item.refundStatus === 'requested') { %>
+  <span class="text-warning">Requested</span>
+<% } else if (item.status === 'cancelled' && item.refundStatus === 'rejected') { %>
+  <span class="text-danger">Rejected</span>
+<% } else { %>
+  <span class="text-danger">Cancelled</span>
+<% } %>
+
                   </td>
                   <td class="text-end">
                     ₹<%= itemTotal %><br>
@@ -178,6 +183,7 @@
               <i class="material-icons">replay</i> Retry Payment
             </a>
           <% } %>
+         
         </div>
 
         <% 

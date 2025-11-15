@@ -6,6 +6,7 @@
   const dateFun = require('../config/dateData');
   const Wallet = require('../models/walletModel');
   const DailyCount = require('../models/dailybookingCount')
+  const { creditToWallet } = require('./walletController');
   
   
   const listUserOrders = async (req, res) => {
@@ -70,7 +71,6 @@
             // Handle the case where the order with the given ID is not found.
             return res.status(404).send('Order not found.');
         }
-        console.log('The testing is :',order)
         // Render the template with async: true option
         res.render("admin/order/orderDetails", { order });
     } catch (error) {
@@ -78,132 +78,164 @@
         res.status(500).send('Internal Server Error');
     }
   };
-  
-
   const orderStatus = async (req, res) => {
     try {
       const { orderId, status } = req.body;
-      console.log('Hi the value for the status is:',status)
-      const userId = req.session.user_id;
   
-      const validStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'requested', 'approved'];
+      const validStatuses = ['requested', 'approved', 'cancelled', 'rejected'];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: 'Invalid status' });
       }
-
   
-      // Fetch order and update item statuses
       const order = await Order.findById(orderId).populate('booking');
-      if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-
+      if (!order) return res.status(404).json({ message: 'Order not found' });
   
-      // Update order status
+      // Update main refund status
       order.refundStatus = status;
   
-      // Update status of each item
-      order.items.forEach(item => {
-        item.status = 'cancelled'
-        item.refundStatus = status;
-      });
-  
-      await order.save();
-
+      // --------------------------------------------------------
+      // 🟢 APPROVED → Refund to wallet + cancel order/items
+      // --------------------------------------------------------
       if (status === 'approved') {
-        const userId = order.user;
-        const totalRefund = order.finalAmount;
-      
-        if (totalRefund > 0) {
-          let wallet = await Wallet.findOne({ user: userId });
-      
-          // Create wallet if it doesn't exist
-          if (!wallet) {
-            wallet = new Wallet({ user: userId, balance: 0 });
-          }
-      
-          wallet.balance += totalRefund;
-          await wallet.save();
+        order.items.forEach((item) => {
+          item.status = 'cancelled';
+          item.refundStatus = 'approved';
+        });
+  
+        const refundAmount = order.finalAmount;
+  
+        if (refundAmount > 0) {
+          await creditToWallet(
+            order.user,
+            refundAmount,
+            order._id,
+            'Refund for cancelled order'
+          );
+        }
+  
+        // Reverse DailyCount
+        const eventDate = new Date(order.booking.eventDate)
+          .toISOString()
+          .split("T")[0];
+  
+        await DailyCount.findOneAndUpdate(
+          { date: new Date(eventDate) },
+          {
+            $inc: {
+              totalBookings: -1,
+              totalGuests: -parseInt(order.booking.guestCount),
+            }
+          },
+          { upsert: true, new: true }
+        );
+  
+        // Mark order fully cancelled
+        order.status = 'cancelled';
+      }
+  
+      // --------------------------------------------------------
+      // 🔴 REJECTED → No refund, no changes to booking, no wallet
+      // --------------------------------------------------------
+      if (status === 'rejected') {
+        order.items.forEach((item) => {
+          item.refundStatus = 'rejected';
+        });
+  
+        // Keep order status as 'completed' (or your normal fulfilled status)
+        if (order.status !== 'completed') {
+          order.status = 'completed';
         }
       }
-      if(order.refundStatus=='approved' && order.status=='cancelled'){
-
-    const eventDate = new Date(order.booking.eventDate).toISOString().split("T")[0];
-    await DailyCount.findOneAndUpdate(
-      { date: new Date(eventDate) },
-      {
-        $inc: {
-          totalBookings: -1,
-          totalGuests: -parseInt(order.booking.guestCount),
-
-        },
-      },
-      { upsert: true, new: true }
-    );
-
-         
-      }
   
-      res.json({ message: 'Order status and item statuses updated', updatedStatus: order.refundStatus });
+      await order.save();
+  
+      return res.json({
+        message: 'Order updated successfully',
+        updatedStatus: order.refundStatus
+      });
   
     } catch (error) {
-      console.error(error);
+      console.error("Order Status Error:", error);
       res.status(500).json({ message: 'Server error' });
     }
   };
+  
+
+  
+
   const itemStatus = async (req, res) => {
-    const { orderId, itemId, status } = req.body;
-    const userId = req.session.user_id;
-  
     try {
-      // Step 1: Update the item's refundStatus
-      await Order.updateOne(
-        { _id: orderId, 'items._id': itemId },
-        { $set: { 'items.$.refundStatus': status } }
-      );
+      const { orderId, itemId, status } = req.body;
   
-      // Step 2: If approved, process refund
+      const order = await Order.findById(orderId);
+      if (!order) return res.status(404).json({ message: 'Order not found' });
+  
+      const item = order.items.find((item) => item._id.toString() === itemId);
+      if (!item) return res.status(404).json({ message: 'Item not found' });
+  
+      // Update refund status of selected item
+      item.refundStatus = status;
+  
+      // STEP 1: Approve refund for a single item
       if (status === 'approved') {
-        const wallet = await Wallet.findOne({ user: userId });
-  
-        if (!wallet) {
-          return res.status(400).json({ message: 'Wallet not found' });
-        }
-  
-        const order = await Order.findOne({ _id: orderId });
-        const item = order.items.find(item => item._id.toString() === itemId);
-  
-        if (!item) {
-          return res.status(400).json({ message: 'Item not found in order' });
-        }
+        
+        // Mark item cancelled
+        item.status = 'cancelled';
   
         const itemPrice = item.price;
         const quantity = item.quantity;
         const couponDiscount = item.couponDiscount || 0;
   
-        const totalRefund = (itemPrice * quantity) - couponDiscount;
+        const totalRefund =
+          itemPrice * quantity - couponDiscount;
   
-        wallet.balance += totalRefund;
-        await wallet.save();
+        if (totalRefund > 0) {
+          await creditToWallet(
+            order.user,
+            totalRefund,
+            order._id,
+            'Refund for cancelled item'
+          );
+        }
       }
   
-      // Step 3: Check if all items are "approved" or "cancelled"
-      const updatedOrder = await Order.findOne({ _id: orderId });
-      const allResolved = updatedOrder.items.every(
-        (item) => item.refundStatus === 'approved' || item.refundStatus === 'cancelled'
+      // STEP 2: If ALL items are approved → cancel full order
+      const allApproved = order.items.every(
+        (it) => it.refundStatus === 'approved'
       );
   
-      if (allResolved) {
-        updatedOrder.orderStatus = 'cancelled'; // or 'completed' if you prefer
-        await updatedOrder.save();
+      if (allApproved) {
+        order.status = 'cancelled';
+        order.refundStatus = 'approved';
+  
+        // Reverse DailyCount bookings
+        const fullOrder = await order.populate('booking');
+        const eventDate = new Date(fullOrder.booking.eventDate)
+          .toISOString()
+          .split("T")[0];
+  
+        await DailyCount.findOneAndUpdate(
+          { date: new Date(eventDate) },
+          {
+            $inc: {
+              totalBookings: -1,
+              totalGuests: -parseInt(fullOrder.booking.guestCount),
+            }
+          },
+          { upsert: true }
+        );
       }
   
-      res.json({ updatedStatus: status });
+      await order.save();
+  
+      return res.json({ updatedStatus: status });
+  
     } catch (error) {
-      console.log(error);
+      console.error("Item Status Error:", error);
       res.status(500).json({ message: 'Server error' });
     }
   };
+  
   
 
   module.exports= {

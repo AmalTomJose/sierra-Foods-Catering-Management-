@@ -13,6 +13,7 @@ const { changePasswordFromProfile } = require('./addressController');
 const Notification = require('../models/notificationModel')
 const Offer = require('../models/offerModel')
 const Coupon = require('../models/coupenModel')
+const {debitFromWallet} = require('./walletController');
 
 
 
@@ -46,7 +47,6 @@ const loadCheckout = async (req, res) => {
     });
 
     if (!cart) {
-      console.log("Cart not found");
       return res.status(404).send("Cart not found");
     }
 
@@ -152,21 +152,15 @@ const checkOutPost = async (req, res) => {
       return res.status(400).json({ success: false, error: "Booking not found" });
     }
 
-    // 💰 Step 2: Wallet payment validation
     if (paymentMethod === "wallet") {
       const wallet = await Wallet.findOne({ user: userId });
-      if (!wallet) {
-        return res.status(400).json({ success: false, error: "Wallet not found for the User!" });
-      }
-
-      if (wallet.balance < finalAmount) {
-        return res.status(400).json({ success: false, error: "Insufficient wallet balance." });
-      }
-
-      wallet.balance -= finalAmount;
-      await wallet.save();
+      if (!wallet)
+        return res.status(400).json({ error: "Wallet not found" });
+    
+      if (wallet.balance < finalAmount)
+        return res.status(400).json({ error: "Insufficient wallet balance" });
     }
-
+    
     // 🎁 Step 3: Fetch active offers
     const activeOffers = await Offer.find({
       startDate: { $lte: new Date() },
@@ -256,6 +250,18 @@ const checkOutPost = async (req, res) => {
 
     await newOrder.save();
 
+    if (paymentMethod === "wallet") {
+      await debitFromWallet(userId, finalAmount, newOrder._id, 'Order payment via wallet');
+    }
+    // 🧾 Step 7.1: Mark coupon as used (if applicable)
+if (coupon) {
+  await Coupon.findOneAndUpdate(
+    { code: coupon },
+    { $addToSet: { usedBy: userId } } // prevents duplicates
+  );
+}
+
+
     // 🧹 Step 7: Cleanup after order
     booking.status = "completed";
     await booking.save();
@@ -291,6 +297,166 @@ function calculateOffer(offer, price) {
 }
 
 
+const codWalletPayment = async (req, res) => {
+  try {
+    const userId = req.session.user_id;
+
+    const {
+      address,
+      paymentMethod,
+      coupon,
+      couponDiscount,
+      finalAmount,
+    } = req.body;
+
+    console.log("COD WALLET REQUEST BODY:", req.body);
+
+    // 1️⃣ Fetch Cart
+    const userCart = await Cart.findOne({ user: userId }).populate("items.product");
+    if (!userCart || userCart.items.length === 0) {
+      return res.status(400).json({ success: false, error: "Cart is empty" });
+    }
+
+    // 2️⃣ Fetch Booking
+    const booking = await Booking.findOne({ user: userId, status: "active" });
+    if (!booking) {
+      return res.status(400).json({ success: false, error: "No active booking found" });
+    }
+
+    // 3️⃣ Fetch Active Offers
+    const activeOffers = await Offer.find({
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
+      isActive: true,
+    });
+
+    let subtotal = 0;
+    const orderItems = [];
+
+    // 4️⃣ Apply Offer Logic
+    for (const item of userCart.items) {
+      const product = item.product;
+      const quantity = item.quantity;
+
+      let discountPerItem = 0;
+
+      const productOffer = activeOffers.find(
+        o => o.applicableTo === "product" && o.products?.includes(product._id)
+      );
+
+      const categoryOffer = activeOffers.find(
+        o => o.applicableTo === "category" && o.category?.toString() === product.category?._id.toString()
+      );
+
+      const universalOffer = activeOffers.find(o => o.applicableTo === "all");
+
+      if (productOffer) discountPerItem = calculateOffer(productOffer, product.item_price);
+      else if (categoryOffer) discountPerItem = calculateOffer(categoryOffer, product.item_price);
+      else if (universalOffer) discountPerItem = calculateOffer(universalOffer, product.item_price);
+
+      const discountedPrice = product.item_price - discountPerItem;
+
+      subtotal += discountedPrice * quantity;
+
+      orderItems.push({
+        product: product._id,
+        quantity,
+        price: discountedPrice,
+        offerDiscount: discountPerItem,
+        couponDiscount: 0,
+        status: "ordered",
+      });
+    }
+
+    // 5️⃣ Distribute Coupon
+    let distributed = 0;
+    for (let i = 0; i < orderItems.length; i++) {
+      let itemTotal = orderItems[i].price * orderItems[i].quantity;
+      let share = Math.floor((itemTotal / subtotal) * couponDiscount);
+
+      if (i === orderItems.length - 1) {
+        share = couponDiscount - distributed;
+      }
+
+      distributed += share;
+      orderItems[i].couponDiscount = share;
+    }
+
+    // 6️⃣ COD Wallet Advance (25%)
+    const advanceAmount = Math.round(finalAmount * 0.25);
+
+    const wallet = await Wallet.findOne({ user:userId });
+    if (!wallet || wallet.balance < advanceAmount) {
+      return res.status(400).json({
+        success: false,
+        error: "Insufficient Wallet Balance",
+      });
+    }
+
+
+    // 7️⃣ Save Order
+    const newOrder = new Order({
+      user: userId,
+      booking: booking._id,
+      deliveryDate: booking.eventDate,
+      address,
+      items: orderItems,
+      paymentMethod: "cashondelivery",
+      paymentStatus: "partial",
+      totalAmount: subtotal,
+      finalAmount,
+      couponUsed: coupon || null,
+      couponDiscount,
+      advanceAmount,
+      status: "confirmed",
+    });
+
+    await newOrder.save();
+    // Deduct from wallet
+    await debitFromWallet(userId, advanceAmount,newOrder._id, "COD 25% Advance Payment");
+
+    // 8️⃣ Mark Coupon Used
+    if (coupon) {
+      await Coupon.findOneAndUpdate(
+        { code: coupon },
+        { $addToSet: { usedBy: userId } }
+      );
+    }
+
+    // 9️⃣ Booking Completed
+    booking.status = "completed";
+    await booking.save();
+
+    // 🔟 Update DailyCount
+    const eventDate = new Date(booking.eventDate).toISOString().split("T")[0];
+    await DailyCount.findOneAndUpdate(
+      { date: new Date(eventDate) },
+      {
+        $inc: {
+          totalBookings: 1,
+          totalGuests: parseInt(booking.guestCount),
+        },
+      },
+      { upsert: true }
+    );
+
+    // 1️⃣1️⃣ Clear Cart
+    await Cart.findOneAndUpdate(
+      { user: userId },
+      { $set: { items: [], total: 0 } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Order placed successfully using Wallet + COD",
+      orderId: newOrder._id,
+    });
+
+  } catch (error) {
+    console.log("COD WALLET ERROR:", error);
+    return res.status(500).json({ success: false, error: "Something went wrong!" });
+  }
+};
 
 
 const loadOrderDetails = async (req, res) => {
@@ -419,7 +585,6 @@ const loadOrderDetails = async (req, res) => {
         });
       }
   
-      console.log("To view order details:", order);
 
       const extractedOrderId = order.orderId;
   
@@ -721,6 +886,14 @@ const verifyPayment = async (req, res) => {
     });
 
     await newOrder.save();
+    // 🧾 Step 7.1: Mark coupon as used (if applicable)
+if (coupon) {
+  await Coupon.findOneAndUpdate(
+    { code: coupon },
+    { $addToSet: { usedBy: userId } } // prevents duplicates
+  );
+}
+
 
     // 🧹 Step 8: Cleanup
     booking.status = "completed";
@@ -895,5 +1068,6 @@ module.exports = {
     loadOrderSuccess,
     createRazorpayOrder,
     verifyPayment,
-    failurePage
+    failurePage,
+    codWalletPayment
 }

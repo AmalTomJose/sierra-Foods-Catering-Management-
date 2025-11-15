@@ -57,7 +57,6 @@ const getCoupons = async(req,res)=>{
   };
 
   const saveCoupon = async(req,res)=>{
-    console.log(req.body)
     const { code, discountType, discountValue, minOrderAmount, expiryDate } = req.body;
     couponCode=code.trim().toLowerCase();
     
@@ -65,7 +64,6 @@ const getCoupons = async(req,res)=>{
     const existingCoupon = await Coupon.findOne({code:{$regex:new RegExp(`^${couponCode}$`,'i')}});
 
     if(existingCoupon){
-      console.log('This is a testing for existingCoupon')
       req.flash('error','coupon name already exists')
       
       return    res.render('admin/coupon/addCoupon',{error:'coupon name already exist'});
