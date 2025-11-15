@@ -222,7 +222,6 @@ const addProduct = async (req, res) => {
 };
 
 
-
 const storeEditProduct = async (req, res) => {
   try {
     const {
@@ -242,7 +241,9 @@ const storeEditProduct = async (req, res) => {
 
     let images = Array.isArray(product.item_image) ? product.item_image : [];
 
-    // ✅ Product name validation
+    // --------------------- VALIDATIONS -------------------------
+
+    // Product name validation
     const validNameRegex = /^[A-Za-z\s]+$/;
     if (!validNameRegex.test(productName)) {
       return res.render("admin/product/editProduct", {
@@ -254,7 +255,7 @@ const storeEditProduct = async (req, res) => {
       });
     }
 
-    // ✅ Price validation
+    // Price validation
     if (price <= 0) {
       return res.render("admin/product/editProduct", {
         error: "Price must be greater than zero.",
@@ -265,7 +266,7 @@ const storeEditProduct = async (req, res) => {
       });
     }
 
-    // ✅ Discount price validation
+    // Discount validation
     if (discountprice < 0) {
       return res.render("admin/product/editProduct", {
         error: "Discount price cannot be negative.",
@@ -276,8 +277,10 @@ const storeEditProduct = async (req, res) => {
       });
     }
 
-    // ✅ Handle deleted images first
+    // --------------------- HANDLE DELETED IMAGES -------------------------
+
     let deleteImages = req.body.deleteImages;
+
     if (deleteImages) {
       if (!Array.isArray(deleteImages)) deleteImages = [deleteImages];
 
@@ -286,13 +289,17 @@ const storeEditProduct = async (req, res) => {
       });
     }
 
-    // ✅ Validate at least 3 total images after deletion + new uploads
-    const existingImagesCount = images.length;
-    const newImagesCount = req.files && req.files.length > 0 ? req.files.length : 0;
+    // --------------------- MINIMUM IMAGE VALIDATION -------------------------
 
-    if (existingImagesCount + newImagesCount < 3) {
+    const existingImagesCount = images.length;
+    const newImagesCount = req.files?.length || 0;
+
+    const totalImages = existingImagesCount + newImagesCount;
+
+    // ❌ If final images < 3 → not allowed
+    if (totalImages < 3) {
       return res.render("admin/product/editProduct", {
-        error: "A product must have at least 3 images. Please upload more images.",
+        error: "A product must have at least 3 images.",
         oldData: req.body,
         product,
         categories,
@@ -300,12 +307,19 @@ const storeEditProduct = async (req, res) => {
       });
     }
 
-    // ✅ Process and add new images
+    // --------------------- PROCESS NEW IMAGES -------------------------
+
     if (newImagesCount > 0) {
       for (const file of req.files) {
         const randomInteger = Math.floor(Math.random() * 20000001);
         const imgFileName = `cropped${randomInteger}.jpg`;
-        const imagePath = path.join("public", "admin-assets", "imgs", "productIMG", imgFileName);
+        const imagePath = path.join(
+          "public",
+          "admin-assets",
+          "imgs",
+          "productIMG",
+          imgFileName
+        );
 
         await sharp(file.path)
           .resize({ width: 300, height: 300, fit: "cover" })
@@ -315,7 +329,8 @@ const storeEditProduct = async (req, res) => {
       }
     }
 
-    // ✅ Final update to DB
+    // --------------------- UPDATE DATABASE -------------------------
+
     await Product.findByIdAndUpdate(product_id, {
       $set: {
         item_name: productName,
@@ -336,6 +351,7 @@ const storeEditProduct = async (req, res) => {
     res.status(500).send("Error while updating product");
   }
 };
+
 
 
 const removeImage = async (req, res) => {

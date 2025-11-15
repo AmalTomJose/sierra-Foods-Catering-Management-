@@ -191,3 +191,53 @@
     </form>
   </section>
   
+
+
+
+
+  <script>
+    function checkImageCount() {
+      const existing = document.querySelectorAll(".image-container").length;
+      const newFiles = document.getElementById("files").files.length;
+      const total = existing + newFiles;
+    
+      const uploadBtn = document.getElementById("uploadButton");
+    
+      if (total < 3) {
+        uploadBtn.disabled = true;
+        uploadBtn.style.opacity = "0.5";
+      } else {
+        uploadBtn.disabled = false;
+        uploadBtn.style.opacity = "1";
+      }
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      checkImageCount();
+    
+      document.getElementById("files").addEventListener("change", checkImageCount);
+    
+      document.querySelectorAll("input[name='deleteImages']").forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          if (!this.checked) return;
+    
+          if (!confirm("Are you sure you want to delete this image?")) {
+            this.checked = false;
+            return;
+          }
+    
+          const container = this.closest(".image-container");
+          container.remove();
+    
+          const hidden = document.createElement("input");
+          hidden.type = "hidden";
+          hidden.name = "deleteImages";
+          hidden.value = this.value;
+          document.getElementById("product-form").appendChild(hidden);
+    
+          checkImageCount();
+        });
+      });
+    });
+    </script>
+                          

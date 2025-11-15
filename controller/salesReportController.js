@@ -28,7 +28,7 @@ const renderPage = (req, res) => {
 
 const getFilteredReport = async (req, res) => {
   try {
-    const { rangeType, startDate, endDate } = req.body;
+    const { rangeType, startDate, endDate } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = 6;
     const skip = (page - 1) * limit;
@@ -118,13 +118,29 @@ const getFilteredReport = async (req, res) => {
 
 
 
-
 const downloadReport = async (req, res) => {
   try {
     const { type } = req.params;
     const { rangeType, startDate, endDate } = req.query;
 
+    // ================================
+    // 1️⃣ VALIDATION
+    // ================================
+    const validRanges = ["today", "week", "month", "custom"];
+
+    if (!rangeType || !validRanges.includes(rangeType)) {
+      return res.status(400).send("Please filter a report before downloading.");
+    }
+
+    if (rangeType === "custom" && (!startDate || !endDate)) {
+      return res.status(400).send("Please select valid custom dates.");
+    }
+
+    // ================================
+    // 2️⃣ DATE RANGE CALCULATION
+    // ================================
     let start, end;
+
     if (rangeType === "custom") {
       start = moment.utc(startDate).startOf("day").toDate();
       end = moment.utc(endDate).endOf("day").toDate();
@@ -137,29 +153,29 @@ const downloadReport = async (req, res) => {
     } else if (rangeType === "month") {
       start = moment.utc().startOf("month").toDate();
       end = moment.utc().endOf("month").toDate();
-    } else {
-      return res.status(400).send("Invalid range");
     }
 
+    // ================================
+    // 3️⃣ FETCH ORDERS
+    // ================================
     const orders = await Order.find({
-      status: { $in: ["delivered", "confirmed"] }, // include confirmed too if needed
+      status: { $in: ["delivered", "confirmed"] },
       createdAt: { $gte: start, $lte: end },
     })
       .populate("user", "firstname lastname email")
       .populate("items.product", "item_name");
 
     if (!orders || orders.length === 0) {
-      return res.status(404).send("No orders found in the selected range");
+      return res.status(404).send("No orders found in the selected range.");
     }
 
-    // ===============================
-    // 📊 GENERATE EXCEL REPORT
-    // ===============================
+    // ================================
+    // 4️⃣ EXCEL DOWNLOAD
+    // ================================
     if (type === "excel") {
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet("Sales Report");
 
-      // Columns
       sheet.columns = [
         { header: "Order ID", key: "id", width: 20 },
         { header: "Customer", key: "customer", width: 25 },
@@ -173,13 +189,9 @@ const downloadReport = async (req, res) => {
         { header: "Order Date", key: "date", width: 20 },
       ];
 
-      // Rows
       orders.forEach((order) => {
         const itemsList = order.items
-          .map(
-            (i) =>
-              `${i.product?.item_name || "N/A"} (x${i.quantity})`
-          )
+          .map((i) => `${i.product?.item_name || "N/A"} (x${i.quantity})`)
           .join(", ");
 
         sheet.addRow({
@@ -198,7 +210,6 @@ const downloadReport = async (req, res) => {
         });
       });
 
-      // Header Style
       sheet.getRow(1).eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
         cell.fill = {
@@ -216,19 +227,23 @@ const downloadReport = async (req, res) => {
         "Content-Disposition",
         "attachment; filename=sales-report.xlsx"
       );
-      await workbook.xlsx.write(res);
-      res.end();
 
-    // ===============================
-    // 📄 GENERATE PDF REPORT
-    // ===============================
-    } else if (type === "pdf") {
+      await workbook.xlsx.write(res);
+      return res.end();
+    }
+
+    // ================================
+    // 5️⃣ PDF DOWNLOAD
+    // ================================
+    if (type === "pdf") {
       const doc = new PDFDocument({ margin: 30, size: "A4" });
+
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
         "attachment; filename=sales-report.pdf"
       );
+
       doc.pipe(res);
 
       doc.fontSize(18).text("📦 Sales Report", { align: "center" });
@@ -262,18 +277,20 @@ const downloadReport = async (req, res) => {
       await doc.table(table, {
         prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
         prepareRow: (row, i) =>
-          doc.font("Helvetica").fontSize(9).fillColor(i % 2 ? "black" : "black"),
+          doc.font("Helvetica").fontSize(9),
       });
 
       doc.end();
-    } else {
-      return res.status(400).send("Invalid report type");
+      return;
     }
+
+    return res.status(400).send("Invalid report type.");
   } catch (error) {
     console.error("Error generating sales report:", error);
-    res.status(500).send("Internal Server Error");
+    return res.status(500).send("Internal Server Error");
   }
 };
+
 
 
 

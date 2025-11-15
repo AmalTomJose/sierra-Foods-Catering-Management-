@@ -14,6 +14,10 @@ const Notification = require('../models/notificationModel')
 const Offer = require('../models/offerModel')
 const Coupon = require('../models/coupenModel')
 const {debitFromWallet} = require('./walletController');
+const PDFDocument = require("pdfkit");
+const path = require("path");
+const fs = require("fs");
+
 
 
 
@@ -1055,6 +1059,205 @@ if (coupon) {
       res.status(500).json({ success: false, message: 'Server error' });
     }
   };
+
+
+
+
+  
+const downloadInvoice = async (req, res) => {
+    try {
+      const order = await Order.findById(req.params.id)
+        .populate("items.product")
+        .populate("user")
+        .populate("booking");
+  
+      if (!order) return res.status(404).send("Order not found");
+  
+      const doc = new PDFDocument({
+        margin: 40,
+        size: "A4",
+      });
+  
+      const fileName = `invoice_${order.orderId}.pdf`;
+  
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+  
+      doc.pipe(res);
+  
+      // ----------------------------------------------------------------
+      // HEADER SECTION (ORDER DETAILS TITLE)
+      // ----------------------------------------------------------------
+      doc
+        .fontSize(18)
+        .text("ORDER DETAILS", { align: "center" })
+        .moveDown(1.2);
+  
+      // ----------------------------------------------------------------
+      // TOP INFO SECTION (ORDER ID, DATE, DELIVERY DATE)
+      // ----------------------------------------------------------------
+      doc.fontSize(11);
+      doc.text(`Order ID: ${order.orderId}`);
+      doc.moveDown(0.3);
+      doc.text(
+        `Order Date: ${new Date(order.orderDate).toLocaleString("en-IN")}`
+      );
+  
+      if (order.status !== "failed") {
+        doc.moveDown(0.3);
+        doc.text(
+          `Delivery Date: ${new Date(order.deliveryDate).toLocaleString("en-IN")}`
+        );
+      }
+  
+      doc.moveDown(1);
+  
+      // ----------------------------------------------------------------
+      // CUSTOMER / ORDER INFO / DELIVERY INFO
+      // ----------------------------------------------------------------
+      doc.fontSize(13).text("Customer Information", { underline: true });
+      doc.fontSize(11);
+      doc.text(`${order.user.firstname}`);
+      doc.text(`Phone: ${order.user.phoneno}`);
+      doc.moveDown(1);
+  
+      doc.fontSize(13).text("Order Information", { underline: true });
+      doc.fontSize(11);
+      doc.text(`Shipping: Fargo Express`);
+      doc.text(`Payment Method: ${order.paymentMethod}`);
+      doc.text(`Order Status: ${order.status}`);
+  
+      if (order.paymentMethod == "cashondelivery") {
+        doc.text(`Payment Status: ${order.paymentStatus}`);
+        doc.text(`Advance Amount: ₹${order.advanceAmount}`);
+      }
+      doc.moveDown(1);
+  
+      doc.fontSize(13).text("Delivery Details", { underline: true });
+      doc.fontSize(11);
+      doc.text(
+        `Event Date: ${new Date(order.booking.eventDate).toLocaleDateString(
+          "en-IN"
+        )}`
+      );
+      doc.text(`Event Type: ${order.booking.eventType}`);
+      doc.text(`Guest Count: ${order.booking.guestCount}`);
+      doc.text(`Event Place: ${order.booking.eventPlace}`);
+      doc.text(`Event Time: ${order.booking.eventTime}`);
+      doc.text(`District: ${order.booking.eventDistrict}`);
+      doc.text(`Pincode: ${order.booking.eventPincode}`);
+      doc.moveDown(1.5);
+  
+      // ----------------------------------------------------------------
+      // TABLE HEADER
+      // ----------------------------------------------------------------
+      doc
+        .fontSize(13)
+        .text("Order Items", { underline: true })
+        .moveDown(0.7);
+  
+      const tableTop = doc.y;
+  
+      doc.fontSize(11);
+      doc.text("Product", 40, tableTop);
+      doc.text("Unit Price", 200, tableTop);
+      doc.text("Qty", 280, tableTop);
+      doc.text("Status", 330, tableTop);
+      doc.text("Total", 420, tableTop, { align: "right" });
+  
+      doc.moveDown(0.5);
+      doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+  
+      // ----------------------------------------------------------------
+      // TABLE ROWS
+      // ----------------------------------------------------------------
+      let subtotal = 0;
+      let totalCouponDiscount = 0;
+  
+      for (const item of order.items) {
+        const itemTotal = item.price * item.quantity;
+        const discount = item.couponDiscount || 0;
+        const finalTotal = itemTotal - discount;
+  
+        subtotal += finalTotal;
+        totalCouponDiscount += discount;
+  
+        doc.moveDown(0.7);
+  
+        // Product name
+        doc.text(item.product.item_name, 40, doc.y);
+  
+        // Unit price
+        doc.text(`₹${item.price}`, 200, doc.y);
+  
+        // Qty
+        doc.text(`${item.quantity}`, 280, doc.y);
+  
+        // Status
+        doc.text(
+          item.status === "cancelled"
+            ? "Cancelled"
+            : item.status === "pending"
+            ? "Pending"
+            : "Active",
+          330,
+          doc.y
+        );
+  
+        // Total
+        doc.text(`₹${finalTotal}`, 420, doc.y, { align: "right" });
+  
+        // Discount line
+        if (discount > 0) {
+          doc.fontSize(10).fillColor("green");
+          doc.text(`(Coupon -₹${discount})`, 420, doc.y + 12, {
+            align: "right",
+          });
+          doc.fontSize(11).fillColor("black");
+        }
+      }
+  
+      // ----------------------------------------------------------------
+      // TOTALS SECTION
+      // ----------------------------------------------------------------
+      doc.moveDown(1.5);
+      doc.fontSize(12);
+  
+      if (order.couponCode) {
+        doc.text(`Coupon Used: ${order.couponCode}`);
+      }
+  
+      doc.text(`Subtotal: ₹${subtotal + totalCouponDiscount}`);
+      doc.text(`Coupon Discount: -₹${totalCouponDiscount}`);
+      doc.text(`Shipping: ₹0`);
+      doc.moveDown(0.3);
+      doc.fontSize(14).text(`Grand Total: ₹${subtotal}`, { bold: true });
+  
+      doc.moveDown(1);
+  
+      // ----------------------------------------------------------------
+      // REFUND OR CANCELLATION MESSAGE
+      // ----------------------------------------------------------------
+      const anyRefundApproved = order.items.some(
+        (item) => item.refundStatus === "approved"
+      );
+  
+      if (order.refundStatus === "approved" || anyRefundApproved) {
+        doc.fillColor("green");
+        doc.text(
+          "✓ Your refund was approved. The amount will be processed shortly."
+        );
+        doc.fillColor("black");
+      }
+  
+      doc.end();
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Failed to generate invoice PDF");
+    }
+  };
+  
+
   
 module.exports = {
     loadCheckout,
@@ -1069,5 +1272,6 @@ module.exports = {
     createRazorpayOrder,
     verifyPayment,
     failurePage,
-    codWalletPayment
+    codWalletPayment,
+    downloadInvoice
 }

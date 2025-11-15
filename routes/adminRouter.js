@@ -30,7 +30,7 @@ router.get('/dashboard-data', adminController.getDashboardData);
 
 // routes/admin/salesReport.js
 router.get('/salesReport', adminAuth.islogin, salesReportController.renderPage);
-router.post('/salesReport/filter', adminAuth.islogin, salesReportController.getFilteredReport);
+router.get('/salesReport/filter', adminAuth.islogin, salesReportController.getFilteredReport);
 router.get('/salesReport/download/:type', adminAuth.islogin, salesReportController.downloadReport);
 
 

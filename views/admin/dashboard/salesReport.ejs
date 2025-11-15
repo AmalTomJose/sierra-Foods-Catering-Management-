@@ -116,7 +116,7 @@
   <!-- FILTER CARD -->
   <div class="card shadow-sm border-0 mb-4">
     <div class="card-body">
-      <form action="/admin/salesReport/filter" method="POST" class="row g-3 align-items-end">
+      <form action="/admin/salesReport/filter" method="GET" class="row g-3 align-items-end">
         <div class="col-md-4">
           <label for="rangeType" class="form-label fw-semibold">Select Report Range</label>
           <select name="rangeType" id="rangeType" class="form-select" onchange="toggleDateInputs()">
@@ -147,14 +147,14 @@
   <% if (report) { %>
   <!-- DOWNLOAD BUTTONS -->
   <div class="d-flex justify-content-end gap-3 mb-3">
-    <a href="/admin/salesReport/download/pdf?rangeType=<%=report.rangeType%>&startDate=<%=report.startDate%>&endDate=<%=report.endDate%>"
-       class="btn btn-outline-danger">
-      <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download PDF
-    </a>
-    <a href="/admin/salesReport/download/excel?rangeType=<%=report.rangeType%>&startDate=<%=report.startDate%>&endDate=<%=report.endDate%>"
-       class="btn btn-outline-success">
-      <i class="bi bi-file-earmark-excel-fill me-1"></i>Download Excel
-    </a>
+    <% if (report.rangeType) { %>
+      <a href="/admin/salesReport/download/pdf?rangeType=<%= report.rangeType %>&startDate=<%= report.startDate %>&endDate=<%= report.endDate %>" 
+         class="btn btn-outline-danger">Download PDF</a>
+  
+      <a href="/admin/salesReport/download/excel?rangeType=<%= report.rangeType %>&startDate=<%= report.startDate %>&endDate=<%= report.endDate %>" 
+         class="btn btn-outline-success">Download Excel</a>
+  <% } %>
+  
   </div>
 
   <!-- SUMMARY CARD -->
@@ -223,26 +223,22 @@
 
   // AJAX pagination for report table
   document.addEventListener("click", async (e) => {
-    if (e.target.classList.contains("page-btn")) {
-      e.preventDefault();
+  if (e.target.classList.contains("page-btn")) {
+    e.preventDefault();
 
-      const page = e.target.dataset.page;
-      const rangeType = "<%= report?.rangeType %>";
-      const startDate = "<%= report?.startDate %>";
-      const endDate = "<%= report?.endDate %>";
+    const page = e.target.dataset.page;
+    const rangeType = "<%= report?.rangeType %>";
+    const startDate = "<%= report?.startDate %>";
+    const endDate = "<%= report?.endDate %>";
 
-      try {
-        const response = await fetch(`/admin/salesReport/filter?page=${page}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
-          body: JSON.stringify({ rangeType, startDate, endDate })
-        });
+    const response = await fetch(
+      `/admin/salesReport/filter?page=${page}&rangeType=${rangeType}&startDate=${startDate}&endDate=${endDate}`,
+      { headers: { "X-Requested-With": "XMLHttpRequest" } }
+    );
 
-        const html = await response.text();
-        document.getElementById("reportContainer").innerHTML = html;
-      } catch (err) {
-        console.error("Pagination failed:", err);
-      }
-    }
-  });
+    const html = await response.text();
+    document.getElementById("reportContainer").innerHTML = html;
+  }
+});
+
 </script>

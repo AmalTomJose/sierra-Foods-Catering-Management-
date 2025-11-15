@@ -108,6 +108,8 @@ router.post('/checkout/pay-cod-wallet',islogin,orderController.codWalletPayment)
 
 router.get('/order/:id/failure', orderController.failurePage);
 router.get('/orderFailed', orderController.failurePage);
+router.get("/order/:id/download-invoice", orderController.downloadInvoice);
+
 
 
 //orderSuccess

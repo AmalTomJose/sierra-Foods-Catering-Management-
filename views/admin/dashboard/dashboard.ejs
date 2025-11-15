@@ -299,10 +299,7 @@
   <div class="container mt-4">
       <div class="dashboard-header">
         <h2>📊 Admin Dashboard</h2>
-        <select id="filter" class="form-select w-auto shadow-sm">
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
+        
       </div>
 
       <!-- Stats Row -->
@@ -369,6 +366,12 @@
       <!-- Sales Chart -->
       <div class="card p-4 mt-5 chart-card">
         <h4 class="mb-3">📈 Sales Overview</h4>
+        
+        <div class="mb-4 text-end">
+          <select id="filter">
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
         <canvas id="salesChart" height="120"></canvas>
       </div>
 

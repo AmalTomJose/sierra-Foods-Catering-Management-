@@ -1,40 +1,25 @@
-<div class="container mt-5" style="padding-top: 100px;">
-  <div class="text-end mb-3">
-    <button onclick="printContent()" class="btn btn-secondary">
-      <i class="material-icons"></i> Download Invoice
-    </button>
-  </div>
-
-  <section class="content-main">
-    <div class="content-header text-center mb-4">
-      <h5 class="content-title">ORDER DETAILS</h5>
+  <div class="container mt-5" style="padding-top: 100px;">
+    <div class="text-end mb-3">
+      <a href="/order/<%= order._id %>/download-invoice" class="btn btn-danger">
+        Download Invoice PDF
+      </a>
     </div>
+    
 
-    <div class="card">
-      <header class="card-header">
-        <div class="row">
-          <div class="col-md-6">
-            <small class="text-muted">Order ID: <%= order.orderId %></small><br>
-            <small class="text-muted">Order Date:</small>
-            <div>
-              <b>
-                <%= new Date(order.orderDate).toLocaleDateString('en-IN', { 
-                    weekday: 'long', 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                }) %>
-              </b>
-            </div>
-          </div>
-          <% if (order.status !== 'failed') { %>
+    <section class="content-main">
+      <div class="content-header text-center mb-4">
+        <h5 class="content-title">ORDER DETAILS</h5>
+      </div>
+
+      <div class="card">
+        <header class="card-header">
+          <div class="row">
             <div class="col-md-6">
-              <small class="text-muted">Delivery Date:</small>
+              <small class="text-muted">Order ID: <%= order.orderId %></small><br>
+              <small class="text-muted">Order Date:</small>
               <div>
                 <b>
-                  <%= new Date(order.deliveryDate).toLocaleDateString('en-IN', { 
+                  <%= new Date(order.orderDate).toLocaleDateString('en-IN', { 
                       weekday: 'long', 
                       day: 'numeric', 
                       month: 'long', 
@@ -45,238 +30,254 @@
                 </b>
               </div>
             </div>
-          <% } %>
-          
-        </div>
-      </header>
+            <% if (order.status !== 'failed') { %>
+              <div class="col-md-6">
+                <small class="text-muted">Delivery Date:</small>
+                <div>
+                  <b>
+                    <%= new Date(order.deliveryDate).toLocaleDateString('en-IN', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    }) %>
+                  </b>
+                </div>
+              </div>
+            <% } %>
+            
+          </div>
+        </header>
 
-      <div class="card-body">
-        <div class="row mb-4">
-          <div class="col-md-4">
-            <h6>Customer</h6>
-            <p><%= order.user.firstname %><br><%= order.user.phoneno %></p>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <h6>Customer</h6>
+              <p><%= order.user.firstname %><br><%= order.user.phoneno %></p>
+            </div>
+            <div class="col-md-4">
+              <h6>Order Info</h6>
+              <p>
+                Shipping: Fargo express<br>
+                Pay method: <%= order.paymentMethod %><br>
+                Order Status: <%= order.status %>
+                <% if(order.paymentMethod=='cashondelivery'){%>
+                  payment Status:<%=order.paymentStatus%>
+                  Advance Amount:<%=order.advanceAmount%>
+                <%}%>
+              </p>
+            </div>
+            <div class="col-md-4">
+              <h6>Deliver To</h6>
+              <p>
+                Event Date: <%= new Date(order.booking.eventDate).toLocaleDateString('en-GB') %><br>
+                Event Type : <%= order.booking.eventType %><br>
+                Guest Count : <%= order.booking.guestCount %><br>
+                Event Place : <%= order.booking.eventPlace %><br>
+                Event Time : <%= order.booking.eventTime %><br>
+                District : <%= order.booking.eventDistrict %><br>
+                Pincode : <%= order.booking.eventPincode %>
+              </p>
+            </div>
           </div>
-          <div class="col-md-4">
-            <h6>Order Info</h6>
-            <p>
-              Shipping: Fargo express<br>
-              Pay method: <%= order.paymentMethod %><br>
-              Order Status: <%= order.status %>
-              <% if(order.paymentMethod=='cashondelivery'){%>
-                payment Status:<%=order.paymentStatus%>
-                Advance Amount:<%=order.advanceAmount%>
-              <%}%>
-            </p>
-          </div>
-          <div class="col-md-4">
-            <h6>Deliver To</h6>
-            <p>
-              Event Date: <%= new Date(order.booking.eventDate).toLocaleDateString('en-GB') %><br>
-              Event Type : <%= order.booking.eventType %><br>
-              Guest Count : <%= order.booking.guestCount %><br>
-              Event Place : <%= order.booking.eventPlace %><br>
-              Event Time : <%= order.booking.eventTime %><br>
-              District : <%= order.booking.eventDistrict %><br>
-              Pincode : <%= order.booking.eventPincode %>
-            </p>
-          </div>
-        </div>
 
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Unit Price</th>
-                <th>Quantity</th>
-                <th>Order Action</th>
-                <th class="text-end">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% 
-                let subtotal = 0;
-                let totalCouponDiscount = 0;
-                order.items.forEach(item => {
-                  const itemTotal = item.price* item.quantity;
-                  const discount = item.couponDiscount || 0;
-                  const finalTotal = itemTotal - discount;
-                  subtotal += finalTotal;
-                  totalCouponDiscount += discount;
-              %>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
                 <tr>
-                  <td>
-                    <a class="d-flex align-items-center" href="/product/<%= item.product._id %>">
-                      <img src="/admin-assets/imgs/productIMG/<%= item.product.item_image[0] %>" width="40" height="40" class="me-2">
-                      <%= item.product.item_name %>
-                    </a>
-                  </td>
-                  <td>₹<%= item.price %></td>
-                  <td><%= item.quantity %></td>
-                  <td>
-                    <% if (item.status !== 'cancelled') { %>
-  <button class="btn btn-danger" onclick="cancelItem('<%= order._id %>', '<%= item._id %>')">
-    Cancel Item
-  </button>
-<% } else if (item.status === 'cancelled' && item.refundStatus === 'requested') { %>
-  <span class="text-warning">Requested</span>
-<% } else if (item.status === 'cancelled' && item.refundStatus === 'rejected') { %>
-  <span class="text-danger">Rejected</span>
-<% } else { %>
-  <span class="text-danger">Cancelled</span>
-<% } %>
-
-                  </td>
-                  <td class="text-end">
-                    ₹<%= itemTotal %><br>
-                    <% if (discount > 0) { %>
-                      <small class="text-success">- ₹<%= discount %> (Coupon)</small><br>
-                      <strong>₹<%= finalTotal %></strong>
-                    <% } else { %>
-                      <strong>₹<%= itemTotal %></strong>
-                    <% } %>
-                  </td>
+                  <th>Product</th>
+                  <th>Unit Price</th>
+                  <th>Quantity</th>
+                  <th>Order Action</th>
+                  <th class="text-end">Total</th>
                 </tr>
-              <% }); %>
-              <tr>
-                <td colspan="4">
-                  <div class="float-end">
-                    <% if (order.couponCode) { %>
-                      <p><strong>Coupon Code:</strong> <%= order.couponCode %></p>
-                    <% } %>
-                    <p>Subtotal: ₹<%= subtotal + totalCouponDiscount %></p>
-                    <p>Coupon Discount: <span class="text-danger">- ₹<%= totalCouponDiscount %></span></p>
-                    <p>Shipping: ₹0.00</p>
-                    <p><strong>Grand Total: ₹<%= subtotal %></strong></p>
-                    <span class="badge rounded-pill 
-                      <%= order.status === 'Delivered' ? 'alert-success text-success' : 
-                          order.status === 'Pending' ? 'alert-warning text-warning' :
-                          order.status === 'Shipped' ? 'alert-info text-info' :
-                          order.status === 'failed' ? 'alert-danger text-danger' : 
-                          'alert-secondary' %>">
-                      <%= order.status %>
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <% 
-  // Check if all items are cancelled
-  const allItemsCancelled = order.items.every(item => item.status === 'cancelled');
-%>
-
-<div class="text-center mt-4">
-  <% if (order.status == 'confirmed' && !allItemsCancelled) { %>
-    <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
-      <i class="material-icons"></i> Cancel Order
+              </thead>
+              <tbody>
+                <% 
+                  let subtotal = 0;
+                  let totalCouponDiscount = 0;
+                  order.items.forEach(item => {
+                    const itemTotal = item.price* item.quantity;
+                    const discount = item.couponDiscount || 0;
+                    const finalTotal = itemTotal - discount;
+                    subtotal += finalTotal;
+                    totalCouponDiscount += discount;
+                %>
+                  <tr>
+                    <td>
+                      <a class="d-flex align-items-center" href="/product/<%= item.product._id %>">
+                        <img src="/admin-assets/imgs/productIMG/<%= item.product.item_image[0] %>" width="40" height="40" class="me-2">
+                        <%= item.product.item_name %>
+                      </a>
+                    </td>
+                    <td>₹<%= item.price %></td>
+                    <td><%= item.quantity %></td>
+                    <td>
+                      <% if (item.status !== 'cancelled') { %>
+    <button class="btn btn-danger" onclick="cancelItem('<%= order._id %>', '<%= item._id %>')">
+      Cancel Item
     </button>
+  <% } else if (item.status === 'cancelled' && item.refundStatus === 'requested') { %>
+    <span class="text-warning">Requested</span>
+  <% } else if (item.status === 'cancelled' && item.refundStatus === 'rejected') { %>
+    <span class="text-danger">Rejected</span>
+  <% } else { %>
+    <span class="text-danger">Cancelled</span>
   <% } %>
 
-          <% if (order.status === 'requested') { %>
-            <h6 class="text-danger">Requested for cancellation</h6>
-          <% } %>
-          <% if (order.status === 'failed') { %>
-            <a class="btn btn-outline-success" href="/checkout?orderId=<%= order._id %>">
-              <i class="material-icons">replay</i> Retry Payment
-            </a>
-          <% } %>
-         
-        </div>
-
-        <% 
-          const isOrderRefundApproved = order.refundStatus === 'approved';
-          const isAnyItemRefundApproved = order.items.some(item => item.refundStatus === 'approved');
-        %>
-        <% if (isOrderRefundApproved || isAnyItemRefundApproved) { %>
-          <div class="alert alert-success text-center mt-4" role="alert">
-            ✅ Admin has approved your refund request. The amount will be processed shortly.
+                    </td>
+                    <td class="text-end">
+                      ₹<%= itemTotal %><br>
+                      <% if (discount > 0) { %>
+                        <small class="text-success">- ₹<%= discount %> (Coupon)</small><br>
+                        <strong>₹<%= finalTotal %></strong>
+                      <% } else { %>
+                        <strong>₹<%= itemTotal %></strong>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+                <tr>
+                  <td colspan="4">
+                    <div class="float-end">
+                      <% if (order.couponCode) { %>
+                        <p><strong>Coupon Code:</strong> <%= order.couponCode %></p>
+                      <% } %>
+                      <p>Subtotal: ₹<%= subtotal + totalCouponDiscount %></p>
+                      <p>Coupon Discount: <span class="text-danger">- ₹<%= totalCouponDiscount %></span></p>
+                      <p>Shipping: ₹0.00</p>
+                      <p><strong>Grand Total: ₹<%= subtotal %></strong></p>
+                      <span class="badge rounded-pill 
+                        <%= order.status === 'Delivered' ? 'alert-success text-success' : 
+                            order.status === 'Pending' ? 'alert-warning text-warning' :
+                            order.status === 'Shipped' ? 'alert-info text-info' :
+                            order.status === 'failed' ? 'alert-danger text-danger' : 
+                            'alert-secondary' %>">
+                        <%= order.status %>
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        <% } %>
 
+          <% 
+    // Check if all items are cancelled
+    const allItemsCancelled = order.items.every(item => item.status === 'cancelled');
+  %>
+
+  <div class="text-center mt-4">
+    <% if (order.status == 'confirmed' && !allItemsCancelled) { %>
+      <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
+        <i class="material-icons"></i> Cancel Order
+      </button>
+    <% } %>
+
+            <% if (order.status === 'requested') { %>
+              <h6 class="text-danger">Requested for cancellation</h6>
+            <% } %>
+            <% if (order.status === 'failed') { %>
+              <a class="btn btn-outline-success" href="/checkout?orderId=<%= order._id %>">
+                <i class="material-icons">replay</i> Retry Payment
+              </a>
+            <% } %>
+          
+          </div>
+
+          <% 
+            const isOrderRefundApproved = order.refundStatus === 'approved';
+            const isAnyItemRefundApproved = order.items.some(item => item.refundStatus === 'approved');
+          %>
+          <% if (isOrderRefundApproved || isAnyItemRefundApproved) { %>
+            <div class="alert alert-success text-center mt-4" role="alert">
+              ✅ Admin has approved your refund request. The amount will be processed shortly.
+            </div>
+          <% } %>
+
+        </div>
       </div>
-    </div>
-  </section>                    
-</div>
+    </section>                    
+  </div>
 
-<script>
-  function printContent() {
-    window.print();
-  }
+  <script>
+    function printContent() {
+      window.print();
+    }
 
-  function cancelOrder(orderId){
-    Swal.fire({
-      icon: 'warning',
-      title: 'Cancel Order',
-      text: 'Are you sure you want to cancel this Order?',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, cancel it',
-      cancelButtonText: 'No',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        fetch(`/cancel-order/${orderId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            Swal.fire('Cancelled!', 'Order has been cancelled.', 'success')
-              .then(() => {
-                window.location.reload();
-              });
-          } else {
-            Swal.fire('Error', data.message || 'Failed to cancel order.', 'error');
-          }
-        })
-        .catch(() => {
-          Swal.fire('Error', 'Something went wrong.', 'error');
-        });
-      }
-    });
-  }
+    function cancelOrder(orderId){
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cancel Order',
+        text: 'Are you sure you want to cancel this Order?',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, cancel it',
+        cancelButtonText: 'No',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/cancel-order/${orderId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire('Cancelled!', 'Order has been cancelled.', 'success')
+                .then(() => {
+                  window.location.reload();
+                });
+            } else {
+              Swal.fire('Error', data.message || 'Failed to cancel order.', 'error');
+            }
+          })
+          .catch(() => {
+            Swal.fire('Error', 'Something went wrong.', 'error');
+          });
+        }
+      });
+    }
 
-  function cancelItem(orderId, itemId) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Cancel Item',
-      text: 'Are you sure you want to cancel this item?',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, cancel it',
-      cancelButtonText: 'No',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        fetch(`/cancel-item/${orderId}/${itemId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            Swal.fire('Cancelled!', data.message || 'Item has been cancelled.', 'success')
-              .then(() => {
-                window.location.reload();
-              });
-          } else {
-            Swal.fire('Error', data.message || 'Failed to cancel item.', 'error');
-          }
-        })
-        .catch(() => {
-          Swal.fire('Error', data.message ||'Something went wrong.', 'error');
-        });
-      }
-    });
-  }
-</script>
+    function cancelItem(orderId, itemId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cancel Item',
+        text: 'Are you sure you want to cancel this item?',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, cancel it',
+        cancelButtonText: 'No',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/cancel-item/${orderId}/${itemId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire('Cancelled!', data.message || 'Item has been cancelled.', 'success')
+                .then(() => {
+                  window.location.reload();
+                });
+            } else {
+              Swal.fire('Error', data.message || 'Failed to cancel item.', 'error');
+            }
+          })
+          .catch(() => {
+            Swal.fire('Error', data.message ||'Something went wrong.', 'error');
+          });
+        }
+      });
+    }
+  </script>
