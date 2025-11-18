@@ -59,11 +59,12 @@ const userSchema = new Schema ({
     type:String,
     default:''
    },
-   referralCode :{
-    type:String,
-    unique:true
-
-   },
+   referralCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    default: null
+  },
    referredBy:{
     type:ObjectId,
     ref:'User',
