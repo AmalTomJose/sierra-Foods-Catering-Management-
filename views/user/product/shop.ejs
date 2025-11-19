@@ -43,6 +43,18 @@
 
       <!-- Category Pills -->
       <ul class="nav nav-pills flex-wrap justify-content-center justify-content-lg-end" id="category-pills">
+
+        <!-- ALL Button -->
+        <li class="nav-item me-2 mb-2">
+          <button 
+            type="button"
+            class="btn btn-outline-primary border-2 category-pill <%= !query.category ? 'active' : '' %>"
+            id="all-category"
+          >
+            All
+          </button>
+        </li>
+
         <% categories.forEach(cat => { %>
           <li class="nav-item me-2 mb-2">
             <button 
@@ -54,7 +66,9 @@
             </button>
           </li>
         <% }); %>
+
       </ul>
+
     </div>
     <!-- ==================== End Search + Sort + Category ==================== -->
 
@@ -66,134 +80,111 @@
 </div>
 <!-- ==================== End Product Page ==================== -->
 
-
-<!-- ✅ SweetAlert for messages -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+<!-- ==================== JavaScript ==================== -->
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const pills = document.querySelectorAll('.category-pill');
-    const searchInput = document.querySelector('input[name="search"]');
-    const sortSelect = document.querySelector('select[name="sort"]');
-    const searchForm = document.getElementById('filterForm');
-    let currentPage = 1;
-    let selectedCategory = "<%= query.category || '' %>";
+document.addEventListener('DOMContentLoaded', () => {
+  
+  // HTML references
+  const pills = document.querySelectorAll('.category-pill');
+  const searchInput = document.querySelector('input[name="search"]');
+  const sortSelect = document.querySelector('select[name="sort"]');
+  const searchForm = document.getElementById('filterForm');
 
-    // ✅ Fetch products with AJAX
-    function fetchFilteredProducts() {
-      const search = searchInput.value;
-      const sort = sortSelect.value;
-      const container = document.getElementById('product-listing');
-      container.innerHTML = '<div class="text-center w-100 py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+  // Filter values
+  let currentPage = 1;
+  let selectedCategory = "<%= query.category || '' %>";
 
-      fetch(`/shop/ajax?category=${selectedCategory}&search=${encodeURIComponent(search)}&sort=${sort}&page=${currentPage}`)
-        .then(res => res.text())
-        .then(html => {
-          container.innerHTML = html || '<div class="text-center text-muted w-100 py-5">No products found.</div>';
-          attachPaginationEvents();
-        })
-        .catch(err => {
-          console.error('Error loading products:', err);
-          container.innerHTML = '<div class="text-danger w-100 text-center py-5">Failed to load products.</div>';
-        });
-    }
+  // ======================= AJAX FETCH FUNCTION ===========================
+  function fetchFilteredProducts() {
+    const search = searchInput.value;
+    const sort = sortSelect.value;
+    const container = document.getElementById('product-listing');
 
-    // ✅ Pagination handler
-    function attachPaginationEvents() {
-      document.querySelectorAll('.pagination-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          currentPage = parseInt(link.getAttribute('data-page'));
-          fetchFilteredProducts();
-        });
+    container.innerHTML = `
+      <div class="text-center w-100 py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>`;
+
+    fetch(`/shop/ajax?category=${selectedCategory}&search=${encodeURIComponent(search)}&sort=${sort}&page=${currentPage}`)
+      .then(res => res.text())
+      .then(html => {
+        container.innerHTML = html || '<div class="text-center text-muted w-100 py-5">No products found.</div>';
+        attachPaginationEvents();
+      })
+      .catch(err => {
+        console.error('Error loading products:', err);
+        container.innerHTML = '<div class="text-danger w-100 text-center py-5">Failed to load products.</div>';
       });
-    }
+  }
 
-    // ✅ Category selection
-    pills.forEach(pill => {
-      pill.addEventListener('click', () => {
-        selectedCategory = pill.getAttribute('data-id');
-        pills.forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        currentPage = 1;
+  // ======================= Pagination ===========================
+  function attachPaginationEvents() {
+    document.querySelectorAll('.pagination-link').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        currentPage = parseInt(link.dataset.page);
         fetchFilteredProducts();
       });
     });
+  }
 
-    // ✅ Search form submit
-    searchForm.addEventListener('submit', e => {
-      e.preventDefault();
+  // ======================= Category Pills ===========================
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      selectedCategory = pill.dataset.id || "";
+
+      pills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+
       currentPage = 1;
       fetchFilteredProducts();
     });
-
-    // ✅ Sort change
-    sortSelect.addEventListener('change', () => {
-      currentPage = 1;
-      fetchFilteredProducts();
-    });
-
-    attachPaginationEvents();
   });
+
+  // ======================= ALL BUTTON (AJAX RESET) ===========================
+  document.getElementById('all-category').addEventListener('click', () => {
+    selectedCategory = "";
+    searchInput.value = "";
+    sortSelect.value = "asc";
+    currentPage = 1;
+
+    pills.forEach(p => p.classList.remove('active'));
+    document.getElementById('all-category').classList.add('active');
+
+    fetchFilteredProducts();
+  });
+
+  // ======================= Search Submit ===========================
+  searchForm.addEventListener('submit', e => {
+    e.preventDefault();
+    currentPage = 1;
+    fetchFilteredProducts();
+  });
+
+  // ======================= Sort Change ===========================
+  sortSelect.addEventListener('change', () => {
+    currentPage = 1;
+    fetchFilteredProducts();
+  });
+
+  attachPaginationEvents();
+});
 </script>
 
-<!-- ✅ Success Alert -->
-<% if (success && success.length > 0) { %>
-  <script>
-    Swal.fire({
-      icon: 'success',
-      text: '<%= success[0] %>',
-    });
-  </script>
-<% } %>
-
-<!-- ✅ Responsive Styling -->
+<!-- ==================== Responsive Styling ==================== -->
 <style>
-  /* Main filter section */
   #filterForm {
     gap: 10px;
   }
 
   @media (max-width: 767px) {
-    #filterForm {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
+    #filterForm { flex-direction: column; }
     #filterForm input,
     #filterForm select,
-    #filterForm button {
-      width: 100% !important;
-    }
-
-    #filterForm button {
-      margin-top: 5px;
-    }
-
-    #category-pills {
-      justify-content: flex-start;
-    }
+    #filterForm button { width: 100% !important; }
+    #category-pills { justify-content: flex-start; }
   }
 
-  @media (min-width: 768px) and (max-width: 991px) {
-    #filterForm {
-      justify-content: space-between;
-    }
-
-    #filterForm input {
-      width: 60%;
-    }
-
-    #filterForm select {
-      width: 30%;
-    }
-
-    #filterForm button {
-      width: auto;
-    }
-  }
-
-  /* Category pills responsive */
   #category-pills .btn {
     white-space: nowrap;
   }
