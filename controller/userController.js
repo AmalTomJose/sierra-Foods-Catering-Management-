@@ -256,7 +256,7 @@ const loginPage = async(req,res)=>{
   
     // Login success
     req.session.user_id = existingUser._id;
-    return res.redirect("/");
+    return res.redirect("/shop");
   
   } 
   catch(error)
